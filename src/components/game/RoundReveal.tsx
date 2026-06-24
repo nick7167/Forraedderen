@@ -96,8 +96,8 @@ export function RoundReveal({
               <div
                 key={id}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border p-2",
-                  wasImposter && "border-red-300 bg-red-50 dark:bg-red-950/30",
+                  "glass flex items-center gap-2 rounded-xl p-2",
+                  wasImposter && "ring-1 ring-red-400/50",
                 )}
               >
                 <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={28} />

@@ -21,10 +21,8 @@ export function AvatarPicker({
             type="button"
             onClick={() => onEmoji(e)}
             className={cn(
-              "flex aspect-square items-center justify-center rounded-xl border text-2xl transition-all",
-              emoji === e
-                ? "border-primary bg-primary/10 scale-105"
-                : "border-border hover:bg-accent",
+              "glass flex aspect-square items-center justify-center rounded-2xl text-2xl transition-all active:scale-95",
+              emoji === e && "ring-2 ring-primary scale-105",
             )}
           >
             {e}

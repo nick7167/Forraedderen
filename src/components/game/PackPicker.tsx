@@ -110,8 +110,8 @@ export function PackPicker({
                       onOpenChange(false);
                     }}
                     className={cn(
-                      "relative flex flex-col items-start rounded-xl border p-3 text-left transition-all hover:bg-accent",
-                      selectedPackId === p._id && "border-primary bg-primary/5",
+                      "glass relative flex flex-col items-start rounded-2xl p-3 text-left transition-all active:scale-95",
+                      selectedPackId === p._id && "ring-2 ring-primary",
                     )}
                   >
                     {selectedPackId === p._id && (

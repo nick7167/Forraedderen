@@ -57,11 +57,7 @@ export function GameRoom() {
 
   // Lobby (pre-match or between matches).
   if (room.phase === "lobby") {
-    return (
-      <div className="p-4">
-        <LobbyView room={room} authArgs={authArgs} onLeave={leave} />
-      </div>
-    );
+    return <LobbyView room={room} authArgs={authArgs} onLeave={leave} />;
   }
 
   // In-round phases need the round payload.
@@ -74,10 +70,12 @@ export function GameRoom() {
   }
 
   const header = (
-    <div className="flex items-center justify-between border-b px-4 py-2 text-xs text-muted-foreground">
-      <span className="font-mono">{room.code}</span>
-      <span>
-        {t.pass} {room.currentRoundNumber}/{room.settings.roundCount}
+    <div className="flex items-center justify-between px-5 py-2 text-xs font-medium text-muted-foreground">
+      <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">
+        {room.code}
+      </span>
+      <span className="rounded-full bg-white/5 px-2.5 py-1">
+        Runde {room.currentRoundNumber}/{room.settings.roundCount}
       </span>
     </div>
   );

@@ -60,7 +60,7 @@ export function VotePhase({
       )}
 
       {/* Clue recap to inform the vote */}
-      <div className="rounded-xl border bg-card p-3">
+      <div className="glass rounded-2xl p-3">
         <div className="flex flex-wrap gap-1.5">
           {round.clues.map((c) => {
             const p = playerById(c.playerId);
@@ -89,10 +89,10 @@ export function VotePhase({
               disabled={disabled}
               onClick={() => vote(id)}
               className={cn(
-                "flex flex-col items-center gap-2 rounded-xl border p-3 transition-all",
+                "glass flex flex-col items-center gap-2 rounded-2xl p-3 transition-all",
                 disabled
                   ? "opacity-50"
-                  : "hover:border-primary hover:bg-primary/5 active:scale-95",
+                  : "hover:ring-2 hover:ring-primary/60 active:scale-95",
               )}
             >
               <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={48} />

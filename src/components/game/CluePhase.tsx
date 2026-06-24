@@ -81,8 +81,8 @@ export function CluePhase({
             <div
               key={id}
               className={cn(
-                "flex items-center gap-3 rounded-xl border p-2.5 transition-all",
-                isCurrent && "border-primary bg-primary/5 ring-1 ring-primary/30",
+                "glass flex items-center gap-3 rounded-2xl p-2.5 transition-all",
+                isCurrent && "ring-2 ring-primary/70 shadow-[0_0_24px_-6px] shadow-primary/60",
               )}
             >
               <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={36} />
