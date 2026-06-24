@@ -78,6 +78,12 @@ export const t = {
   clueGiven: "Spor givet",
   thinking: "tænker…",
 
+  // Discussion
+  discussTitle: "Diskutér",
+  discussHint: "Snak om, hvem der virker mistænkelig.",
+  nextClue: "Næste spor",
+  goToVoting: "Gå til afstemning",
+
   // Vote
   votePhase: "Stem",
   voteInstruction: "Hvem er forræderen?",

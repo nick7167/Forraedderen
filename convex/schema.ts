@@ -30,6 +30,7 @@ export const phaseValidator = v.union(
   v.literal("lobby"),
   v.literal("reveal"),
   v.literal("clues"),
+  v.literal("discussion"),
   v.literal("vote"),
   v.literal("resolve"),
   v.literal("scoreboard"),
@@ -93,6 +94,7 @@ export default defineSchema({
     phase: v.union(
       v.literal("reveal"),
       v.literal("clues"),
+      v.literal("discussion"),
       v.literal("vote"),
       v.literal("resolve"),
     ),

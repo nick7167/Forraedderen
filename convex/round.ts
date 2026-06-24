@@ -538,13 +538,27 @@ async function maybeAdvanceCluePhase(
   const everyone = round.turnOrder.every((id) => cluedThisPass.has(id));
   if (!everyone && !force) return;
 
+  // Pause for discussion after every completed clue round. The host then
+  // advances (advanceDiscussion) to the next clue round or to voting.
+  await ctx.db.patch(round._id, { phase: "discussion", phaseDeadline: undefined });
+  await ctx.db.patch(room._id, { phase: "discussion" });
+}
+
+/** Move from the discussion screen to the next clue round, or to voting. */
+async function advanceFromDiscussion(
+  ctx: MutationCtx,
+  room: Doc<"rooms">,
+  round: Doc<"rounds">,
+) {
   if (round.currentPass < round.cluePasses) {
     await ctx.db.patch(round._id, {
+      phase: "clues",
       currentPass: round.currentPass + 1,
       phaseDeadline: room.settings.timersEnabled
         ? Date.now() + room.settings.clueSecs * 1000
         : undefined,
     });
+    await ctx.db.patch(room._id, { phase: "clues" });
   } else {
     await ctx.db.patch(round._id, {
       phase: "vote",
@@ -554,7 +568,20 @@ async function maybeAdvanceCluePhase(
     });
     await ctx.db.patch(room._id, { phase: "vote" });
   }
+  scheduleBotTick(ctx, room._id, round._id);
 }
+
+/** Host advances from the discussion screen. */
+export const advanceDiscussion = mutation({
+  args: { ...hostArgs(), roundId: v.id("rounds") },
+  handler: async (ctx, args) => {
+    const room = await requireHost(ctx, args);
+    const round = await ctx.db.get(args.roundId);
+    if (round === null || round.roomId !== room._id) throw new Error("Ugyldig runde.");
+    if (round.phase !== "discussion") return;
+    await advanceFromDiscussion(ctx, room, round);
+  },
+});
 
 /** Players eligible to vote this ballot (active, not eliminated). */
 function voters(round: Doc<"rounds">): Id<"players">[] {
@@ -758,6 +785,16 @@ export const botTick = internalMutation({
       .collect();
     const isBot = (id: Id<"players">) =>
       players.find((p) => p._id === id)?.isBot === true;
+
+    // If a bot inherited host (the human host left), auto-advance the
+    // discussion screen so the game can't stall. With a human host, the button
+    // drives it and bots do nothing here.
+    if (round.phase === "discussion") {
+      if (room.hostPlayerId && isBot(room.hostPlayerId)) {
+        await advanceFromDiscussion(ctx, room, round);
+      }
+      return;
+    }
 
     if (round.phase === "clues") {
       // Whose turn is it? (first in order without a clue this pass)

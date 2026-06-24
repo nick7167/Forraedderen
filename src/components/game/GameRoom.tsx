@@ -7,6 +7,7 @@ import { t } from "@/lib/strings";
 import { LobbyView } from "./LobbyView";
 import { RoleReveal } from "./RoleReveal";
 import { CluePhase } from "./CluePhase";
+import { DiscussionPhase } from "./DiscussionPhase";
 import { VotePhase } from "./VotePhase";
 import { RoundReveal } from "./RoundReveal";
 import { MatchResults } from "./MatchResults";
@@ -93,6 +94,9 @@ export function GameRoom() {
       )}
       {round.phase === "clues" && (
         <CluePhase round={round} authArgs={authArgs} isHost={room.isHost} />
+      )}
+      {round.phase === "discussion" && (
+        <DiscussionPhase round={round} authArgs={authArgs} isHost={room.isHost} />
       )}
       {round.phase === "vote" && (
         <VotePhase round={round} authArgs={authArgs} isHost={room.isHost} />
