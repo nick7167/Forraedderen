@@ -41,10 +41,19 @@ export const t = {
   imposterSeesCategory: "Forræder ser kategorien",
   impostersKnowEachOther: "Forrædere kender hinanden",
   timers: "Tidsbegrænsning",
-  pack: "Ordpakke",
-  choosePack: "Vælg pakke",
+  pack: "Kategori",
+  choosePack: "Vælg kategori",
   on: "Til",
   off: "Fra",
+
+  // Game mode
+  mode: "Spiltype",
+  modeSpy: "Klassisk",
+  modeUndercover: "Undercover",
+  modeSpyDesc: "Forræderen kender ikke ordet.",
+  modeUndercoverDesc: "Forræderen får et lignende ord — uden at vide det.",
+  randomCategory: "Tilfældig",
+  randomCategoryOption: "Tilfældig kategori",
 
   // Reveal
   yourRole: "Din rolle",
@@ -84,6 +93,7 @@ export const t = {
   impostersWon: "Forræderne vandt!",
   theImposterWas: "Forræderen var",
   theImpostersWere: "Forræderne var",
+  imposterWordWas: "Forræderens ord",
   votes: "stemmer",
   nextRound: "Næste runde",
   scoreboard: "Stilling",
@@ -96,6 +106,36 @@ export const t = {
   // Host controls
   skip: "Spring over",
   skipPlayer: "Spring stallende spiller over",
+
+  // Clue hint (broad-clue guidance)
+  clueHintCrew: "Giv et bredt spor — tydeligt nok for andre med ordet, men ikke så tydeligt at forræderen kan gætte det.",
+  clueHintSpyImposter: "Du kender ikke ordet. Lyt til de andre og bluf et spor.",
+  clueHintUndercover: "Giv et bredt spor til dit ord.",
+
+  // How to play
+  howToTitle: "Sådan spilles",
+  howTo: {
+    goal: {
+      title: "Målet",
+      body: "Alle får det samme hemmelige ord — undtagen forræderen. Find forræderen ved at lytte til hinandens spor. Forræderen vil overleve uden at blive afsløret.",
+    },
+    clues: {
+      title: "Spor",
+      body: "På skift giver alle ét bredt spor til ordet. Et godt spor er tydeligt nok for dem, der kender ordet, men ikke så afslørende, at forræderen kan gætte det.",
+    },
+    vote: {
+      title: "Afstemning",
+      body: "Bagefter stemmer alle i hemmelighed på, hvem de tror er forræderen. Flest stemmer ryger ud. Står det lige, slipper forræderen fri.",
+    },
+    klassisk: {
+      title: "Klassisk",
+      body: "Forræderen ved, at de er forræder, men kender ikke ordet og må bluffe sig igennem.",
+    },
+    undercover: {
+      title: "Undercover",
+      body: "Forræderen ved IKKE, at de er forræder — de får bare et lignende ord. Deres spor kommer til at passe lidt skævt.",
+    },
+  },
 
   // Errors / misc
   loading: "Indlæser…",

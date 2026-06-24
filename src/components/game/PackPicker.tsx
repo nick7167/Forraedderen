@@ -25,7 +25,7 @@ export function PackPicker({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   selectedPackId?: Id<"packs">;
-  onSelect: (id: Id<"packs">) => void;
+  onSelect: (id: Id<"packs"> | undefined) => void;
 }) {
   const packs = useQuery(api.packs.listPacks);
   const createPack = useMutation(api.packs.createCustomPack);
@@ -102,6 +102,23 @@ export function PackPicker({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    onSelect(undefined);
+                    onOpenChange(false);
+                  }}
+                  className={cn(
+                    "glass relative flex flex-col items-start rounded-2xl p-3 text-left transition-all active:scale-95",
+                    selectedPackId === undefined && "ring-2 ring-primary",
+                  )}
+                >
+                  {selectedPackId === undefined && (
+                    <Check className="absolute top-2 right-2 size-4 text-primary" />
+                  )}
+                  <span className="text-2xl">🎲</span>
+                  <span className="mt-1 text-sm font-semibold">{t.randomCategoryOption}</span>
+                  <span className="text-xs text-muted-foreground">Skifter hver runde</span>
+                </button>
                 {packs.map((p) => (
                   <button
                     key={p._id}

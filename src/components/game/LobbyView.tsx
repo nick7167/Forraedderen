@@ -15,10 +15,11 @@ import { Screen } from "./Screen";
 import { TopBar } from "./TopBar";
 import { Avatar } from "./PlayerBadge";
 import { SettingsPanel } from "./SettingsPanel";
+import { HowToPlay } from "./HowToPlay";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
-import { Copy, Crown, LogOut, X, Loader2, Settings2, Bot } from "lucide-react";
+import { Copy, Crown, LogOut, X, Loader2, Settings2, Bot, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type RoomShape = NonNullable<FunctionReturnType<typeof api.games.getRoomState>>;
@@ -48,7 +49,8 @@ export function LobbyView({
     }
   }
 
-  const canStart = room.isHost && room.players.length >= 3 && !!room.settings.packId;
+  // Random category is valid, so no pack pick is required to start.
+  const canStart = room.isHost && room.players.length >= 3;
 
   async function copyCode() {
     await navigator.clipboard.writeText(room.code);
@@ -77,11 +79,7 @@ export function LobbyView({
   }
 
   const startLabel =
-    room.players.length < 3
-      ? "Mindst 3 spillere"
-      : !room.settings.packId
-        ? t.choosePack
-        : t.startGame;
+    room.players.length < 3 ? "Mindst 3 spillere" : t.startGame;
 
   return (
     <>
@@ -99,33 +97,47 @@ export function LobbyView({
           </Button>
         }
         right={
-          room.isHost ? (
-            <Drawer>
-              <DrawerTrigger asChild>
+          <div className="flex items-center gap-1">
+            <HowToPlay
+              trigger={
                 <Button
                   variant="ghost"
                   size="icon"
                   className="size-9 rounded-full text-muted-foreground"
-                  aria-label={t.settings}
+                  aria-label={t.howToTitle}
                 >
-                  <Settings2 className="size-5" />
+                  <HelpCircle className="size-5" />
                 </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>{t.settings}</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-8">
-                  <SettingsPanel
-                    settings={room.settings}
-                    playerCount={room.players.length}
-                    editable
-                    onChange={saveSettings}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          ) : null
+              }
+            />
+            {room.isHost && (
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-full text-muted-foreground"
+                    aria-label={t.settings}
+                  >
+                    <Settings2 className="size-5" />
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <DrawerHeader>
+                    <DrawerTitle>{t.settings}</DrawerTitle>
+                  </DrawerHeader>
+                  <div className="px-4 pb-8">
+                    <SettingsPanel
+                      settings={room.settings}
+                      playerCount={room.players.length}
+                      editable
+                      onChange={saveSettings}
+                    />
+                  </div>
+                </DrawerContent>
+              </Drawer>
+            )}
+          </div>
         }
       />
 

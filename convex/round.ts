@@ -222,6 +222,10 @@ export const getRoundState = query({
 
     const iAmImposter = me !== null && round.imposterPlayerIds.some((id) => id === me._id);
     const revealEverything = round.phase === "resolve";
+    // In undercover mode the imposter must NOT know they're the imposter during
+    // play — they're shown a normal word card (the decoy). The truth only comes
+    // out at the reveal.
+    const hideImposter = round.gameMode === "undercover" && !revealEverything;
 
     // Whose turn / who still needs to act this pass (turn order is sequential).
     const cluedThisPass = new Set(
@@ -258,21 +262,42 @@ export const getRoundState = query({
         }))
       : [];
 
-    // Co-imposter visibility (when enabled and you are an imposter).
+    // What we tell the client about *this* player's role.
+    const effectiveImposter = iAmImposter && !hideImposter;
+
+    // Co-imposter visibility (spy mode, when enabled). Never in undercover
+    // (the imposter doesn't even know they're an imposter).
     const teammateIds =
-      iAmImposter && round.impostersKnowEachOther
+      effectiveImposter && round.impostersKnowEachOther
         ? round.imposterPlayerIds.filter((id) => me && id !== me._id)
         : [];
+
+    // The word shown on this player's card.
+    let myWord: string | null;
+    if (revealEverything || !iAmImposter) {
+      myWord = round.secretWord; // crew (and everyone at reveal) see the real word
+    } else if (round.gameMode === "undercover") {
+      myWord = round.decoyWord ?? null; // hidden imposter sees the decoy
+    } else {
+      myWord = null; // spy imposter knows no word
+    }
+
+    // Category is always visible in undercover (the imposter holds a word too).
+    const categoryVisible =
+      round.gameMode === "undercover" ||
+      revealEverything ||
+      !iAmImposter ||
+      round.imposterSeesCategory;
 
     return {
       roundId: round._id,
       roundNumber: round.roundNumber,
       phase: round.phase,
+      gameMode: round.gameMode,
       currentPass: round.currentPass,
       cluePasses: round.cluePasses,
       currentBallot: round.currentBallot,
-      category:
-        !iAmImposter || round.imposterSeesCategory ? round.category : null,
+      category: categoryVisible ? round.category : null,
       turnOrder: round.turnOrder,
       currentTurnPlayerId,
       eliminatedPlayerIds: round.eliminatedPlayerIds,
@@ -285,9 +310,8 @@ export const getRoundState = query({
       me: me
         ? {
             playerId: me._id,
-            isImposter: iAmImposter,
-            // Crew see the word; imposter never does (until reveal).
-            secretWord: !iAmImposter || revealEverything ? round.secretWord : null,
+            isImposter: effectiveImposter,
+            secretWord: myWord,
             teammateIds,
           }
         : null,
@@ -296,6 +320,8 @@ export const getRoundState = query({
         ? {
             imposterPlayerIds: round.imposterPlayerIds,
             secretWord: round.secretWord,
+            decoyWord: round.decoyWord ?? null,
+            gameMode: round.gameMode,
             outcome: round.outcome ?? null,
             voteBreakdown,
           }
@@ -385,15 +411,17 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
     if (firstCrew > 0) [order[0], order[firstCrew]] = [order[firstCrew], order[0]];
   }
 
-  const { word, category } = await pickWord(ctx, room);
+  const { word, category, decoyWord } = await pickWords(ctx, room);
 
   const roundId = await ctx.db.insert("rounds", {
     roomId: room._id,
     roundNumber,
     secretWord: word,
+    decoyWord, // undercover only; all imposters share it
     category,
     imposterPlayerIds: imposterIds,
     turnOrder: order,
+    gameMode: s.gameMode,
     cluePasses: s.cluePasses,
     imposterSeesCategory: s.imposterSeesCategory,
     impostersKnowEachOther: s.impostersKnowEachOther,
@@ -413,24 +441,43 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
   return roundId;
 }
 
-async function pickWord(
+async function pickWords(
   ctx: QueryCtx,
   room: Doc<"rooms">,
-): Promise<{ word: string; category: string }> {
+): Promise<{ word: string; category: string; decoyWord?: string }> {
   let pack: Doc<"packs"> | null = null;
-  if (room.settings.packId) pack = await ctx.db.get(room.settings.packId);
-  if (pack === null) {
-    // Fallback: any built-in pack.
-    pack = await ctx.db
+  if (room.settings.packId) {
+    // Host pinned a specific category.
+    pack = await ctx.db.get(room.settings.packId);
+  } else {
+    // Random category: pick a random built-in pack each round.
+    const builtIns = await ctx.db
       .query("packs")
       .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
-      .first();
+      .collect();
+    if (builtIns.length > 0) {
+      pack = builtIns[Math.floor(Math.random() * builtIns.length)];
+    }
   }
   if (pack === null || pack.words.length === 0) {
     return { word: "Hemmelighed", category: "Standard" };
   }
-  const entry = pack.words[Math.floor(Math.random() * pack.words.length)];
-  return { word: entry.word, category: pack.name };
+
+  const words = pack.words;
+  const word = words[Math.floor(Math.random() * words.length)].word;
+
+  let decoyWord: string | undefined;
+  if (room.settings.gameMode === "undercover") {
+    // A different word from the same category "reminds" the imposter of the real one.
+    const others = words
+      .map((w) => w.word)
+      .filter((w) => w.toLowerCase() !== word.toLowerCase());
+    if (others.length > 0) {
+      decoyWord = others[Math.floor(Math.random() * others.length)];
+    }
+  }
+
+  return { word, category: pack.name, decoyWord };
 }
 
 /** Move room/round from reveal → clues (called by client once cards seen). */

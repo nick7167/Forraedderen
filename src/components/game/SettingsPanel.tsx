@@ -103,6 +103,31 @@ export function SettingsPanel({
 
   return (
     <div className="glass divide-y divide-border rounded-3xl px-4">
+      {/* Game mode */}
+      <div className="py-3">
+        <Label className="mb-2 block text-[15px] font-medium">{t.mode}</Label>
+        <div className="flex gap-1 rounded-2xl bg-black/20 p-1">
+          {(["spy", "undercover"] as const).map((m) => (
+            <button
+              key={m}
+              disabled={!editable}
+              onClick={() => set("gameMode", m)}
+              className={cn(
+                "flex-1 rounded-xl py-2 text-sm font-semibold transition-all",
+                settings.gameMode === m
+                  ? "bg-primary text-primary-foreground gloss"
+                  : "text-muted-foreground",
+              )}
+            >
+              {m === "spy" ? t.modeSpy : t.modeUndercover}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {settings.gameMode === "spy" ? t.modeSpyDesc : t.modeUndercoverDesc}
+        </p>
+      </div>
+
       <button
         onClick={editable ? () => setPackOpen(true) : undefined}
         disabled={!editable}
@@ -110,7 +135,7 @@ export function SettingsPanel({
       >
         <Label className="text-[15px] font-medium">{t.pack}</Label>
         <span className="flex items-center gap-1 font-semibold">
-          {currentPack ? `${currentPack.emoji} ${currentPack.name}` : t.choosePack}
+          {currentPack ? `${currentPack.emoji} ${currentPack.name}` : `🎲 ${t.randomCategory}`}
           {editable && <ChevronRight className="size-4 text-muted-foreground" />}
         </span>
       </button>
@@ -127,14 +152,20 @@ export function SettingsPanel({
         <Stepper value={settings.roundCount} min={1} max={20}
           disabled={!editable} onChange={(v) => set("roundCount", v)} />
       </Row>
-      <Row label={t.imposterSeesCategory}>
-        <Toggle value={settings.imposterSeesCategory}
-          disabled={!editable} onChange={(v) => set("imposterSeesCategory", v)} />
-      </Row>
-      <Row label={t.impostersKnowEachOther}>
-        <Toggle value={settings.impostersKnowEachOther}
-          disabled={!editable} onChange={(v) => set("impostersKnowEachOther", v)} />
-      </Row>
+      {/* These only make sense in spy mode (undercover imposters don't know
+          they're imposters). */}
+      {settings.gameMode === "spy" && (
+        <>
+          <Row label={t.imposterSeesCategory}>
+            <Toggle value={settings.imposterSeesCategory}
+              disabled={!editable} onChange={(v) => set("imposterSeesCategory", v)} />
+          </Row>
+          <Row label={t.impostersKnowEachOther}>
+            <Toggle value={settings.impostersKnowEachOther}
+              disabled={!editable} onChange={(v) => set("impostersKnowEachOther", v)} />
+          </Row>
+        </>
+      )}
       <Row label={t.timers}>
         <Toggle value={settings.timersEnabled}
           disabled={!editable} onChange={(v) => set("timersEnabled", v)} />

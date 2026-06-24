@@ -1,17 +1,27 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// Game mode:
+//  - "spy":        imposter knows they're the imposter and gets no word.
+//  - "undercover": imposter secretly gets a related decoy word and is NOT told
+//                  they're the imposter.
+export const gameModeValidator = v.union(
+  v.literal("spy"),
+  v.literal("undercover"),
+);
+
 // Per-room game settings (host-configurable in the lobby / between rounds).
 export const settingsValidator = v.object({
+  gameMode: gameModeValidator,
   imposterCount: v.number(), // 1+ (validated against player count at start)
   cluePasses: v.number(), // 1-3: how many clues each player gives
-  imposterSeesCategory: v.boolean(),
-  impostersKnowEachOther: v.boolean(),
+  imposterSeesCategory: v.boolean(), // "spy" mode only
+  impostersKnowEachOther: v.boolean(), // "spy" mode only
   timersEnabled: v.boolean(),
   clueSecs: v.number(), // per-turn clue timer when enabled
   voteSecs: v.number(), // voting timer when enabled
   roundCount: v.number(), // rounds in a match
-  packId: v.optional(v.id("packs")), // chosen curated/custom pack
+  packId: v.optional(v.id("packs")), // pinned category; undefined = random
 });
 
 // Phases the room moves through. `lobby` and `finished` bookend a match;
@@ -70,10 +80,13 @@ export default defineSchema({
     roomId: v.id("rooms"),
     roundNumber: v.number(),
     secretWord: v.string(),
+    // "undercover" only: the related word the imposter(s) secretly receive.
+    decoyWord: v.optional(v.string()),
     category: v.string(), // pack/category name shown to crew (and imposter if enabled)
     imposterPlayerIds: v.array(v.id("players")),
     turnOrder: v.array(v.id("players")), // clue order for this round
     // Snapshots of the settings at round start (so mid-match changes are clean):
+    gameMode: gameModeValidator,
     cluePasses: v.number(),
     imposterSeesCategory: v.boolean(),
     impostersKnowEachOther: v.boolean(),
