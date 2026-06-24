@@ -1,24 +1,20 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireCurrentUser } from "./users";
+import { resolvePlayer } from "./lib";
 
 /**
- * Presence heartbeat: the client calls this on an interval while viewing a
- * room. It refreshes `lastSeen` so `listPlayers` can derive online/offline.
- * This is intentionally simple; swap in the official Convex presence component
- * later if you need scale or typing/cursor presence.
+ * Presence heartbeat: the client calls this on an interval while in a room so
+ * `lastSeen` stays fresh and others see online/offline + reconnection works.
  */
 export const heartbeat = mutation({
-  args: { roomId: v.id("rooms") },
-  handler: async (ctx, { roomId }) => {
-    const user = await requireCurrentUser(ctx);
-    const membership = await ctx.db
-      .query("players")
-      .withIndex("by_room_and_user", (q) =>
-        q.eq("roomId", roomId).eq("userId", user._id),
-      )
-      .unique();
-    if (membership === null) return; // not a member; nothing to update
-    await ctx.db.patch(membership._id, { lastSeen: Date.now() });
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.optional(v.id("players")),
+    guestSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const me = await resolvePlayer(ctx, args);
+    if (me === null) return;
+    await ctx.db.patch(me._id, { lastSeen: Date.now() });
   },
 });

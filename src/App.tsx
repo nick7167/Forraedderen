@@ -1,56 +1,43 @@
 import { Routes, Route } from "react-router-dom";
-import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { useStoreUser } from "@/hooks/useStoreUser";
-import { SignInScreen } from "@/components/SignInScreen";
-import { Lobby } from "@/components/Lobby";
-import { Room } from "@/components/Room";
-import { AppHeader } from "@/components/AppHeader";
+import { HomeScreen } from "@/components/game/HomeScreen";
+import { GameRoom } from "@/components/game/GameRoom";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
 
-function FullScreenSpinner({ label }: { label: string }) {
-  return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground">
-      <Loader2 className="size-8 animate-spin" />
-      <p className="text-sm">{label}</p>
-    </div>
-  );
-}
-
-function AuthenticatedApp() {
-  // Mirror the Clerk identity into Convex before rendering game screens.
-  const { isStoring } = useStoreUser();
-  if (isStoring) return <FullScreenSpinner label="Setting up your profile…" />;
+export default function App() {
+  // Mirror Clerk identity into Convex when signed in (no-op for guests).
+  useStoreUser();
 
   return (
     <div className="mx-auto flex h-full w-full max-w-2xl flex-col">
-      <AppHeader />
-      <main className="flex-1 overflow-y-auto p-4">
-        <Routes>
-          <Route path="/" element={<Lobby />} />
-          <Route path="/room/:roomId" element={<Room />} />
-          <Route path="*" element={<Lobby />} />
-        </Routes>
-      </main>
-    </div>
-  );
-}
-
-export default function App() {
-  return (
-    <>
       <OfflineIndicator />
       <InstallPrompt />
-      <AuthLoading>
-        <FullScreenSpinner label="Loading…" />
-      </AuthLoading>
-      <Unauthenticated>
-        <SignInScreen />
-      </Unauthenticated>
-      <Authenticated>
-        <AuthenticatedApp />
-      </Authenticated>
-    </>
+
+      {/* Slim top bar: optional sign-in (unlocks saving custom packs). */}
+      <div className="flex items-center justify-end px-3 py-1.5">
+        <SignedOut>
+          <SignInButton mode="modal">
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <LogIn className="size-4" /> Log ind
+            </Button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
+      </div>
+
+      <div className="flex flex-1 flex-col overflow-y-auto">
+        <Routes>
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/room/:roomId" element={<GameRoom />} />
+          <Route path="*" element={<HomeScreen />} />
+        </Routes>
+      </div>
+    </div>
   );
 }

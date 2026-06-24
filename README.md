@@ -60,15 +60,16 @@ This opens a browser to log in / sign up, lets you create a project, and **write
 
 ### 5. Run the app
 
-In a **second terminal** (keep `pnpm dev:convex` running in the first):
-
 ```bash
 pnpm dev
 ```
 
-Open the printed URL, sign in, and you're in the lobby.
+This runs the **frontend and Convex backend together** (labeled `[web]` and
+`[convex]`); Ctrl+C stops both. Open the printed URL, sign in, and you're in
+the lobby.
 
-> Tip: `pnpm dev:all` runs Convex and Vite together in one terminal.
+> Need just one side? `pnpm dev:web` (frontend only) or `pnpm dev:convex`
+> (backend only).
 
 ---
 
@@ -106,9 +107,9 @@ pwa-assets.config.ts    # icon generation from public/logo.svg
 
 | Command | Description |
 | --- | --- |
-| `pnpm dev` | Run the Vite dev server |
-| `pnpm dev:convex` | Run the Convex backend (codegen + push + watch) |
-| `pnpm dev:all` | Run both together |
+| `pnpm dev` | Run the frontend **and** Convex backend together |
+| `pnpm dev:web` | Run only the Vite dev server |
+| `pnpm dev:convex` | Run only the Convex backend (codegen + push + watch) |
 | `pnpm build` | Typecheck + production build (generates the service worker) |
 | `pnpm preview` | Serve the production build locally (test the PWA here) |
 | `pnpm lint` | Typecheck only (`tsc --noEmit`) |

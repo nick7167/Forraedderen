@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon-180x180.png", "logo.svg"],
       manifest: {
-        name: "Game PWA",
-        short_name: "Game",
-        description: "A real-time multiplayer game.",
+        name: "Forræderen",
+        short_name: "Forræderen",
+        description: "Find forræderen — et socialt gættespil til festen.",
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",
