@@ -33,6 +33,7 @@ export type PublicPlayer = {
   joinedAt: number;
   isOnline: boolean;
   isHost: boolean;
+  isBot: boolean;
 };
 
 export const PRESENCE_TIMEOUT_MS = 12_000;
@@ -50,8 +51,10 @@ export function toPublicPlayer(
     score: player.score,
     activeFromRound: player.activeFromRound,
     joinedAt: player.joinedAt,
-    isOnline: now - player.lastSeen < PRESENCE_TIMEOUT_MS,
+    // Bots are always "present"; humans rely on the heartbeat.
+    isOnline: player.isBot === true || now - player.lastSeen < PRESENCE_TIMEOUT_MS,
     isHost: hostPlayerId !== undefined && player._id === hostPlayerId,
+    isBot: player.isBot === true,
   };
 }
 

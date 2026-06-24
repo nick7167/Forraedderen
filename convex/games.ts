@@ -147,6 +147,48 @@ export const kickPlayer = mutation({
   },
 });
 
+const BOT_NAMES = [
+  "Bot Bo", "Robo Rita", "Klog-Karl", "Snu-Sara", "Mister Mistro",
+  "Frede Falsk", "Agent Aksel", "Lure-Lis", "Bedrag-Bent", "Spion-Sofie",
+];
+
+/** Host adds a CPU player (bot) that auto-plays via the scheduler. */
+export const addBot = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.optional(v.id("players")),
+    guestSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const room = await requireHost(ctx, args);
+    const all = await ctx.db
+      .query("players")
+      .withIndex("by_room", (q) => q.eq("roomId", room._id))
+      .collect();
+    if (all.length >= 12) throw new Error("Rummet er fuldt (maks 12).");
+
+    // Pick a bot name not already in the room.
+    const used = new Set(all.map((p) => p.name));
+    const name =
+      BOT_NAMES.find((n) => !used.has(n)) ?? `Bot ${all.length + 1}`;
+    const now = Date.now();
+    const activeFrom =
+      room.currentRoundNumber === 0 ? 1 : room.currentRoundNumber + 1;
+
+    return await ctx.db.insert("players", {
+      roomId: room._id,
+      name,
+      avatarEmoji: "🤖",
+      avatarColor: AVATAR_COLORS[all.length % AVATAR_COLORS.length],
+      score: 0,
+      activeFromRound: activeFrom,
+      joinedAt: now,
+      lastSeen: now,
+      isBot: true,
+    });
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Read model
 // ---------------------------------------------------------------------------

@@ -18,7 +18,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
-import { Copy, Crown, LogOut, X, Loader2, Settings2 } from "lucide-react";
+import { Copy, Crown, LogOut, X, Loader2, Settings2, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type RoomShape = NonNullable<FunctionReturnType<typeof api.games.getRoomState>>;
@@ -36,7 +36,17 @@ export function LobbyView({
   const updateSettings = useMutation(api.games.updateSettings);
   const startMatch = useMutation(api.round.startMatch);
   const kickPlayer = useMutation(api.games.kickPlayer);
+  const addBot = useMutation(api.games.addBot);
   const [starting, setStarting] = useState(false);
+
+  async function handleAddBot() {
+    feedback.tap();
+    try {
+      await addBot(authArgs);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Fejl");
+    }
+  }
 
   const canStart = room.isHost && room.players.length >= 3 && !!room.settings.packId;
 
@@ -163,6 +173,11 @@ export function LobbyView({
                   <p className="flex items-center gap-1.5 truncate font-semibold">
                     {p.name}
                     {p.isHost && <Crown className="size-4 text-amber-400" />}
+                    {p.isBot && (
+                      <span className="rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                        {t.bot}
+                      </span>
+                    )}
                   </p>
                   {p._id === room.myPlayerId ? (
                     <p className="text-xs text-muted-foreground">{t.you}</p>
@@ -183,6 +198,15 @@ export function LobbyView({
               </div>
             ))}
           </div>
+
+          {room.isHost && room.players.length < 12 && (
+            <button
+              onClick={handleAddBot}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white/5 active:scale-[0.99]"
+            >
+              <Bot className="size-4" /> {t.addBot}
+            </button>
+          )}
         </div>
       </Screen>
     </>

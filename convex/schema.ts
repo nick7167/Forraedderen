@@ -51,6 +51,7 @@ export default defineSchema({
     // Random token a guest stores in localStorage to authorize their actions.
     // Never projected to clients (see toPublicPlayer in convex/lib.ts).
     guestSecret: v.optional(v.string()),
+    isBot: v.optional(v.boolean()), // CPU player; auto-plays via the scheduler
     name: v.string(),
     avatarEmoji: v.string(),
     avatarColor: v.string(),

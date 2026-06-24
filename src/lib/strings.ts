@@ -30,6 +30,8 @@ export const t = {
   settings: "Indstillinger",
   host: "Vært",
   you: "dig",
+  bot: "BOT",
+  addBot: "Tilføj bot",
   waitingNextRound: "Du er med fra næste runde",
 
   // Settings

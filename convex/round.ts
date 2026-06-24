@@ -1,5 +1,6 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import {
   shuffle,
   requirePlayer,
@@ -9,6 +10,9 @@ import {
 } from "./lib";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
+
+// How long the scheduler waits before a bot acts (feels alive, not instant).
+const BOT_ACT_MS = 1300;
 
 // ---------------------------------------------------------------------------
 // Starting a match / round
@@ -102,6 +106,7 @@ export const submitClue = mutation({
     });
 
     await maybeAdvanceCluePhase(ctx, room, round);
+    scheduleBotTick(ctx, room._id, round._id);
   },
 });
 
@@ -150,6 +155,7 @@ export const castVote = mutation({
     }
 
     await maybeResolveBallot(ctx, room, round);
+    scheduleBotTick(ctx, room._id, round._id);
   },
 });
 
@@ -171,6 +177,7 @@ export const skipPhase = mutation({
     } else if (round.phase === "vote") {
       await resolveBallot(ctx, room, round);
     }
+    scheduleBotTick(ctx, room._id, round._id);
   },
 });
 
@@ -441,6 +448,7 @@ export const beginClues = mutation({
         : undefined,
     });
     await ctx.db.patch(room._id, { phase: "clues" });
+    scheduleBotTick(ctx, room._id, round._id);
   },
 });
 
@@ -647,3 +655,114 @@ async function finishRound(
   });
   await ctx.db.patch(room._id, { phase: "scoreboard" });
 }
+
+// ---------------------------------------------------------------------------
+// Bots — CPU players that auto-play via the Convex scheduler
+// ---------------------------------------------------------------------------
+
+/** Schedule a bot tick if the round could currently need a bot to act. */
+function scheduleBotTick(
+  ctx: MutationCtx,
+  roomId: Id<"rooms">,
+  roundId: Id<"rounds">,
+) {
+  void ctx.scheduler.runAfter(BOT_ACT_MS, internal.round.botTick, {
+    roomId,
+    roundId,
+  });
+}
+
+const BOT_FILLER = ["hmm", "måske", "noget", "ja", "svært", "tja"];
+
+/** On-theme clue: a random word from the round's pack, never the secret word. */
+async function botClueText(
+  ctx: MutationCtx,
+  room: Doc<"rooms">,
+  round: Doc<"rounds">,
+): Promise<string> {
+  if (room.settings.packId) {
+    const pack = await ctx.db.get(room.settings.packId);
+    if (pack && pack.words.length > 0) {
+      const candidates = pack.words
+        .map((w) => w.word)
+        .filter((w) => w.toLowerCase() !== round.secretWord.toLowerCase());
+      const pick = (candidates.length > 0 ? candidates : pack.words.map((w) => w.word));
+      return pick[Math.floor(Math.random() * pick.length)];
+    }
+  }
+  return BOT_FILLER[Math.floor(Math.random() * BOT_FILLER.length)];
+}
+
+/**
+ * One bot "tick": make the current bot act (clue or vote), advance the engine,
+ * and re-schedule if another bot still needs to act. Drives a paced cadence.
+ * Internal — only callable by the scheduler, never by clients.
+ */
+export const botTick = internalMutation({
+  args: { roomId: v.id("rooms"), roundId: v.id("rounds") },
+  handler: async (ctx, { roomId, roundId }) => {
+    const room = await ctx.db.get(roomId);
+    const round = await ctx.db.get(roundId);
+    if (room === null || round === null || round.roomId !== roomId) return;
+
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_room", (q) => q.eq("roomId", roomId))
+      .collect();
+    const isBot = (id: Id<"players">) =>
+      players.find((p) => p._id === id)?.isBot === true;
+
+    if (round.phase === "clues") {
+      // Whose turn is it? (first in order without a clue this pass)
+      const cluesNow = await ctx.db
+        .query("clues")
+        .withIndex("by_round", (q) => q.eq("roundId", round._id))
+        .collect();
+      const cluedThisPass = new Set(
+        cluesNow.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
+      );
+      const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
+      if (current === undefined || !isBot(current)) return; // human's turn → wait
+
+      await ctx.db.insert("clues", {
+        roundId: round._id,
+        playerId: current,
+        passNumber: round.currentPass,
+        text: await botClueText(ctx, room, round),
+        createdAt: Date.now(),
+      });
+      await maybeAdvanceCluePhase(ctx, room, round);
+      scheduleBotTick(ctx, roomId, roundId); // next bot (clue or vote)
+      return;
+    }
+
+    if (round.phase === "vote") {
+      const eligible = voters(round);
+      const voted = new Set(
+        (
+          await ctx.db
+            .query("votes")
+            .withIndex("by_round_and_ballot", (q) =>
+              q.eq("roundId", round._id).eq("ballotNumber", round.currentBallot),
+            )
+            .collect()
+        ).map((vt) => vt.voterPlayerId),
+      );
+      const pendingBot = eligible.find((id) => isBot(id) && !voted.has(id));
+      if (pendingBot === undefined) return; // only humans left to vote
+
+      const targets = eligible.filter((id) => id !== pendingBot);
+      const target = targets[Math.floor(Math.random() * targets.length)];
+      await ctx.db.insert("votes", {
+        roundId: round._id,
+        ballotNumber: round.currentBallot,
+        voterPlayerId: pendingBot,
+        targetPlayerId: target,
+      });
+      await maybeResolveBallot(ctx, room, round);
+      scheduleBotTick(ctx, roomId, roundId); // next pending bot / next ballot
+      return;
+    }
+    // reveal / resolve / scoreboard → nothing; host advances.
+  },
+});
