@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
 import { PhaseTimer } from "./PhaseTimer";
 import { t } from "@/lib/strings";
+import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Check, SkipForward } from "lucide-react";
@@ -38,6 +39,7 @@ export function VotePhase({
   async function vote(targetPlayerId: Id<"players">) {
     try {
       await castVote({ ...authArgs, roundId: round.roundId, targetPlayerId });
+      feedback.confirm();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fejl");
     }

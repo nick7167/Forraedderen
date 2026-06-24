@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
 import { t } from "@/lib/strings";
+import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { Eye } from "lucide-react";
 
@@ -39,7 +40,10 @@ export function RoleReveal({
       </p>
 
       <button
-        onClick={() => setFlipped(true)}
+        onClick={() => {
+          setFlipped(true);
+          feedback.reveal();
+        }}
         disabled={flipped}
         className={cn(
           "relative flex aspect-[3/4] w-64 max-w-full items-center justify-center rounded-3xl shadow-xl transition-all duration-500",

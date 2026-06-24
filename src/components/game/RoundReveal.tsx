@@ -7,6 +7,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
 import { t } from "@/lib/strings";
+import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
@@ -24,11 +25,17 @@ export function RoundReveal({
   const nextRound = useMutation(api.round.nextRound);
   const reveal = round.reveal;
   const crewWon = reveal?.outcome === "crew";
+  // Did *this* player end up on the winning side?
+  const iWon =
+    reveal !== null &&
+    (round.me?.isImposter ? reveal.outcome === "imposters" : crewWon);
 
   useEffect(() => {
     if (crewWon) {
       void confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
     }
+    if (reveal) feedback[iWon ? "win" : "lose"]();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crewWon]);
 
   if (!reveal) return null;

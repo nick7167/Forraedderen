@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar } from "./PlayerBadge";
 import { PhaseTimer } from "./PhaseTimer";
 import { t } from "@/lib/strings";
+import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Send, SkipForward } from "lucide-react";
@@ -33,6 +34,13 @@ export function CluePhase({
   const isMyTurn = round.currentTurnPlayerId === myId;
   const playerById = (id: Id<"players">) => round.players.find((p) => p._id === id);
 
+  // Cue the player when it becomes their turn.
+  const wasMyTurn = useRef(false);
+  useEffect(() => {
+    if (isMyTurn && !wasMyTurn.current) feedback.yourTurn();
+    wasMyTurn.current = isMyTurn;
+  }, [isMyTurn]);
+
   const cluesThisPass = round.clues.filter((c) => c.passNumber === round.currentPass);
 
   async function send() {
@@ -42,6 +50,7 @@ export function CluePhase({
     try {
       await submitClue({ ...authArgs, roundId: round.roundId, text: value });
       setText("");
+      feedback.confirm();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fejl");
     } finally {
