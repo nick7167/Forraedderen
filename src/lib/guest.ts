@@ -45,3 +45,14 @@ export function recallRoomPlayer(roomId: string): string | null {
 export function forgetRoomPlayer(roomId: string) {
   localStorage.removeItem(`forraeder.room.${roomId}`);
 }
+
+// One-time "tap the settings gear" coach mark for first-time hosts.
+const COACH_KEY = "forraeder.seenSettingsCoach";
+
+export function hasSeenSettingsCoach(): boolean {
+  return localStorage.getItem(COACH_KEY) === "1";
+}
+
+export function markSettingsCoachSeen() {
+  localStorage.setItem(COACH_KEY, "1");
+}

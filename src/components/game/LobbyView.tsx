@@ -9,13 +9,14 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Screen } from "./Screen";
 import { TopBar } from "./TopBar";
 import { Avatar } from "./PlayerBadge";
 import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
+import { SettingsCoach } from "./SettingsCoach";
+import { hasSeenSettingsCoach, markSettingsCoachSeen } from "@/lib/guest";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
@@ -39,6 +40,17 @@ export function LobbyView({
   const kickPlayer = useMutation(api.games.kickPlayer);
   const addBot = useMutation(api.games.addBot);
   const [starting, setStarting] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // First-time host nudge toward the settings gear.
+  const [coach, setCoach] = useState(
+    () => room.isHost && room.phase === "lobby" && !hasSeenSettingsCoach(),
+  );
+  function dismissCoach() {
+    if (!coach) return;
+    markSettingsCoachSeen();
+    setCoach(false);
+  }
 
   async function handleAddBot() {
     feedback.tap();
@@ -83,6 +95,15 @@ export function LobbyView({
 
   return (
     <>
+      {coach && (
+        <SettingsCoach
+          onDismiss={dismissCoach}
+          onOpenSettings={() => {
+            dismissCoach();
+            setSettingsOpen(true);
+          }}
+        />
+      )}
       <TopBar
         title={t.lobby}
         left={
@@ -111,35 +132,39 @@ export function LobbyView({
               }
             />
             {room.isHost && (
-              <Drawer>
-                <DrawerTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 rounded-full text-muted-foreground"
-                    aria-label={t.settings}
-                  >
-                    <Settings2 className="size-5" />
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader>
-                    <DrawerTitle>{t.settings}</DrawerTitle>
-                  </DrawerHeader>
-                  <div className="px-4 pb-8">
-                    <SettingsPanel
-                      settings={room.settings}
-                      playerCount={room.players.length}
-                      editable
-                      onChange={saveSettings}
-                    />
-                  </div>
-                </DrawerContent>
-              </Drawer>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 rounded-full text-muted-foreground"
+                aria-label={t.settings}
+                onClick={() => {
+                  dismissCoach();
+                  setSettingsOpen(true);
+                }}
+              >
+                <Settings2 className="size-5" />
+              </Button>
             )}
           </div>
         }
       />
+
+      {/* Host settings, controlled so the coach can open it too. */}
+      <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{t.settings}</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-8">
+            <SettingsPanel
+              settings={room.settings}
+              playerCount={room.players.length}
+              editable
+              onChange={saveSettings}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Screen
         footer={

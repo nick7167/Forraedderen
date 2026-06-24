@@ -1,8 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useGameRoom } from "@/hooks/useGameRoom";
 import { forgetRoomPlayer } from "@/lib/guest";
+import { feedback } from "@/lib/feedback";
 import { t } from "@/lib/strings";
 import { LobbyView } from "./LobbyView";
 import { RoleReveal } from "./RoleReveal";
@@ -11,12 +13,41 @@ import { DiscussionPhase } from "./DiscussionPhase";
 import { VotePhase } from "./VotePhase";
 import { RoundReveal } from "./RoundReveal";
 import { MatchResults } from "./MatchResults";
+import { PhaseBanner } from "./PhaseBanner";
+
+// Phases that get an announcing banner when entered.
+const PHASE_BANNERS: Record<string, { emoji: string; label: string }> = {
+  clues: { emoji: "💬", label: t.bannerClues },
+  discussion: { emoji: "🗣️", label: t.bannerDiscuss },
+  vote: { emoji: "🗳️", label: t.bannerVote },
+};
 
 export function GameRoom() {
   const { roomId: roomIdParam } = useParams();
   const roomId = roomIdParam as Id<"rooms"> | undefined;
   const navigate = useNavigate();
   const { room, round, authArgs } = useGameRoom(roomId);
+
+  // Announce phase changes with a brief banner.
+  const phase = round?.phase ?? null;
+  const prevPhase = useRef<string | null>(null);
+  const [banner, setBanner] =
+    useState<{ emoji: string; label: string } | null>(null);
+  useEffect(() => {
+    if (phase && prevPhase.current && prevPhase.current !== phase) {
+      const b = PHASE_BANNERS[phase];
+      if (b) {
+        setBanner(b);
+        feedback.tap();
+      }
+    }
+    prevPhase.current = phase;
+  }, [phase]);
+  useEffect(() => {
+    if (!banner) return;
+    const id = setTimeout(() => setBanner(null), 1300);
+    return () => clearTimeout(id);
+  }, [banner]);
 
   function leave() {
     if (roomId) forgetRoomPlayer(roomId);
@@ -83,6 +114,13 @@ export function GameRoom() {
 
   return (
     <div className="flex flex-1 flex-col">
+      {banner && (
+        <PhaseBanner
+          emoji={banner.emoji}
+          label={banner.label}
+          onDone={() => setBanner(null)}
+        />
+      )}
       {header}
       {round.phase === "reveal" && (
         <RoleReveal

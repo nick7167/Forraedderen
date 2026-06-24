@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
@@ -9,7 +10,6 @@ import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
 import { Loader2, MessagesSquare } from "lucide-react";
-import { useState } from "react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -25,8 +25,19 @@ export function DiscussionPhase({
 }) {
   const advance = useMutation(api.round.advanceDiscussion);
   const [busy, setBusy] = useState(false);
-  const playerById = (id: Id<"players">) => round.players.find((p) => p._id === id);
   const moreClues = round.currentPass < round.cluePasses;
+
+  // One row per player (in turn order), with all the clues they've given.
+  const cluesByPlayer = round.turnOrder
+    .map((id) => {
+      const player = round.players.find((p) => p._id === id);
+      if (!player) return null;
+      const clues = round.clues
+        .filter((c) => c.playerId === id)
+        .sort((a, b) => a.passNumber - b.passNumber);
+      return { player, clues };
+    })
+    .filter((x): x is { player: Round["players"][number]; clues: Round["clues"] } => x !== null && x.clues.length > 0);
 
   async function handleAdvance() {
     setBusy(true);
@@ -44,7 +55,12 @@ export function DiscussionPhase({
     <Screen
       footer={
         isHost ? (
-          <Button size="hero" onClick={handleAdvance} disabled={busy}>
+          <Button
+            size="hero"
+            onClick={handleAdvance}
+            disabled={busy}
+            className="animate-pulse"
+          >
             {busy ? (
               <Loader2 className="animate-spin" />
             ) : moreClues ? (
@@ -60,32 +76,38 @@ export function DiscussionPhase({
         )
       }
     >
-      <div className="flex items-center gap-2">
-        <MessagesSquare className="size-5 text-primary" />
-        <h2 className="text-lg font-bold">{t.discussTitle}</h2>
+      {/* Dramatic hero banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-fuchsia-600 p-6 text-center text-white gloss duration-500 animate-in fade-in zoom-in">
+        <MessagesSquare className="mx-auto size-9 opacity-90" />
+        <h1 className="mt-2 text-4xl font-black tracking-tight">
+          {t.discussTitle.toUpperCase()}
+        </h1>
+        <p className="mt-1 text-sm font-medium opacity-90">{t.discussPrompt}</p>
         {round.category && (
-          <span className="ml-auto rounded-full bg-white/5 px-2.5 py-1 text-xs text-muted-foreground">
+          <span className="mt-3 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
             {round.category}
           </span>
         )}
       </div>
-      <p className="-mt-2 text-sm text-muted-foreground">{t.discussHint}</p>
 
-      {/* Clue recap — every clue so far, attributed. */}
+      {/* Evidence list — one row per player with their clue(s). */}
       <div className="flex flex-col gap-2">
-        {round.clues.map((c) => {
-          const p = playerById(c.playerId);
-          if (!p) return null;
-          return (
-            <div key={c._id} className="glass flex items-center gap-3 rounded-2xl p-2.5">
-              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={36} />
-              <span className="text-sm font-semibold">{p.name}</span>
-              <span className="ml-auto rounded-lg bg-secondary px-3 py-1 text-sm font-medium">
-                {c.text}
-              </span>
+        {cluesByPlayer.map(({ player, clues }) => (
+          <div key={player._id} className="glass flex items-center gap-3 rounded-2xl p-3">
+            <Avatar emoji={player.avatarEmoji} color={player.avatarColor} size={40} />
+            <span className="font-semibold">{player.name}</span>
+            <div className="ml-auto flex flex-wrap justify-end gap-1.5">
+              {clues.map((c) => (
+                <span
+                  key={c._id}
+                  className="rounded-lg bg-secondary px-3 py-1 text-sm font-medium"
+                >
+                  {c.text}
+                </span>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </Screen>
   );

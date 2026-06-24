@@ -80,9 +80,19 @@ export const t = {
 
   // Discussion
   discussTitle: "Diskutér",
+  discussPrompt: "Hvem virker falsk?",
   discussHint: "Snak om, hvem der virker mistænkelig.",
   nextClue: "Næste spor",
   goToVoting: "Gå til afstemning",
+
+  // Settings coach (first-time host nudge)
+  coachSettings: "Tilpas spillet",
+  coachSettingsSub: "Skift spiltype, kategori og mere",
+
+  // Phase-transition banners
+  bannerClues: "Spor",
+  bannerDiscuss: "Diskutér",
+  bannerVote: "Afstemning",
 
   // Vote
   votePhase: "Stem",
