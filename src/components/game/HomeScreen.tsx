@@ -20,6 +20,7 @@ import {
   loadProfile,
   saveProfile,
   rememberRoomPlayer,
+  findRememberedRoom,
 } from "@/lib/guest";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
@@ -37,6 +38,7 @@ export function HomeScreen() {
   const [mode, setMode] = useState<"create" | "join">("create");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const rememberedRoom = findRememberedRoom();
 
   const createRoom = useMutation(api.games.createRoom);
   const joinRoom = useMutation(api.games.joinRoom);
@@ -100,6 +102,15 @@ export function HomeScreen() {
         </Button>
       }
     >
+      {rememberedRoom && (
+        <button
+          onClick={() => navigate(`/room/${rememberedRoom}`)}
+          className="mx-auto -mt-2 mb-1 rounded-full bg-white/5 px-4 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white/10"
+        >
+          ↩ {t.continueGame}
+        </button>
+      )}
+
       {/* Hero */}
       <div className="text-center">
         <div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-violet-500 to-fuchsia-600 text-6xl shadow-xl gloss">

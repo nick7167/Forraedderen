@@ -37,10 +37,12 @@ export async function ensureBuiltInPacks(ctx: MutationCtx): Promise<number> {
 export const listPacks = query({
   args: {},
   handler: async (ctx) => {
-    const builtIn = await ctx.db
-      .query("packs")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
-      .collect();
+    const builtIn = (
+      await ctx.db
+        .query("packs")
+        .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
+        .collect()
+    ).filter((p) => p.isBuiltIn); // exclude guests' one-off packs (also ownerless)
 
     const user = await getCurrentUser(ctx);
     const mine = user

@@ -45,3 +45,14 @@ export function recallRoomPlayer(roomId: string): string | null {
 export function forgetRoomPlayer(roomId: string) {
   localStorage.removeItem(`forraeder.room.${roomId}`);
 }
+
+/** The most-recently-remembered room id (for a "rejoin" affordance), if any. */
+export function findRememberedRoom(): string | null {
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith("forraeder.room.")) {
+      return key.slice("forraeder.room.".length);
+    }
+  }
+  return null;
+}

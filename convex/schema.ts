@@ -17,9 +17,10 @@ export const settingsValidator = v.object({
   cluePasses: v.number(), // 1-3: how many clues each player gives
   imposterSeesCategory: v.boolean(), // "spy" mode only
   impostersKnowEachOther: v.boolean(), // "spy" mode only
-  timersEnabled: v.boolean(),
-  clueSecs: v.number(), // per-turn clue timer when enabled
-  voteSecs: v.number(), // voting timer when enabled
+  // Deprecated timer fields — optional for back-compat with existing rooms.
+  timersEnabled: v.optional(v.boolean()),
+  clueSecs: v.optional(v.number()),
+  voteSecs: v.optional(v.number()),
   roundCount: v.number(), // rounds in a match
   packId: v.optional(v.id("packs")), // pinned category; undefined = random
 });

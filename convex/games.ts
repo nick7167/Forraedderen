@@ -19,9 +19,6 @@ const DEFAULT_SETTINGS = {
   cluePasses: 1,
   imposterSeesCategory: true,
   impostersKnowEachOther: true,
-  timersEnabled: false,
-  clueSecs: 30,
-  voteSecs: 45,
   roundCount: 5,
   packId: undefined as Id<"packs"> | undefined,
 };
@@ -148,6 +145,33 @@ export const kickPlayer = mutation({
       await ctx.db.delete(target._id);
       await reassignHostIfNeeded(ctx, args.roomId, target._id);
     }
+  },
+});
+
+// A member may take over host only once the current host has been gone this long.
+const HOST_STALE_MS = 15_000;
+
+/** Any member can take over as host if the current host has disconnected. */
+export const claimHost = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.optional(v.id("players")),
+    guestSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const me = await requirePlayer(ctx, args);
+    const room = await ctx.db.get(args.roomId);
+    if (room === null) throw new Error("Rummet findes ikke.");
+    if (room.hostPlayerId === me._id) return; // already host
+
+    const host = room.hostPlayerId ? await ctx.db.get(room.hostPlayerId) : null;
+    const hostActive =
+      host !== null &&
+      host.isBot !== true &&
+      Date.now() - host.lastSeen < HOST_STALE_MS;
+    if (hostActive) throw new Error("Værten er stadig aktiv.");
+
+    await ctx.db.patch(room._id, { hostPlayerId: me._id });
   },
 });
 

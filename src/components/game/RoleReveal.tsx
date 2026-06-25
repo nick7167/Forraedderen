@@ -8,6 +8,7 @@ import { Avatar } from "./PlayerBadge";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Eye } from "lucide-react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
@@ -112,7 +113,13 @@ export function RoleReveal({
             <Button
               size="lg"
               className="w-full font-bold"
-              onClick={() => beginClues({ ...authArgs, roundId: round.roundId })}
+              onClick={async () => {
+                try {
+                  await beginClues({ ...authArgs, roundId: round.roundId });
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Fejl");
+                }
+              }}
             >
               {t.startClues}
             </Button>

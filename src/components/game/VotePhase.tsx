@@ -4,7 +4,6 @@ import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
-import { PhaseTimer } from "./PhaseTimer";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -49,7 +48,6 @@ export function VotePhase({
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">{t.voteInstruction}</h2>
-        {round.phaseDeadline && <PhaseTimer deadline={round.phaseDeadline} />}
       </div>
 
       {round.currentBallot > 1 && (
@@ -131,7 +129,7 @@ export function VotePhase({
             className="w-full text-muted-foreground"
             onClick={() => skipPhase({ ...authArgs, roundId: round.roundId })}
           >
-            <SkipForward className="size-4" /> {t.skip}
+            <SkipForward className="size-4" /> {t.endVote}
           </Button>
         )}
       </div>

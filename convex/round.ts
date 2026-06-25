@@ -26,7 +26,7 @@ export const startMatch = mutation({
     const room = await requireHost(ctx, args);
     if (room.phase !== "lobby") throw new Error("Spillet er allerede i gang.");
     const players = await activePlayers(ctx, room._id, 1);
-    validateForStart(players.length, room.settings.imposterCount);
+    validateForStart(players.length);
     await dealRound(ctx, room, 1);
   },
 });
@@ -45,7 +45,7 @@ export const nextRound = mutation({
     }
     const nextNumber = room.currentRoundNumber + 1;
     const players = await activePlayers(ctx, room._id, nextNumber);
-    validateForStart(players.length, room.settings.imposterCount);
+    validateForStart(players.length);
     await dealRound(ctx, room, nextNumber);
   },
 });
@@ -113,17 +113,17 @@ export const submitClue = mutation({
     const text = args.text.trim().slice(0, 60);
     if (text.length === 0) throw new Error("Skriv et spor.");
 
-    // One clue per player per pass.
+    // Enforce sequential turn order server-side (not just in the UI).
     const existing = await ctx.db
       .query("clues")
       .withIndex("by_round", (q) => q.eq("roundId", round._id))
       .collect();
-    if (
-      existing.some(
-        (c) => c.playerId === me._id && c.passNumber === round.currentPass,
-      )
-    ) {
-      throw new Error("Du har allerede givet et spor i denne omgang.");
+    const cluedThisPass = new Set(
+      existing.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
+    );
+    const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
+    if (current !== me._id) {
+      throw new Error("Det er ikke din tur endnu.");
     }
 
     await ctx.db.insert("clues", {
@@ -189,10 +189,14 @@ export const castVote = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// Host skip (advance past a staller) + timer auto-advance
+// Host skip
 // ---------------------------------------------------------------------------
 
-/** Host forces the current phase forward, auto-filling missing inputs. */
+/**
+ * Host skip. In the clue phase this skips ONLY the current player's turn
+ * (places a "—" placeholder and advances to the next player); in the vote
+ * phase it force-resolves the ballot ("Afslut afstemning").
+ */
 export const skipPhase = mutation({
   args: { ...hostArgs(), roundId: v.id("rounds") },
   handler: async (ctx, args) => {
@@ -200,9 +204,25 @@ export const skipPhase = mutation({
     const round = await ctx.db.get(args.roundId);
     if (round === null || round.roomId !== room._id) throw new Error("Ugyldig runde.");
     if (round.phase === "clues") {
-      await fillMissingClues(ctx, round);
-      const fresh = await ctx.db.get(round._id);
-      if (fresh) await maybeAdvanceCluePhase(ctx, room, fresh, true);
+      // Skip only the current-turn player (first without a clue this pass).
+      const clues = await ctx.db
+        .query("clues")
+        .withIndex("by_round", (q) => q.eq("roundId", round._id))
+        .collect();
+      const cluedThisPass = new Set(
+        clues.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
+      );
+      const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
+      if (current) {
+        await ctx.db.insert("clues", {
+          roundId: round._id,
+          playerId: current,
+          passNumber: round.currentPass,
+          text: "—",
+          createdAt: Date.now(),
+        });
+        await maybeAdvanceCluePhase(ctx, room, round); // advances only if that was the last
+      }
     } else if (round.phase === "vote") {
       await resolveBallot(ctx, room, round);
     }
@@ -249,7 +269,12 @@ export const getRoundState = query({
         text: c.text,
       }));
 
-    const iAmImposter = me !== null && round.imposterPlayerIds.some((id) => id === me._id);
+    // A "participant" is in this round's turn order. Players who joined
+    // mid-match (or otherwise aren't dealt in) are spectators this round and
+    // must NOT receive the secret word/role — they wait for the next round.
+    const isParticipant = me !== null && round.turnOrder.some((id) => id === me._id);
+    const iAmImposter =
+      isParticipant && round.imposterPlayerIds.some((id) => id === me!._id);
     const revealEverything = round.phase === "resolve";
     // In undercover mode the imposter must NOT know they're the imposter during
     // play — they're shown a normal word card (the decoy). The truth only comes
@@ -303,7 +328,9 @@ export const getRoundState = query({
 
     // The word shown on this player's card.
     let myWord: string | null;
-    if (revealEverything || !iAmImposter) {
+    if (!isParticipant && !revealEverything) {
+      myWord = null; // spectator / not dealt into this round
+    } else if (revealEverything || !iAmImposter) {
       myWord = round.secretWord; // crew (and everyone at reveal) see the real word
     } else if (round.gameMode === "undercover") {
       myWord = round.decoyWord ?? null; // hidden imposter sees the decoy
@@ -313,10 +340,11 @@ export const getRoundState = query({
 
     // Category is always visible in undercover (the imposter holds a word too).
     const categoryVisible =
-      round.gameMode === "undercover" ||
       revealEverything ||
-      !iAmImposter ||
-      round.imposterSeesCategory;
+      (isParticipant &&
+        (round.gameMode === "undercover" ||
+          !iAmImposter ||
+          round.imposterSeesCategory));
 
     return {
       roundId: round._id,
@@ -339,6 +367,7 @@ export const getRoundState = query({
       me: me
         ? {
             playerId: me._id,
+            isParticipant,
             isImposter: effectiveImposter,
             secretWord: myWord,
             teammateIds,
@@ -378,16 +407,13 @@ function playerArgs() {
   };
 }
 
-function validateForStart(playerCount: number, imposterCount: number) {
+function validateForStart(playerCount: number) {
   if (playerCount < 3) throw new Error("Mindst 3 spillere skal være med.");
-  if (imposterCount < 1) throw new Error("Mindst 1 forræder.");
-  if (imposterCount >= playerCount) {
-    throw new Error("For mange forrædere i forhold til spillere.");
-  }
-  // Keep at least 2 crew so the game is playable.
-  if (playerCount - imposterCount < 2) {
-    throw new Error("Der skal være mindst 2 i besætningen.");
-  }
+}
+
+/** Clamp the configured imposter count to what the player count allows. */
+function effectiveImposterCount(playerCount: number, configured: number) {
+  return Math.max(1, Math.min(configured, playerCount - 2));
 }
 
 async function requireHost(
@@ -432,9 +458,10 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
       .first();
     if (prev) prevImposters = prev.imposterPlayerIds;
   }
+  const imposterCount = effectiveImposterCount(players.length, s.imposterCount);
   let pool = players.filter((p) => !prevImposters.some((id) => id === p._id));
-  if (pool.length < s.imposterCount) pool = players; // small group fallback
-  const imposterIds = shuffle(pool).slice(0, s.imposterCount).map((p) => p._id);
+  if (pool.length < imposterCount) pool = players; // small group fallback
+  const imposterIds = shuffle(pool).slice(0, imposterCount).map((p) => p._id);
 
   // Turn order: fully randomized, but an imposter is never forced to go first.
   let order = shuffle(players.map((p) => p._id));
@@ -519,38 +546,12 @@ export const beginClues = mutation({
     const round = await ctx.db.get(args.roundId);
     if (round === null || round.roomId !== room._id) throw new Error("Ugyldig runde.");
     if (round.phase !== "reveal") return;
-    await ctx.db.patch(round._id, {
-      phase: "clues",
-      phaseDeadline: room.settings.timersEnabled
-        ? Date.now() + room.settings.clueSecs * 1000
-        : undefined,
-    });
+    await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
     await ctx.db.patch(room._id, { phase: "clues" });
     scheduleBotTick(ctx, room._id, round._id);
   },
 });
 
-async function fillMissingClues(ctx: MutationCtx, round: Doc<"rounds">) {
-  const existing = await ctx.db
-    .query("clues")
-    .withIndex("by_round", (q) => q.eq("roundId", round._id))
-    .collect();
-  const done = new Set(
-    existing.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
-  );
-  const now = Date.now();
-  for (const id of round.turnOrder) {
-    if (!done.has(id)) {
-      await ctx.db.insert("clues", {
-        roundId: round._id,
-        playerId: id,
-        passNumber: round.currentPass,
-        text: "—",
-        createdAt: now,
-      });
-    }
-  }
-}
 
 /** If everyone has clued this pass, advance to next pass or to voting. */
 async function maybeAdvanceCluePhase(
@@ -585,18 +586,11 @@ async function advanceFromDiscussion(
     await ctx.db.patch(round._id, {
       phase: "clues",
       currentPass: round.currentPass + 1,
-      phaseDeadline: room.settings.timersEnabled
-        ? Date.now() + room.settings.clueSecs * 1000
-        : undefined,
+      phaseDeadline: undefined,
     });
     await ctx.db.patch(room._id, { phase: "clues" });
   } else {
-    await ctx.db.patch(round._id, {
-      phase: "vote",
-      phaseDeadline: room.settings.timersEnabled
-        ? Date.now() + room.settings.voteSecs * 1000
-        : undefined,
-    });
+    await ctx.db.patch(round._id, { phase: "vote", phaseDeadline: undefined });
     await ctx.db.patch(room._id, { phase: "vote" });
   }
   scheduleBotTick(ctx, room._id, round._id);
@@ -708,9 +702,7 @@ async function resolveBallot(
   await ctx.db.patch(round._id, {
     eliminatedPlayerIds: newlyEliminated,
     currentBallot: round.currentBallot + 1,
-    phaseDeadline: room.settings.timersEnabled
-      ? Date.now() + room.settings.voteSecs * 1000
-      : undefined,
+    phaseDeadline: undefined,
   });
 }
 
@@ -779,21 +771,28 @@ function scheduleBotTick(
 
 const BOT_FILLER = ["hmm", "måske", "noget", "ja", "svært", "tja"];
 
-/** On-theme clue: a random word from the round's pack, never the secret word. */
+/** On-theme clue: a random word from the round's category, never the secret word. */
 async function botClueText(
   ctx: MutationCtx,
   room: Doc<"rooms">,
   round: Doc<"rounds">,
 ): Promise<string> {
-  if (room.settings.packId) {
+  // Words for the round's category — works for random games (matched against the
+  // DANISH_PACKS constant by name) and pinned built-in/custom packs (the table).
+  let words: string[] | null = null;
+  const builtIn = DANISH_PACKS.find((p) => p.name === round.category);
+  if (builtIn) {
+    words = builtIn.words;
+  } else if (room.settings.packId) {
     const pack = await ctx.db.get(room.settings.packId);
-    if (pack && pack.words.length > 0) {
-      const candidates = pack.words
-        .map((w) => w.word)
-        .filter((w) => w.toLowerCase() !== round.secretWord.toLowerCase());
-      const pick = (candidates.length > 0 ? candidates : pack.words.map((w) => w.word));
-      return pick[Math.floor(Math.random() * pick.length)];
-    }
+    if (pack && pack.words.length > 0) words = pack.words.map((w) => w.word);
+  }
+  if (words && words.length > 0) {
+    const candidates = words.filter(
+      (w) => w.toLowerCase() !== round.secretWord.toLowerCase(),
+    );
+    const pick = candidates.length > 0 ? candidates : words;
+    return pick[Math.floor(Math.random() * pick.length)];
   }
   return BOT_FILLER[Math.floor(Math.random() * BOT_FILLER.length)];
 }

@@ -9,6 +9,7 @@ import { Avatar } from "./PlayerBadge";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -124,7 +125,13 @@ export function RoundReveal({
         <Button
           size="lg"
           className="mt-auto w-full font-bold"
-          onClick={() => nextRound(authArgs)}
+          onClick={async () => {
+            try {
+              await nextRound(authArgs);
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Fejl");
+            }
+          }}
         >
           {t.nextRound}
         </Button>

@@ -124,7 +124,19 @@ export const t = {
 
   // Host controls
   skip: "Spring over",
+  skipTurn: "Spring {name} over",
+  endVote: "Afslut afstemning",
   skipPlayer: "Spring stallende spiller over",
+  hostGone: "Værten er væk",
+  claimHost: "Overtag som vært",
+
+  // Spectator / removed / rejoin
+  waitingTitle: "Du er med fra næste runde",
+  waitingBody: "Spillet er i gang. Du deltager, så snart næste runde starter.",
+  removedTitle: "Du er ikke længere i spillet",
+  removedBody: "Du er blevet fjernet fra rummet.",
+  goHome: "Til forsiden",
+  continueGame: "Fortsæt spil",
 
   // Clue hint (broad-clue guidance)
   clueHintCrew: "Giv et bredt spor — tydeligt nok for andre med ordet, men ikke så tydeligt at forræderen kan gætte det.",

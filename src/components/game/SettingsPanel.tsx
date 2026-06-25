@@ -166,10 +166,6 @@ export function SettingsPanel({
           </Row>
         </>
       )}
-      <Row label={t.timers}>
-        <Toggle value={settings.timersEnabled}
-          disabled={!editable} onChange={(v) => set("timersEnabled", v)} />
-      </Row>
 
       <PackPicker
         open={packOpen}

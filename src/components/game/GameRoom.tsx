@@ -5,10 +5,12 @@ import { Loader2, Volume2, VolumeX } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useGameRoom } from "@/hooks/useGameRoom";
-import { forgetRoomPlayer } from "@/lib/guest";
+import { forgetRoomPlayer, recallRoomPlayer } from "@/lib/guest";
 import { feedback, isMuted, setMuted } from "@/lib/feedback";
 import { t } from "@/lib/strings";
 import { LeaveButton } from "./LeaveButton";
+import { InfoScreen } from "./InfoScreen";
+import { HostGoneBanner } from "./HostGoneBanner";
 import { LobbyView } from "./LobbyView";
 import { RoleReveal } from "./RoleReveal";
 import { CluePhase } from "./CluePhase";
@@ -86,6 +88,19 @@ export function GameRoom() {
 
   if (!authArgs) return null;
 
+  // We had a seat here but the server no longer knows us → we were kicked/removed.
+  if (roomId && room.myPlayerId === null && recallRoomPlayer(roomId)) {
+    return (
+      <InfoScreen
+        emoji="👋"
+        title={t.removedTitle}
+        body={t.removedBody}
+        actionLabel={t.goHome}
+        onAction={leave}
+      />
+    );
+  }
+
   // Match finished.
   if (room.phase === "finished") {
     return (
@@ -138,6 +153,23 @@ export function GameRoom() {
     </div>
   );
 
+  // Joined mid-match (not dealt into this round) → wait for the next one.
+  if (round.me && !round.me.isParticipant && round.phase !== "resolve") {
+    return (
+      <div className="flex flex-1 flex-col">
+        {header}
+        <HostGoneBanner room={room} authArgs={authArgs} />
+        <InfoScreen
+          emoji="⏳"
+          title={t.waitingTitle}
+          body={t.waitingBody}
+          actionLabel={t.leave}
+          onAction={leave}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       {banner && (
@@ -148,6 +180,7 @@ export function GameRoom() {
         />
       )}
       {header}
+      <HostGoneBanner room={room} authArgs={authArgs} />
       {round.phase === "reveal" && (
         <RoleReveal
           round={round}

@@ -6,7 +6,6 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "./PlayerBadge";
-import { PhaseTimer } from "./PhaseTimer";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -75,7 +74,6 @@ export function CluePhase({
             · {t.pass} {round.currentPass}/{round.cluePasses}
           </span>
         </h2>
-        {round.phaseDeadline && <PhaseTimer deadline={round.phaseDeadline} />}
       </div>
 
       {/* Turn order with clue status */}
@@ -140,14 +138,18 @@ export function CluePhase({
             <b>{playerById(round.currentTurnPlayerId as Id<"players">)?.name ?? "…"}</b>
           </p>
         )}
-        {isHost && (
+        {isHost && round.currentTurnPlayerId && (
           <Button
             variant="ghost"
             size="sm"
             className="w-full text-muted-foreground"
             onClick={() => skipPhase({ ...authArgs, roundId: round.roundId })}
           >
-            <SkipForward className="size-4" /> {t.skip}
+            <SkipForward className="size-4" />{" "}
+            {t.skipTurn.replace(
+              "{name}",
+              playerById(round.currentTurnPlayerId)?.name ?? "spilleren",
+            )}
           </Button>
         )}
       </div>

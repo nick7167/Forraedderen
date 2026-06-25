@@ -17,6 +17,7 @@ import { Avatar } from "./PlayerBadge";
 import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
 import { SettingsCoach } from "./SettingsCoach";
+import { HostGoneBanner } from "./HostGoneBanner";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
@@ -178,6 +179,8 @@ export function LobbyView({
           )
         }
       >
+        <HostGoneBanner room={room} authArgs={authArgs} />
+
         {/* Room code hero */}
         <button
           onClick={copyCode}
