@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
 import { Screen } from "./Screen";
+import { PhaseHero } from "./PhaseHero";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
@@ -77,18 +78,13 @@ export function DiscussionPhase({
       }
     >
       {/* Dramatic hero banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-fuchsia-600 p-6 text-center text-white gloss duration-500 animate-in fade-in zoom-in">
-        <MessagesSquare className="mx-auto size-9 opacity-90" />
-        <h1 className="mt-2 text-4xl font-black tracking-tight">
-          {t.discussTitle.toUpperCase()}
-        </h1>
-        <p className="mt-1 text-sm font-medium opacity-90">{t.discussPrompt}</p>
-        {round.category && (
-          <span className="mt-3 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-            {round.category}
-          </span>
-        )}
-      </div>
+      <PhaseHero
+        size="lg"
+        icon={<MessagesSquare className="size-9" />}
+        title={t.discussTitle.toUpperCase()}
+        subtitle={t.discussPrompt}
+        pill={round.category || undefined}
+      />
 
       {/* Evidence list — one row per player with their clue(s). */}
       <div className="flex flex-col gap-2">

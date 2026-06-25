@@ -128,7 +128,7 @@ export function GameRoom() {
   }
 
   const header = (
-    <div className="flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground">
+    <div className="sticky top-0 z-20 flex items-center justify-between bg-background/80 px-3 py-2 text-xs font-medium text-muted-foreground backdrop-blur-md">
       <div className="flex items-center gap-2">
         <LeaveButton onLeave={leave} confirm />
         <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">

@@ -29,7 +29,7 @@ export function Screen({
         {children}
       </div>
       {footer && (
-        <div className="sticky bottom-0 z-10 px-5 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="sticky bottom-0 z-10 bg-gradient-to-t from-background via-background/95 to-transparent px-5 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {footer}
         </div>
       )}

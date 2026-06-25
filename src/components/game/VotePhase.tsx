@@ -4,11 +4,13 @@ import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
+import { Screen } from "./Screen";
+import { PhaseHero } from "./PhaseHero";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Check, SkipForward } from "lucide-react";
+import { Check, SkipForward, Vote } from "lucide-react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -44,18 +46,46 @@ export function VotePhase({
     }
   }
 
-  return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">{t.voteInstruction}</h2>
-      </div>
-
-      {round.currentBallot > 1 && (
-        <p className="text-xs text-muted-foreground">
-          {t.ballotNumber} {round.currentBallot} ·{" "}
-          {round.eliminatedPlayerIds.length} {t.eliminated.toLowerCase()}
+  const footer = (
+    <div className="space-y-2 text-center">
+      {iAmEliminated ? (
+        <p className="text-sm text-muted-foreground">{t.eliminatedHint}</p>
+      ) : iVoted ? (
+        <p className="text-sm text-muted-foreground">
+          <Check className="mr-1 inline size-4 text-green-500" />
+          {t.youVoted} · {t.changeVote.toLowerCase()}
         </p>
+      ) : (
+        <p className="text-sm text-muted-foreground">{t.voteChangeHint}</p>
       )}
+      <p className="text-xs text-muted-foreground">
+        {round.votedPlayerIds.length}/{candidates.length} {t.votes}
+      </p>
+      {isHost && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-muted-foreground"
+          onClick={() => skipPhase({ ...authArgs, roundId: round.roundId })}
+        >
+          <SkipForward className="size-4" /> {t.endVote}
+        </Button>
+      )}
+    </div>
+  );
+
+  return (
+    <Screen footer={footer}>
+      <PhaseHero
+        icon={<Vote className="size-7" />}
+        title={t.votePhase.toUpperCase()}
+        subtitle={t.voteInstruction}
+        pill={
+          round.currentBallot > 1
+            ? `${t.ballotNumber} ${round.currentBallot} · ${round.eliminatedPlayerIds.length} ${t.eliminated.toLowerCase()}`
+            : undefined
+        }
+      />
 
       {/* Clue recap to inform the vote */}
       <div className="glass rounded-2xl p-3">
@@ -107,32 +137,6 @@ export function VotePhase({
           );
         })}
       </div>
-
-      <div className="mt-auto space-y-2 text-center">
-        {iAmEliminated ? (
-          <p className="text-sm text-muted-foreground">{t.eliminated}</p>
-        ) : iVoted ? (
-          <p className="text-sm text-muted-foreground">
-            <Check className="mr-1 inline size-4 text-green-500" />
-            {t.youVoted} · {t.changeVote.toLowerCase()}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">{t.voteInstruction}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          {round.votedPlayerIds.length}/{candidates.length} {t.votes}
-        </p>
-        {isHost && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-muted-foreground"
-            onClick={() => skipPhase({ ...authArgs, roundId: round.roundId })}
-          >
-            <SkipForward className="size-4" /> {t.endVote}
-          </Button>
-        )}
-      </div>
-    </div>
+    </Screen>
   );
 }

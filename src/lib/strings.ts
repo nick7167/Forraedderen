@@ -57,6 +57,7 @@ export const t = {
   modeUndercoverDesc: "Forræderen får et lignende ord — uden at vide det.",
   randomCategory: "Tilfældig",
   randomCategoryOption: "Tilfældig kategori",
+  randomCategoryNote: "Skifter hver runde",
 
   // Reveal
   yourRole: "Din rolle",
@@ -103,6 +104,8 @@ export const t = {
   voteFor: "Stem på",
   youVoted: "Du har stemt",
   changeVote: "Skift stemme",
+  voteChangeHint: "Tryk for at stemme — du kan skifte når som helst",
+  eliminatedHint: "Du er ude og kan ikke stemme i denne runde",
   waitingForVotes: "Venter på alle stemmer…",
   eliminated: "Ude",
   ballotNumber: "Afstemning",

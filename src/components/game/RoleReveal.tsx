@@ -36,9 +36,9 @@ export function RoleReveal({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
-      <p className="text-sm font-medium text-muted-foreground">
+      <span className="rounded-full bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {t.yourRole} · {t.pass} {round.roundNumber}
-      </p>
+      </span>
 
       <button
         onClick={() => {

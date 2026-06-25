@@ -17,7 +17,12 @@ export function TopBar({
   className?: string;
 }) {
   return (
-    <div className={cn("flex h-12 items-center justify-between px-3", className)}>
+    <div
+      className={cn(
+        "sticky top-0 z-20 flex h-12 items-center justify-between bg-background/80 px-3 backdrop-blur-md",
+        className,
+      )}
+    >
       <div className="flex w-16 justify-start">{left}</div>
       <div className="truncate text-sm font-semibold text-foreground/90">
         {title}

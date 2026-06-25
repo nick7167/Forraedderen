@@ -6,6 +6,7 @@ import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
+import { Screen } from "./Screen";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -52,8 +53,28 @@ export function RoundReveal({
     voteCounts.set(v.targetPlayerId, (voteCounts.get(v.targetPlayerId) ?? 0) + 1);
   }
 
+  const footer = isHost ? (
+    <Button
+      size="hero"
+      className="w-full font-bold"
+      onClick={async () => {
+        try {
+          await nextRound(authArgs);
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Fejl");
+        }
+      }}
+    >
+      {t.nextRound}
+    </Button>
+  ) : (
+    <p className="py-3 text-center text-sm text-muted-foreground">
+      {t.waitingForHost}
+    </p>
+  );
+
   return (
-    <div className="flex flex-1 flex-col items-center gap-5 p-4 text-center">
+    <Screen className="items-center text-center" footer={footer}>
       <div
         className={cn(
           "w-full rounded-2xl p-6 text-white",
@@ -120,24 +141,6 @@ export function RoundReveal({
           })}
         </div>
       </div>
-
-      {isHost ? (
-        <Button
-          size="lg"
-          className="mt-auto w-full font-bold"
-          onClick={async () => {
-            try {
-              await nextRound(authArgs);
-            } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Fejl");
-            }
-          }}
-        >
-          {t.nextRound}
-        </Button>
-      ) : (
-        <p className="mt-auto text-sm text-muted-foreground">{t.waitingForHost}</p>
-      )}
-    </div>
+    </Screen>
   );
 }

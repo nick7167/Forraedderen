@@ -128,17 +128,22 @@ export function SettingsPanel({
         </p>
       </div>
 
-      <button
-        onClick={editable ? () => setPackOpen(true) : undefined}
-        disabled={!editable}
-        className="flex w-full items-center justify-between py-3.5 text-left"
-      >
-        <Label className="text-[15px] font-medium">{t.pack}</Label>
-        <span className="flex items-center gap-1 font-semibold">
-          {currentPack ? `${currentPack.emoji} ${currentPack.name}` : `🎲 ${t.randomCategory}`}
-          {editable && <ChevronRight className="size-4 text-muted-foreground" />}
-        </span>
-      </button>
+      <div className="py-1.5">
+        <button
+          onClick={editable ? () => setPackOpen(true) : undefined}
+          disabled={!editable}
+          className="flex w-full items-center justify-between py-2 text-left"
+        >
+          <Label className="text-[15px] font-medium">{t.pack}</Label>
+          <span className="flex items-center gap-1 font-semibold">
+            {currentPack ? `${currentPack.emoji} ${currentPack.name}` : `🎲 ${t.randomCategory}`}
+            {editable && <ChevronRight className="size-4 text-muted-foreground" />}
+          </span>
+        </button>
+        {!currentPack && (
+          <p className="pb-1 text-xs text-muted-foreground">{t.randomCategoryNote}</p>
+        )}
+      </div>
 
       <Row label={t.imposters}>
         <Stepper value={settings.imposterCount} min={1} max={maxImposters}
