@@ -50,11 +50,39 @@ export const nextRound = mutation({
   },
 });
 
-/** Host returns everyone to the lobby for a fresh match (keeps scores reset). */
+/**
+ * Delete every round of a room and all their clues + votes. Used when
+ * returning to the lobby (so a replay starts clean — no duplicate roundNumbers
+ * that would break the `by_room_and_number` lookups) and when a room is torn down.
+ */
+export async function clearRounds(ctx: MutationCtx, roomId: Id<"rooms">) {
+  const rounds = await ctx.db
+    .query("rounds")
+    .withIndex("by_room", (q) => q.eq("roomId", roomId))
+    .collect();
+  for (const round of rounds) {
+    const clues = await ctx.db
+      .query("clues")
+      .withIndex("by_round", (q) => q.eq("roundId", round._id))
+      .collect();
+    for (const c of clues) await ctx.db.delete(c._id);
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_round", (q) => q.eq("roundId", round._id))
+      .collect();
+    for (const vt of votes) await ctx.db.delete(vt._id);
+    await ctx.db.delete(round._id);
+  }
+}
+
+/** Host returns everyone to the lobby for a fresh match (resets scores). */
 export const backToLobby = mutation({
   args: hostArgs(),
   handler: async (ctx, args) => {
     const room = await requireHost(ctx, args);
+    // Clear the finished match's rounds so the next match starts with unique
+    // round numbers (fixes the "Spil igen" blank screen).
+    await clearRounds(ctx, room._id);
     const players = await ctx.db
       .query("players")
       .withIndex("by_room", (q) => q.eq("roomId", room._id))
@@ -393,12 +421,15 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
   // Imposter rotation: random, avoid whoever was imposter last round.
   let prevImposters: Id<"players">[] = [];
   if (roundNumber > 1) {
+    // .order("desc").first() (not .unique()) so a stray duplicate round number
+    // can never throw here.
     const prev = await ctx.db
       .query("rounds")
       .withIndex("by_room_and_number", (q) =>
         q.eq("roomId", room._id).eq("roundNumber", roundNumber - 1),
       )
-      .unique();
+      .order("desc")
+      .first();
     if (prev) prevImposters = prev.imposterPlayerIds;
   }
   let pool = players.filter((p) => !prevImposters.some((id) => id === p._id));

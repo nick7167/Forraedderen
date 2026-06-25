@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useMutation } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../convex/_generated/api";
@@ -16,7 +17,6 @@ import { Avatar } from "./PlayerBadge";
 import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
 import { SettingsCoach } from "./SettingsCoach";
-import { hasSeenSettingsCoach, markSettingsCoachSeen } from "@/lib/guest";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
@@ -42,13 +42,12 @@ export function LobbyView({
   const [starting, setStarting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // First-time host nudge toward the settings gear.
-  const [coach, setCoach] = useState(
-    () => room.isHost && room.phase === "lobby" && !hasSeenSettingsCoach(),
-  );
+  // Host nudge toward the settings gear — shown on every freshly-created lobby
+  // (HomeScreen passes `justCreated` via router state on create).
+  const location = useLocation();
+  const justCreated = (location.state as { justCreated?: boolean } | null)?.justCreated === true;
+  const [coach, setCoach] = useState(() => room.isHost && justCreated);
   function dismissCoach() {
-    if (!coach) return;
-    markSettingsCoachSeen();
     setCoach(false);
   }
 

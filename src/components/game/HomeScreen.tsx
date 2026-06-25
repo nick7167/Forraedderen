@@ -58,7 +58,11 @@ export function HomeScreen() {
           ? await createRoom({ name: name.trim(), avatarEmoji: emoji, avatarColor: color, guestSecret })
           : await joinRoom({ code: code.trim(), name: name.trim(), avatarEmoji: emoji, avatarColor: color, guestSecret });
       rememberRoomPlayer(res.roomId, res.playerId);
-      navigate(`/room/${res.roomId}`);
+      // Flag a freshly-created lobby so the host gets the settings spotlight
+      // (every new lobby, not just the first ever).
+      navigate(`/room/${res.roomId}`, {
+        state: { justCreated: mode === "create" },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fejl");
     } finally {

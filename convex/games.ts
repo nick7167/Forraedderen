@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUser } from "./users";
 import { ensureBuiltInPacks } from "./packs";
+import { clearRounds } from "./round";
 import { settingsValidator } from "./schema";
 import {
   generateCode,
@@ -226,12 +227,15 @@ export const getRoomState = query({
     // Id of the round currently in play (for the client to subscribe to).
     let currentRoundId: Id<"rounds"> | null = null;
     if (room.currentRoundNumber > 0) {
+      // .order("desc").first() (not .unique()) so a stray duplicate round number
+      // can never throw and blank the screen — pick the newest matching round.
       const round = await ctx.db
         .query("rounds")
         .withIndex("by_room_and_number", (q) =>
           q.eq("roomId", room._id).eq("roundNumber", room.currentRoundNumber),
         )
-        .unique();
+        .order("desc")
+        .first();
       currentRoundId = round?._id ?? null;
     }
 
@@ -307,12 +311,21 @@ async function reassignHostIfNeeded(
     .query("players")
     .withIndex("by_room", (q) => q.eq("roomId", roomId))
     .collect();
-  if (remaining.length === 0) {
+  const humans = remaining.filter((p) => p.isBot !== true);
+
+  // No humans left → tear the abandoned room down entirely (deletes bots +
+  // rounds/clues/votes). Covers a solo-with-bots host leaving.
+  if (humans.length === 0) {
+    await clearRounds(ctx, roomId);
+    for (const p of remaining) await ctx.db.delete(p._id);
     await ctx.db.delete(roomId);
     return;
   }
+
+  // Host left → hand off to the earliest-joined human (never a bot, which
+  // couldn't press host-only buttons and would stall the game).
   if (room.hostPlayerId === removedPlayerId) {
-    const next = remaining.sort((a, b) => a.joinedAt - b.joinedAt)[0];
+    const next = humans.sort((a, b) => a.joinedAt - b.joinedAt)[0];
     await ctx.db.patch(roomId, { hostPlayerId: next._id });
   }
 }

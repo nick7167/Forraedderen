@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation } from "convex/react";
 import { Loader2, Volume2, VolumeX } from "lucide-react";
+import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useGameRoom } from "@/hooks/useGameRoom";
 import { forgetRoomPlayer } from "@/lib/guest";
 import { feedback, isMuted, setMuted } from "@/lib/feedback";
 import { t } from "@/lib/strings";
+import { LeaveButton } from "./LeaveButton";
 import { LobbyView } from "./LobbyView";
 import { RoleReveal } from "./RoleReveal";
 import { CluePhase } from "./CluePhase";
@@ -51,7 +54,13 @@ export function GameRoom() {
     return () => clearTimeout(id);
   }, [banner]);
 
-  function leave() {
+  const leaveRoom = useMutation(api.games.leaveRoom);
+  async function leave() {
+    try {
+      if (authArgs) await leaveRoom(authArgs);
+    } catch {
+      // best-effort — always get the user home regardless
+    }
     if (roomId) forgetRoomPlayer(roomId);
     navigate("/");
   }
@@ -104,10 +113,13 @@ export function GameRoom() {
   }
 
   const header = (
-    <div className="flex items-center justify-between px-5 py-2 text-xs font-medium text-muted-foreground">
-      <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">
-        {room.code}
-      </span>
+    <div className="flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground">
+      <div className="flex items-center gap-2">
+        <LeaveButton onLeave={leave} confirm />
+        <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">
+          {room.code}
+        </span>
+      </div>
       <div className="flex items-center gap-2">
         <span className="rounded-full bg-white/5 px-2.5 py-1">
           Runde {room.currentRoundNumber}/{room.settings.roundCount}
