@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Volume2, VolumeX } from "lucide-react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useGameRoom } from "@/hooks/useGameRoom";
 import { forgetRoomPlayer } from "@/lib/guest";
-import { feedback } from "@/lib/feedback";
+import { feedback, isMuted, setMuted } from "@/lib/feedback";
 import { t } from "@/lib/strings";
 import { LobbyView } from "./LobbyView";
 import { RoleReveal } from "./RoleReveal";
@@ -27,6 +27,8 @@ export function GameRoom() {
   const roomId = roomIdParam as Id<"rooms"> | undefined;
   const navigate = useNavigate();
   const { room, round, authArgs } = useGameRoom(roomId);
+
+  const [muted, setMutedState] = useState(isMuted());
 
   // Announce phase changes with a brief banner.
   const phase = round?.phase ?? null;
@@ -106,9 +108,21 @@ export function GameRoom() {
       <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">
         {room.code}
       </span>
-      <span className="rounded-full bg-white/5 px-2.5 py-1">
-        Runde {room.currentRoundNumber}/{room.settings.roundCount}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-white/5 px-2.5 py-1">
+          Runde {room.currentRoundNumber}/{room.settings.roundCount}
+        </span>
+        <button
+          onClick={() => {
+            setMuted(!muted);
+            setMutedState(!muted);
+          }}
+          aria-label={muted ? "Slå lyd til" : "Slå lyd fra"}
+          className="flex size-7 items-center justify-center rounded-full bg-white/5 text-muted-foreground active:scale-90"
+        >
+          {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+        </button>
+      </div>
     </div>
   );
 

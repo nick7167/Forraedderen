@@ -1,6 +1,7 @@
 import { mutation, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { DANISH_PACKS } from "./packData";
 import {
   shuffle,
   requirePlayer,
@@ -445,39 +446,38 @@ async function pickWords(
   ctx: QueryCtx,
   room: Doc<"rooms">,
 ): Promise<{ word: string; category: string; decoyWord?: string }> {
-  let pack: Doc<"packs"> | null = null;
-  if (room.settings.packId) {
-    // Host pinned a specific category.
-    pack = await ctx.db.get(room.settings.packId);
+  // Resolve a {name, words[]} pack to draw from.
+  let category: string;
+  let words: string[];
+
+  const pinned = room.settings.packId
+    ? await ctx.db.get(room.settings.packId)
+    : null;
+
+  if (pinned && pinned.words.length > 0) {
+    // Host pinned a specific category (built-in or custom) from the DB.
+    category = pinned.name;
+    words = pinned.words.map((w) => w.word);
   } else {
-    // Random category: pick a random built-in pack each round.
-    const builtIns = await ctx.db
-      .query("packs")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
-      .collect();
-    if (builtIns.length > 0) {
-      pack = builtIns[Math.floor(Math.random() * builtIns.length)];
-    }
-  }
-  if (pack === null || pack.words.length === 0) {
-    return { word: "Hemmelighed", category: "Standard" };
+    // Random category — drawn straight from the in-code pack list, so it always
+    // works even on a fresh deployment with an unseeded `packs` table.
+    const seed = DANISH_PACKS[Math.floor(Math.random() * DANISH_PACKS.length)];
+    category = seed.name;
+    words = seed.words;
   }
 
-  const words = pack.words;
-  const word = words[Math.floor(Math.random() * words.length)].word;
+  const word = words[Math.floor(Math.random() * words.length)];
 
   let decoyWord: string | undefined;
   if (room.settings.gameMode === "undercover") {
     // A different word from the same category "reminds" the imposter of the real one.
-    const others = words
-      .map((w) => w.word)
-      .filter((w) => w.toLowerCase() !== word.toLowerCase());
+    const others = words.filter((w) => w.toLowerCase() !== word.toLowerCase());
     if (others.length > 0) {
       decoyWord = others[Math.floor(Math.random() * others.length)];
     }
   }
 
-  return { word, category: pack.name, decoyWord };
+  return { word, category, decoyWord };
 }
 
 /** Move room/round from reveal → clues (called by client once cards seen). */

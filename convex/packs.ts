@@ -2,8 +2,36 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUser } from "./users";
 import { DANISH_PACKS } from "./packData";
+import type { MutationCtx } from "./_generated/server";
 
 const wordValidator = v.object({ word: v.string(), hint: v.optional(v.string()) });
+
+/**
+ * Insert any missing built-in Danish packs into the `packs` table. Idempotent.
+ * Called automatically on createRoom so a fresh deployment self-seeds — no
+ * manual `convex run packs:seedBuiltInPacks` step needed.
+ */
+export async function ensureBuiltInPacks(ctx: MutationCtx): Promise<number> {
+  const existing = await ctx.db
+    .query("packs")
+    .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
+    .collect();
+  const have = new Set(existing.map((p) => p.name));
+  let inserted = 0;
+  for (const pack of DANISH_PACKS) {
+    if (have.has(pack.name)) continue;
+    await ctx.db.insert("packs", {
+      ownerUserId: undefined,
+      name: pack.name,
+      language: "da",
+      emoji: pack.emoji,
+      isBuiltIn: true,
+      words: pack.words.map((word) => ({ word })),
+    });
+    inserted++;
+  }
+  return inserted;
+}
 
 /** Built-in packs + the signed-in user's saved custom packs. */
 export const listPacks = query({
@@ -70,24 +98,7 @@ export const createCustomPack = mutation({
 export const seedBuiltInPacks = mutation({
   args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db
-      .query("packs")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
-      .collect();
-    const have = new Set(existing.map((p) => p.name));
-    let inserted = 0;
-    for (const pack of DANISH_PACKS) {
-      if (have.has(pack.name)) continue;
-      await ctx.db.insert("packs", {
-        ownerUserId: undefined,
-        name: pack.name,
-        language: "da",
-        emoji: pack.emoji,
-        isBuiltIn: true,
-        words: pack.words.map((word) => ({ word })),
-      });
-      inserted++;
-    }
+    const inserted = await ensureBuiltInPacks(ctx);
     return { inserted, total: DANISH_PACKS.length };
   },
 });

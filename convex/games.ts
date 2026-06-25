@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUser } from "./users";
+import { ensureBuiltInPacks } from "./packs";
 import { settingsValidator } from "./schema";
 import {
   generateCode,
@@ -42,6 +43,7 @@ const joinArgs = {
 export const createRoom = mutation({
   args: joinArgs,
   handler: async (ctx, args) => {
+    await ensureBuiltInPacks(ctx); // self-seed built-in packs on a fresh deployment
     const user = await getCurrentUser(ctx);
     let code = generateCode();
     for (let i = 0; i < 5 && (await roomByCode(ctx, code)) !== null; i++) {

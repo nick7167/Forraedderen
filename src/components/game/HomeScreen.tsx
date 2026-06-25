@@ -24,7 +24,8 @@ import {
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, LogIn } from "lucide-react";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -66,7 +67,22 @@ export function HomeScreen() {
   }
 
   return (
-    <Screen
+    <div className="relative flex min-h-full flex-1 flex-col">
+      {/* Optional account (unlocks saving custom packs). */}
+      <div className="absolute top-2 right-4 z-10">
+        <SignedOut>
+          <SignInButton mode="modal">
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <LogIn className="size-4" /> Log ind
+            </Button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
+      </div>
+
+      <Screen
       center
       footer={
         <Button size="hero" onClick={go} disabled={busy}>
@@ -150,6 +166,7 @@ export function HomeScreen() {
           onKeyDown={(e) => e.key === "Enter" && go()}
         />
       )}
-    </Screen>
+      </Screen>
+    </div>
   );
 }
