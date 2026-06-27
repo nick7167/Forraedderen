@@ -19,6 +19,7 @@ import { VotePhase } from "./VotePhase";
 import { RoundReveal } from "./RoundReveal";
 import { MatchResults } from "./MatchResults";
 import { PhaseBanner } from "./PhaseBanner";
+import { RoundContextBar } from "./RoundContextBar";
 
 // Phases that get an announcing banner when entered.
 const PHASE_BANNERS: Record<string, { emoji: string; label: string }> = {
@@ -128,7 +129,7 @@ export function GameRoom() {
   }
 
   const header = (
-    <div className="sticky top-0 z-20 flex items-center justify-between bg-background/80 px-3 py-2 text-xs font-medium text-muted-foreground backdrop-blur-md">
+    <div className="flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground">
       <div className="flex items-center gap-2">
         <LeaveButton onLeave={leave} confirm />
         <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">
@@ -157,7 +158,9 @@ export function GameRoom() {
   if (round.me && !round.me.isParticipant && round.phase !== "resolve") {
     return (
       <div className="flex flex-1 flex-col">
-        {header}
+        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md">
+          {header}
+        </div>
         <HostGoneBanner room={room} authArgs={authArgs} />
         <InfoScreen
           emoji="⏳"
@@ -179,7 +182,12 @@ export function GameRoom() {
           onDone={() => setBanner(null)}
         />
       )}
-      {header}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md">
+        {header}
+        {(round.phase === "clues" ||
+          round.phase === "discussion" ||
+          round.phase === "vote") && <RoundContextBar round={round} />}
+      </div>
       <HostGoneBanner room={room} authArgs={authArgs} />
       {round.phase === "reveal" && (
         <RoleReveal

@@ -83,7 +83,6 @@ export function DiscussionPhase({
         icon={<MessagesSquare className="size-9" />}
         title={t.discussTitle.toUpperCase()}
         subtitle={t.discussPrompt}
-        pill={round.category || undefined}
       />
 
       {/* Evidence list — one row per player with their clue(s). */}

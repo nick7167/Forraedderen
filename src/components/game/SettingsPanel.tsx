@@ -157,19 +157,13 @@ export function SettingsPanel({
         <Stepper value={settings.roundCount} min={1} max={20}
           disabled={!editable} onChange={(v) => set("roundCount", v)} />
       </Row>
-      {/* These only make sense in spy mode (undercover imposters don't know
-          they're imposters). */}
+      {/* Only meaningful in spy mode (undercover imposters don't know they're
+          imposters, so they can't "know each other"). */}
       {settings.gameMode === "spy" && (
-        <>
-          <Row label={t.imposterSeesCategory}>
-            <Toggle value={settings.imposterSeesCategory}
-              disabled={!editable} onChange={(v) => set("imposterSeesCategory", v)} />
-          </Row>
-          <Row label={t.impostersKnowEachOther}>
-            <Toggle value={settings.impostersKnowEachOther}
-              disabled={!editable} onChange={(v) => set("impostersKnowEachOther", v)} />
-          </Row>
-        </>
+        <Row label={t.impostersKnowEachOther}>
+          <Toggle value={settings.impostersKnowEachOther}
+            disabled={!editable} onChange={(v) => set("impostersKnowEachOther", v)} />
+        </Row>
       )}
 
       <PackPicker

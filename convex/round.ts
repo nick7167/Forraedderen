@@ -338,13 +338,9 @@ export const getRoundState = query({
       myWord = null; // spy imposter knows no word
     }
 
-    // Category is always visible in undercover (the imposter holds a word too).
-    const categoryVisible =
-      revealEverything ||
-      (isParticipant &&
-        (round.gameMode === "undercover" ||
-          !iAmImposter ||
-          round.imposterSeesCategory));
+    // Everyone in the round can always see the category — crew and imposters
+    // alike. (The secret word is still gated by role/mode above.)
+    const categoryVisible = revealEverything || isParticipant;
 
     return {
       roundId: round._id,
@@ -463,12 +459,9 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
   if (pool.length < imposterCount) pool = players; // small group fallback
   const imposterIds = shuffle(pool).slice(0, imposterCount).map((p) => p._id);
 
-  // Turn order: fully randomized, but an imposter is never forced to go first.
-  let order = shuffle(players.map((p) => p._id));
-  if (imposterIds.some((id) => id === order[0]) && order.length > 1) {
-    const firstCrew = order.findIndex((id) => !imposterIds.some((im) => im === id));
-    if (firstCrew > 0) [order[0], order[firstCrew]] = [order[firstCrew], order[0]];
-  }
+  // Turn order: fully randomized every round — anyone, including an imposter,
+  // can be first to give a clue.
+  const order = shuffle(players.map((p) => p._id));
 
   const { word, category, decoyWord } = await pickWords(ctx, room);
 
