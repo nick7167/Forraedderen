@@ -352,6 +352,7 @@ export const getRoundState = query({
       currentBallot: round.currentBallot,
       category: categoryVisible ? round.category : null,
       turnOrder: round.turnOrder,
+      readyPlayerIds: round.readyPlayerIds ?? [],
       currentTurnPlayerId,
       eliminatedPlayerIds: round.eliminatedPlayerIds,
       phaseDeadline: round.phaseDeadline ?? null,
@@ -473,6 +474,9 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
     category,
     imposterPlayerIds: imposterIds,
     turnOrder: order,
+    // Bots can't tap "ready", so they start ready; humans ready up on the
+    // reveal screen and the round auto-begins once everyone is ready.
+    readyPlayerIds: players.filter((p) => p.isBot).map((p) => p._id),
     gameMode: s.gameMode,
     cluePasses: s.cluePasses,
     imposterSeesCategory: s.imposterSeesCategory,
@@ -542,6 +546,33 @@ export const beginClues = mutation({
     await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
     await ctx.db.patch(room._id, { phase: "clues" });
     scheduleBotTick(ctx, room._id, round._id);
+  },
+});
+
+/**
+ * A player taps "ready" on the reveal screen. Once every participant is ready
+ * the round auto-advances to the clue phase. (The host can still force-start
+ * via beginClues.)
+ */
+export const markReady = mutation({
+  args: { ...playerArgs(), roundId: v.id("rounds") },
+  handler: async (ctx, args) => {
+    const me = await requirePlayer(ctx, args);
+    const { room, round } = await loadActiveRound(ctx, args.roomId, args.roundId);
+    if (round.phase !== "reveal") return;
+    // Only participants (dealt into this round) ready up; spectators wait.
+    if (!round.turnOrder.some((id) => id === me._id)) return;
+
+    const ready = new Set(round.readyPlayerIds ?? []);
+    ready.add(me._id);
+    await ctx.db.patch(round._id, { readyPlayerIds: [...ready] });
+
+    // Everyone ready → begin the clue phase (mirrors beginClues).
+    if (round.turnOrder.every((id) => ready.has(id))) {
+      await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
+      await ctx.db.patch(room._id, { phase: "clues" });
+      scheduleBotTick(ctx, room._id, round._id);
+    }
   },
 });
 

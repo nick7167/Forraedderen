@@ -69,6 +69,9 @@ export const t = {
   imposterHint: "Bluf dig igennem — du kender ikke ordet!",
   yourTeammates: "Dine medforrædere",
   ready: "Klar",
+  readyWaiting: "Venter på de andre…",
+  readyCount: "klar",
+  startNow: "Start nu",
   startClues: "Start spor-fasen",
 
   // Clues

@@ -9,7 +9,7 @@ import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
+import { Check, Eye } from "lucide-react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -27,12 +27,41 @@ export function RoleReveal({
 }) {
   const [flipped, setFlipped] = useState(false);
   const beginClues = useMutation(api.round.beginClues);
+  const markReady = useMutation(api.round.markReady);
   const me = round.me;
   const isImposter = me?.isImposter ?? false;
 
   const teammates = (me?.teammateIds ?? [])
     .map((id) => players.find((p) => p._id === id))
     .filter((p): p is Round["players"][number] => !!p);
+
+  // Ready-up state: every participant taps "ready" and the round begins once
+  // all are ready (bots are seeded ready server-side). Host can force-start.
+  const participants = round.turnOrder
+    .map((id) => players.find((p) => p._id === id))
+    .filter((p): p is Round["players"][number] => !!p);
+  const readySet = new Set(round.readyPlayerIds);
+  const readyCount = participants.filter((p) => readySet.has(p._id)).length;
+  const iAmReady = !!me && readySet.has(me.playerId);
+  const allReady =
+    participants.length > 0 && participants.every((p) => readySet.has(p._id));
+
+  async function handleReady() {
+    feedback.tap();
+    try {
+      await markReady({ ...authArgs, roundId: round.roundId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Fejl");
+    }
+  }
+
+  async function handleForceStart() {
+    try {
+      await beginClues({ ...authArgs, roundId: round.roundId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Fejl");
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
@@ -108,23 +137,52 @@ export function RoleReveal({
       )}
 
       {flipped && (
-        <div className="w-full max-w-xs text-center">
-          {isHost ? (
-            <Button
-              size="lg"
-              className="w-full font-bold"
-              onClick={async () => {
-                try {
-                  await beginClues({ ...authArgs, roundId: round.roundId });
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Fejl");
-                }
-              }}
-            >
-              {t.startClues}
-            </Button>
+        <div className="w-full max-w-xs space-y-3 text-center">
+          {/* Ready roster — everyone sees who's ready. */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {participants.map((p) => {
+              const isReady = readySet.has(p._id);
+              return (
+                <div key={p._id} className="relative">
+                  <Avatar
+                    emoji={p.avatarEmoji}
+                    color={p.avatarColor}
+                    size={32}
+                    dimmed={!isReady}
+                  />
+                  {isReady && (
+                    <span className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-green-500 text-white">
+                      <Check className="size-3" />
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {readyCount}/{participants.length} {t.readyCount}
+          </p>
+
+          {iAmReady ? (
+            <p className="text-sm font-medium text-green-400">
+              <Check className="mr-1 inline size-4" /> {t.ready} · {t.readyWaiting}
+            </p>
           ) : (
-            <p className="text-sm text-muted-foreground">{t.waitingForHost}</p>
+            <Button size="lg" className="w-full font-bold" onClick={handleReady}>
+              {t.ready}
+            </Button>
+          )}
+
+          {/* Host can begin without waiting for stragglers (e.g. someone offline). */}
+          {isHost && !allReady && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
+              onClick={handleForceStart}
+            >
+              {t.startNow}
+            </Button>
           )}
         </div>
       )}

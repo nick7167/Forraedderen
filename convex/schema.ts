@@ -87,6 +87,10 @@ export default defineSchema({
     category: v.string(), // pack/category name shown to crew (and imposter if enabled)
     imposterPlayerIds: v.array(v.id("players")),
     turnOrder: v.array(v.id("players")), // clue order for this round
+    // Players who tapped "ready" on the reveal screen; round begins when all
+    // participants are ready. Bots are seeded as ready at deal time. Optional
+    // for back-compat with rounds created before this field existed.
+    readyPlayerIds: v.optional(v.array(v.id("players"))),
     // Snapshots of the settings at round start (so mid-match changes are clean):
     gameMode: gameModeValidator,
     cluePasses: v.number(),
