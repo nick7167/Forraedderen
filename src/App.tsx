@@ -13,7 +13,9 @@ export default function App() {
     <div
       className="mx-auto flex w-full max-w-md flex-col"
       style={{
-        minHeight: "100dvh",
+        // Fixed viewport height (not min-height) so inner regions can own their
+        // own scrolling — this is what makes per-screen sticky footers work.
+        height: "100dvh",
         // Keep content clear of the notch / rounded corners on installed PWAs.
         paddingTop: "env(safe-area-inset-top)",
         paddingLeft: "env(safe-area-inset-left)",
@@ -23,7 +25,8 @@ export default function App() {
       <OfflineIndicator />
       <InstallPrompt />
 
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      {/* Bounded routing region. Each screen manages its own internal scroll. */}
+      <div className="flex min-h-0 flex-1 flex-col">
         <Routes>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/room/:roomId" element={<GameRoom />} />

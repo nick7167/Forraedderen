@@ -47,21 +47,8 @@ export function MatchResults({
     return () => clearTimeout(id);
   }, []);
 
-  return (
-    <Screen
-      footer={
-        <div className="space-y-2">
-          {isHost && (
-            <Button size="hero" onClick={() => backToLobby(authArgs)}>
-              {t.playAgain}
-            </Button>
-          )}
-          <Button variant="ghost" className="w-full text-muted-foreground" onClick={onLeave}>
-            {t.leave}
-          </Button>
-        </div>
-      }
-    >
+  const header = (
+    <div className="flex flex-col gap-5">
       <div className="pt-2 text-center">
         <p className="text-4xl">🏆</p>
         <h1 className="mt-1 text-2xl font-extrabold">{t.finalResults}</h1>
@@ -98,7 +85,25 @@ export function MatchResults({
           );
         })}
       </div>
+    </div>
+  );
 
+  return (
+    <Screen
+      header={header}
+      footer={
+        <div className="space-y-2">
+          {isHost && (
+            <Button size="hero" onClick={() => backToLobby(authArgs)}>
+              {t.playAgain}
+            </Button>
+          )}
+          <Button variant="ghost" className="w-full text-muted-foreground" onClick={onLeave}>
+            {t.leave}
+          </Button>
+        </div>
+      }
+    >
       {/* Remaining ranks */}
       {rest.length > 0 && (
         <div className="space-y-1.5">

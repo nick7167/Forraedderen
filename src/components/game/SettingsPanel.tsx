@@ -97,6 +97,7 @@ export function SettingsPanel({
   const currentPack = packs?.find((p) => p._id === settings.packId);
   const [packOpen, setPackOpen] = useState(false);
   const maxImposters = Math.max(1, playerCount - 2);
+  const isQuestions = settings.gameMode === "questions";
 
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     onChange({ ...settings, [key]: value });
@@ -107,52 +108,62 @@ export function SettingsPanel({
       <div className="py-3">
         <Label className="mb-2 block text-[15px] font-medium">{t.mode}</Label>
         <div className="flex gap-1 rounded-2xl bg-black/20 p-1">
-          {(["spy", "undercover"] as const).map((m) => (
+          {(["spy", "undercover", "questions"] as const).map((m) => (
             <button
               key={m}
               disabled={!editable}
               onClick={() => set("gameMode", m)}
               className={cn(
-                "flex-1 rounded-xl py-2 text-sm font-semibold transition-all",
+                "flex-1 rounded-xl py-2 text-xs font-semibold transition-all",
                 settings.gameMode === m
                   ? "bg-primary text-primary-foreground gloss"
                   : "text-muted-foreground",
               )}
             >
-              {m === "spy" ? t.modeSpy : t.modeUndercover}
+              {m === "spy" ? t.modeSpy : m === "undercover" ? t.modeUndercover : t.modeQuestions}
             </button>
           ))}
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          {settings.gameMode === "spy" ? t.modeSpyDesc : t.modeUndercoverDesc}
+          {settings.gameMode === "spy"
+            ? t.modeSpyDesc
+            : settings.gameMode === "undercover"
+              ? t.modeUndercoverDesc
+              : t.modeQuestionsDesc}
         </p>
       </div>
 
-      <div className="py-1.5">
-        <button
-          onClick={editable ? () => setPackOpen(true) : undefined}
-          disabled={!editable}
-          className="flex w-full items-center justify-between py-2 text-left"
-        >
-          <Label className="text-[15px] font-medium">{t.pack}</Label>
-          <span className="flex items-center gap-1 font-semibold">
-            {currentPack ? `${currentPack.emoji} ${currentPack.name}` : `🎲 ${t.randomCategory}`}
-            {editable && <ChevronRight className="size-4 text-muted-foreground" />}
-          </span>
-        </button>
-        {!currentPack && (
-          <p className="pb-1 text-xs text-muted-foreground">{t.randomCategoryNote}</p>
-        )}
-      </div>
+      {/* Word packs aren't used in "questions" mode (it draws question themes). */}
+      {!isQuestions && (
+        <div className="py-1.5">
+          <button
+            onClick={editable ? () => setPackOpen(true) : undefined}
+            disabled={!editable}
+            className="flex w-full items-center justify-between py-2 text-left"
+          >
+            <Label className="text-[15px] font-medium">{t.pack}</Label>
+            <span className="flex items-center gap-1 font-semibold">
+              {currentPack ? `${currentPack.emoji} ${currentPack.name}` : `🎲 ${t.randomCategory}`}
+              {editable && <ChevronRight className="size-4 text-muted-foreground" />}
+            </span>
+          </button>
+          {!currentPack && (
+            <p className="pb-1 text-xs text-muted-foreground">{t.randomCategoryNote}</p>
+          )}
+        </div>
+      )}
 
       <Row label={t.imposters}>
         <Stepper value={settings.imposterCount} min={1} max={maxImposters}
           disabled={!editable} onChange={(v) => set("imposterCount", v)} />
       </Row>
-      <Row label={t.cluePasses}>
-        <Stepper value={settings.cluePasses} min={1} max={3}
-          disabled={!editable} onChange={(v) => set("cluePasses", v)} />
-      </Row>
+      {/* "questions" mode is always a single simultaneous answer round. */}
+      {!isQuestions && (
+        <Row label={t.cluePasses}>
+          <Stepper value={settings.cluePasses} min={1} max={3}
+            disabled={!editable} onChange={(v) => set("cluePasses", v)} />
+        </Row>
+      )}
       <Row label={t.roundCount}>
         <Stepper value={settings.roundCount} min={1} max={20}
           disabled={!editable} onChange={(v) => set("roundCount", v)} />

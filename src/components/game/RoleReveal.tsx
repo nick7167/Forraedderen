@@ -4,6 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "./PlayerBadge";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
@@ -26,10 +27,16 @@ export function RoleReveal({
   players: Round["players"];
 }) {
   const [flipped, setFlipped] = useState(false);
+  const [answer, setAnswer] = useState("");
   const beginClues = useMutation(api.round.beginClues);
   const markReady = useMutation(api.round.markReady);
   const me = round.me;
   const isImposter = me?.isImposter ?? false;
+  const isQuestions = round.gameMode === "questions";
+  // In questions mode the player's own answer is visible in their clues row.
+  const myAnswer = me
+    ? round.clues.find((c) => c.playerId === me.playerId)?.text
+    : undefined;
 
   const teammates = (me?.teammateIds ?? [])
     .map((id) => players.find((p) => p._id === id))
@@ -47,9 +54,14 @@ export function RoleReveal({
     participants.length > 0 && participants.every((p) => readySet.has(p._id));
 
   async function handleReady() {
+    if (isQuestions && !answer.trim()) return;
     feedback.tap();
     try {
-      await markReady({ ...authArgs, roundId: round.roundId });
+      await markReady({
+        ...authArgs,
+        roundId: round.roundId,
+        answerText: isQuestions ? answer.trim() : undefined,
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fejl");
     }
@@ -64,9 +76,9 @@ export function RoleReveal({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-4">
       <span className="rounded-full bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {t.yourRole} · {t.pass} {round.roundNumber}
+        {isQuestions ? t.yourQuestion : t.yourRole} · {t.pass} {round.roundNumber}
       </span>
 
       <button
@@ -94,7 +106,19 @@ export function RoleReveal({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2 px-6 text-center duration-300 animate-in fade-in zoom-in">
-            {isImposter ? (
+            {isQuestions ? (
+              <>
+                <span className="text-xs font-medium uppercase opacity-80">
+                  {t.yourQuestion}
+                </span>
+                <span className="text-xl font-extrabold leading-snug">
+                  {me?.secretWord}
+                </span>
+                <span className="mt-1 text-xs opacity-80">
+                  {t.questionAnswerHint}
+                </span>
+              </>
+            ) : isImposter ? (
               <>
                 <span className="text-5xl">🕵️</span>
                 <span className="text-2xl font-black">{t.youAreImposter}</span>
@@ -164,9 +188,35 @@ export function RoleReveal({
           </p>
 
           {iAmReady ? (
-            <p className="text-sm font-medium text-green-400">
-              <Check className="mr-1 inline size-4" /> {t.ready} · {t.readyWaiting}
-            </p>
+            <div className="space-y-1">
+              {isQuestions && myAnswer && (
+                <p className="text-sm text-muted-foreground">
+                  {t.youAnswered}: <b className="text-foreground">{myAnswer}</b>
+                </p>
+              )}
+              <p className="text-sm font-medium text-green-400">
+                <Check className="mr-1 inline size-4" /> {t.ready} · {t.readyWaiting}
+              </p>
+            </div>
+          ) : isQuestions ? (
+            <div className="space-y-2">
+              <Input
+                autoFocus
+                value={answer}
+                maxLength={60}
+                placeholder={t.answerPlaceholder}
+                onChange={(e) => setAnswer(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleReady()}
+              />
+              <Button
+                size="lg"
+                className="w-full font-bold"
+                disabled={!answer.trim()}
+                onClick={handleReady}
+              >
+                {t.ready}
+              </Button>
+            </div>
           ) : (
             <Button size="lg" className="w-full font-bold" onClick={handleReady}>
               {t.ready}

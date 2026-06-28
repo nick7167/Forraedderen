@@ -20,7 +20,7 @@ export function RoundContextBar({ round }: { round: Round }) {
   return (
     <div className="flex items-center justify-center gap-1.5 px-3 pb-2">
       {me.secretWord ? (
-        <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-bold text-primary">
+        <span className="max-w-[70%] truncate rounded-full bg-primary/20 px-3 py-1 text-sm font-bold text-primary">
           {me.secretWord}
         </span>
       ) : (

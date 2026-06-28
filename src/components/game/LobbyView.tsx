@@ -167,6 +167,23 @@ export function LobbyView({
       </Drawer>
 
       <Screen
+        header={
+          <div className="flex flex-col gap-5">
+            <HostGoneBanner room={room} authArgs={authArgs} />
+
+            {/* Room code hero */}
+            <button
+              onClick={copyCode}
+              className="w-full rounded-3xl bg-gradient-to-br from-violet-500 to-fuchsia-600 p-6 text-center text-white gloss active:scale-[0.99]"
+            >
+              <p className="text-xs font-medium opacity-80">{t.shareCode}</p>
+              <p className="mt-1 inline-flex items-center gap-2 text-5xl font-extrabold tracking-[0.15em]">
+                {room.code}
+                <Copy className="size-5 opacity-80" />
+              </p>
+            </button>
+          </div>
+        }
         footer={
           room.isHost ? (
             <Button size="hero" disabled={!canStart || starting} onClick={handleStart}>
@@ -179,21 +196,7 @@ export function LobbyView({
           )
         }
       >
-        <HostGoneBanner room={room} authArgs={authArgs} />
-
-        {/* Room code hero */}
-        <button
-          onClick={copyCode}
-          className="w-full rounded-3xl bg-gradient-to-br from-violet-500 to-fuchsia-600 p-6 text-center text-white gloss active:scale-[0.99]"
-        >
-          <p className="text-xs font-medium opacity-80">{t.shareCode}</p>
-          <p className="mt-1 inline-flex items-center gap-2 text-5xl font-extrabold tracking-[0.15em]">
-            {room.code}
-            <Copy className="size-5 opacity-80" />
-          </p>
-        </button>
-
-        {/* Players */}
+        {/* Players (the only scrolling region) */}
         <div>
           <h2 className="mb-2 px-1 text-sm font-semibold text-muted-foreground">
             {t.players} · {room.players.length}/12

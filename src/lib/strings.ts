@@ -53,8 +53,10 @@ export const t = {
   mode: "Spiltype",
   modeSpy: "Klassisk",
   modeUndercover: "Undercover",
+  modeQuestions: "Spørgsmål",
   modeSpyDesc: "Forræderen kender ikke ordet.",
   modeUndercoverDesc: "Forræderen får et lignende ord — uden at vide det.",
+  modeQuestionsDesc: "Alle svarer på et spørgsmål. Forræderen får et lidt andet spørgsmål — uden at vide det.",
   randomCategory: "Tilfældig",
   randomCategoryOption: "Tilfældig kategori",
   randomCategoryNote: "Skifter hver runde",
@@ -79,11 +81,29 @@ export const t = {
   yourTurn: "Det er din tur",
   waitingFor: "Venter på",
   yourClue: "Dit spor",
+  prepareTurn: "Det er {name}s tur — forbered dit svar",
   cluePlaceholder: "Skriv ét ord eller kort spor",
   submitClue: "Send spor",
   pass: "Runde",
   clueGiven: "Spor givet",
   thinking: "tænker…",
+
+  // Questions mode
+  yourQuestion: "Dit spørgsmål",
+  questionAnswerHint: "Svar ærligt med ÉT ord.",
+  answerPhase: "Svar",
+  answerPlaceholder: "Skriv dit svar (ét ord)",
+  submitAnswer: "Send svar",
+  answeredCount: "har svaret",
+  youAnswered: "Du har svaret",
+  waitingForAnswers: "Venter på de andres svar…",
+  answerWaitOthers: "Afventer at alle svarer…",
+  bannerAnswer: "Svar",
+  voteInstructionQuestions: "Hvem fik et andet spørgsmål?",
+  theCrewQuestion: "Spørgsmålet",
+  theImposterQuestion: "Forræderens spørgsmål",
+  theRealQuestion: "Det rigtige spørgsmål",
+  discussPromptQuestions: "Hvem svarede på et andet spørgsmål?",
 
   // Discussion
   discussTitle: "Diskutér",
@@ -171,6 +191,10 @@ export const t = {
     undercover: {
       title: "Undercover",
       body: "Forræderen ved IKKE, at de er forræder — de får bare et lignende ord. Deres spor kommer til at passe lidt skævt.",
+    },
+    questions: {
+      title: "Spørgsmål",
+      body: "Alle får et spørgsmål og svarer med ét ord på samme tid. Forræderen får et lidt andet spørgsmål — uden at vide det. Find ud af, hvem der svarede på et andet spørgsmål.",
     },
   },
 

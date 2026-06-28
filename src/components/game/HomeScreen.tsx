@@ -73,7 +73,7 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col">
+    <div className="relative flex min-h-0 flex-1 flex-col">
       {/* Optional account (unlocks saving custom packs). */}
       <div className="absolute top-2 right-4 z-10">
         <SignedOut>

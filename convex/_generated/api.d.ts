@@ -13,6 +13,7 @@ import type * as lib from "../lib.js";
 import type * as packData from "../packData.js";
 import type * as packs from "../packs.js";
 import type * as presence from "../presence.js";
+import type * as questionData from "../questionData.js";
 import type * as round from "../round.js";
 import type * as users from "../users.js";
 
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   packData: typeof packData;
   packs: typeof packs;
   presence: typeof presence;
+  questionData: typeof questionData;
   round: typeof round;
   users: typeof users;
 }>;

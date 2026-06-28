@@ -54,6 +54,28 @@ export function DiscussionPhase({
 
   return (
     <Screen
+      header={
+        <div className="flex flex-col gap-3">
+          <PhaseHero
+            size="lg"
+            icon={<MessagesSquare className="size-9" />}
+            title={t.discussTitle.toUpperCase()}
+            subtitle={
+              round.gameMode === "questions" ? t.discussPromptQuestions : t.discussPrompt
+            }
+          />
+          {round.gameMode === "questions" && round.sharedPrompt && (
+            <div className="glass rounded-2xl p-4 text-center">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {t.theRealQuestion}
+              </p>
+              <p className="mt-1 text-lg font-bold leading-snug">
+                {round.sharedPrompt}
+              </p>
+            </div>
+          )}
+        </div>
+      }
       footer={
         isHost ? (
           <Button
@@ -77,14 +99,6 @@ export function DiscussionPhase({
         )
       }
     >
-      {/* Dramatic hero banner */}
-      <PhaseHero
-        size="lg"
-        icon={<MessagesSquare className="size-9" />}
-        title={t.discussTitle.toUpperCase()}
-        subtitle={t.discussPrompt}
-      />
-
       {/* Evidence list — one row per player with their clue(s). */}
       <div className="flex flex-col gap-2">
         {cluesByPlayer.map(({ player, clues }) => (

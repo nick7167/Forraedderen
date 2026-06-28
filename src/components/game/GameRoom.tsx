@@ -157,8 +157,8 @@ export function GameRoom() {
   // Joined mid-match (not dealt into this round) → wait for the next one.
   if (round.me && !round.me.isParticipant && round.phase !== "resolve") {
     return (
-      <div className="flex flex-1 flex-col">
-        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="z-20 shrink-0 bg-background/80 backdrop-blur-md">
           {header}
         </div>
         <HostGoneBanner room={room} authArgs={authArgs} />
@@ -174,7 +174,7 @@ export function GameRoom() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {banner && (
         <PhaseBanner
           emoji={banner.emoji}
@@ -182,7 +182,7 @@ export function GameRoom() {
           onDone={() => setBanner(null)}
         />
       )}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md">
+      <div className="z-20 shrink-0 bg-background/80 backdrop-blur-md">
         {header}
         {(round.phase === "clues" ||
           round.phase === "discussion" ||

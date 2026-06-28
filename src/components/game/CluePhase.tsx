@@ -51,6 +51,10 @@ export function CluePhase({
   }, [isMyTurn]);
 
   const cluesThisPass = round.clues.filter((c) => c.passNumber === round.currentPass);
+  const iAmParticipant = !!myId && round.turnOrder.some((id) => id === myId);
+  const iCluedThisPass = !!myId && cluesThisPass.some((c) => c.playerId === myId);
+  const currentName =
+    playerById(round.currentTurnPlayerId as Id<"players">)?.name ?? "…";
 
   async function send() {
     const value = text.trim();
@@ -69,27 +73,29 @@ export function CluePhase({
 
   const footer = (
     <div className="space-y-2">
-      {isMyTurn ? (
+      {iAmParticipant && !iCluedThisPass ? (
         <div className="space-y-1.5">
-          <p className="px-1 text-xs text-muted-foreground">{clueHint}</p>
+          {/* You can prepare your clue while waiting; Send unlocks on your turn. */}
+          <p className="px-1 text-xs text-muted-foreground">
+            {isMyTurn ? clueHint : t.prepareTurn.replace("{name}", currentName)}
+          </p>
           <div className="flex gap-2">
             <Input
-              autoFocus
+              autoFocus={isMyTurn}
               value={text}
               maxLength={60}
               placeholder={t.cluePlaceholder}
               onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
+              onKeyDown={(e) => e.key === "Enter" && isMyTurn && send()}
             />
-            <Button onClick={send} disabled={busy || !text.trim()}>
+            <Button onClick={send} disabled={!isMyTurn || busy || !text.trim()}>
               <Send className="size-4" />
             </Button>
           </div>
         </div>
       ) : (
         <p className="text-center text-sm text-muted-foreground">
-          {t.waitingFor}{" "}
-          <b>{playerById(round.currentTurnPlayerId as Id<"players">)?.name ?? "…"}</b>
+          {t.waitingFor} <b>{currentName}</b>
         </p>
       )}
       {isHost && round.currentTurnPlayerId && (
@@ -110,13 +116,16 @@ export function CluePhase({
   );
 
   return (
-    <Screen footer={footer}>
-      <PhaseHero
-        icon={<Lightbulb className="size-7" />}
-        title={t.cluePhase.toUpperCase()}
-        pill={`${t.pass} ${round.currentPass}/${round.cluePasses}`}
-      />
-
+    <Screen
+      header={
+        <PhaseHero
+          icon={<Lightbulb className="size-7" />}
+          title={t.cluePhase.toUpperCase()}
+          pill={`${t.pass} ${round.currentPass}/${round.cluePasses}`}
+        />
+      }
+      footer={footer}
+    >
       {/* Turn order with clue status */}
       <div className="flex flex-col gap-2">
         {round.turnOrder.map((id) => {

@@ -74,18 +74,34 @@ export function VotePhase({
     </div>
   );
 
-  return (
-    <Screen footer={footer}>
+  const header = (
+    <div className="flex flex-col gap-5">
       <PhaseHero
         icon={<Vote className="size-7" />}
         title={t.votePhase.toUpperCase()}
-        subtitle={t.voteInstruction}
+        subtitle={
+          round.gameMode === "questions"
+            ? t.voteInstructionQuestions
+            : t.voteInstruction
+        }
         pill={
           round.currentBallot > 1
             ? `${t.ballotNumber} ${round.currentBallot} · ${round.eliminatedPlayerIds.length} ${t.eliminated.toLowerCase()}`
             : undefined
         }
       />
+
+      {/* Questions mode: keep the real question in view while voting. */}
+      {round.gameMode === "questions" && round.sharedPrompt && (
+        <div className="glass rounded-2xl p-3 text-center">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t.theRealQuestion}
+          </p>
+          <p className="mt-0.5 text-base font-bold leading-snug">
+            {round.sharedPrompt}
+          </p>
+        </div>
+      )}
 
       {/* Clue recap to inform the vote */}
       <div className="glass rounded-2xl p-3">
@@ -104,7 +120,11 @@ export function VotePhase({
           })}
         </div>
       </div>
+    </div>
+  );
 
+  return (
+    <Screen header={header} footer={footer}>
       <div className="grid grid-cols-2 gap-2">
         {candidates.map((id) => {
           const p = playerById(id);

@@ -5,9 +5,14 @@ import { v } from "convex/values";
 //  - "spy":        imposter knows they're the imposter and gets no word.
 //  - "undercover": imposter secretly gets a related decoy word and is NOT told
 //                  they're the imposter.
+//  - "questions":  everyone answers a question; the imposter secretly gets a
+//                  different-but-related question and is NOT told they're the
+//                  imposter. Crew question is stored in `secretWord`, the
+//                  imposter's question in `decoyWord`, the theme in `category`.
 export const gameModeValidator = v.union(
   v.literal("spy"),
   v.literal("undercover"),
+  v.literal("questions"),
 );
 
 // Per-room game settings (host-configurable in the lobby / between rounds).

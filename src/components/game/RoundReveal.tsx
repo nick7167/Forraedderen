@@ -73,44 +73,53 @@ export function RoundReveal({
     </p>
   );
 
-  return (
-    <Screen className="items-center text-center" footer={footer}>
-      <div
-        className={cn(
-          "w-full rounded-2xl p-6 text-white",
-          crewWon
-            ? "bg-gradient-to-br from-emerald-400 to-teal-600"
-            : "bg-gradient-to-br from-red-500 to-rose-700",
-        )}
-      >
-        <p className="text-3xl font-black">
-          {crewWon ? t.crewWon : t.impostersWon}
-        </p>
-        <p className="mt-3 text-sm opacity-90">
-          {imposters.length > 1 ? t.theImpostersWere : t.theImposterWas}
-        </p>
-        <div className="mt-2 flex flex-wrap justify-center gap-3">
-          {imposters.map((p) => (
-            <div key={p._id} className="flex flex-col items-center gap-1">
-              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={48} ring />
-              <span className="text-sm font-bold">{p.name}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          <div className="inline-block rounded-xl bg-white/20 px-4 py-2">
-            <span className="text-xs opacity-80">{t.theWord}</span>
-            <p className="text-xl font-black">{reveal.secretWord}</p>
+  const header = (
+    <div
+      className={cn(
+        "w-full rounded-2xl p-6 text-center text-white",
+        crewWon
+          ? "bg-gradient-to-br from-emerald-400 to-teal-600"
+          : "bg-gradient-to-br from-red-500 to-rose-700",
+      )}
+    >
+      <p className="text-3xl font-black">
+        {crewWon ? t.crewWon : t.impostersWon}
+      </p>
+      <p className="mt-3 text-sm opacity-90">
+        {imposters.length > 1 ? t.theImpostersWere : t.theImposterWas}
+      </p>
+      <div className="mt-2 flex flex-wrap justify-center gap-3">
+        {imposters.map((p) => (
+          <div key={p._id} className="flex flex-col items-center gap-1">
+            <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={48} ring />
+            <span className="text-sm font-bold">{p.name}</span>
           </div>
-          {reveal.gameMode === "undercover" && reveal.decoyWord && (
+        ))}
+      </div>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <div className="inline-block rounded-xl bg-white/20 px-4 py-2">
+          <span className="text-xs opacity-80">
+            {reveal.gameMode === "questions" ? t.theCrewQuestion : t.theWord}
+          </span>
+          <p className="text-xl font-black">{reveal.secretWord}</p>
+        </div>
+        {(reveal.gameMode === "undercover" || reveal.gameMode === "questions") &&
+          reveal.decoyWord && (
             <div className="inline-block rounded-xl bg-black/25 px-4 py-2">
-              <span className="text-xs opacity-80">{t.imposterWordWas}</span>
+              <span className="text-xs opacity-80">
+                {reveal.gameMode === "questions"
+                  ? t.theImposterQuestion
+                  : t.imposterWordWas}
+              </span>
               <p className="text-xl font-black">{reveal.decoyWord}</p>
             </div>
           )}
-        </div>
       </div>
+    </div>
+  );
 
+  return (
+    <Screen header={header} className="items-center text-center" footer={footer}>
       {/* Vote breakdown */}
       <div className="w-full">
         <p className="mb-2 text-sm font-semibold text-muted-foreground">

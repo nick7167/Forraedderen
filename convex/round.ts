@@ -2,6 +2,7 @@ import { mutation, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { DANISH_PACKS } from "./packData";
+import { QUESTION_PAIRS } from "./questionData";
 import {
   shuffle,
   requirePlayer,
@@ -113,7 +114,6 @@ export const submitClue = mutation({
     const text = args.text.trim().slice(0, 60);
     if (text.length === 0) throw new Error("Skriv et spor.");
 
-    // Enforce sequential turn order server-side (not just in the UI).
     const existing = await ctx.db
       .query("clues")
       .withIndex("by_round", (q) => q.eq("roundId", round._id))
@@ -121,6 +121,7 @@ export const submitClue = mutation({
     const cluedThisPass = new Set(
       existing.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
     );
+    // Enforce sequential turn order server-side (not just in the UI).
     const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
     if (current !== me._id) {
       throw new Error("Det er ikke din tur endnu.");
@@ -276,19 +277,36 @@ export const getRoundState = query({
     const iAmImposter =
       isParticipant && round.imposterPlayerIds.some((id) => id === me!._id);
     const revealEverything = round.phase === "resolve";
-    // In undercover mode the imposter must NOT know they're the imposter during
-    // play — they're shown a normal word card (the decoy). The truth only comes
-    // out at the reveal.
-    const hideImposter = round.gameMode === "undercover" && !revealEverything;
+    // In undercover/questions mode the imposter must NOT know they're the
+    // imposter during play — they're shown a normal word/question card (the
+    // decoy). The truth only comes out at the reveal.
+    const hideImposter =
+      (round.gameMode === "undercover" || round.gameMode === "questions") &&
+      !revealEverything;
 
     // Whose turn / who still needs to act this pass (turn order is sequential).
     const cluedThisPass = new Set(
       clues.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
     );
+    // "questions" mode answers simultaneously (no turn order, no current turn).
     const currentTurnPlayerId =
-      round.phase === "clues"
+      round.phase === "clues" && round.gameMode !== "questions"
         ? round.turnOrder.find((id) => !cluedThisPass.has(id)) ?? null
         : null;
+
+    // In "questions" mode, answers are collected on the reveal screen. Hide
+    // everyone else's answer text until reveal ends (simultaneous reveal at
+    // discussion). You always see your own.
+    const answersHidden =
+      round.gameMode === "questions" && round.phase === "reveal";
+    const cluesOut = answersHidden
+      ? clues.map((c) => ({
+          ...c,
+          text: me && c.playerId === me._id ? c.text : "",
+        }))
+      : clues;
+    // Who has submitted an answer this pass (for the answer-phase roster).
+    const answeredPlayerIds = [...cluedThisPass];
 
     // Voting status (who has voted, not who they voted for — secret).
     const ballotVotes =
@@ -331,9 +349,9 @@ export const getRoundState = query({
     if (!isParticipant && !revealEverything) {
       myWord = null; // spectator / not dealt into this round
     } else if (revealEverything || !iAmImposter) {
-      myWord = round.secretWord; // crew (and everyone at reveal) see the real word
-    } else if (round.gameMode === "undercover") {
-      myWord = round.decoyWord ?? null; // hidden imposter sees the decoy
+      myWord = round.secretWord; // crew (and everyone at reveal) see the real word/question
+    } else if (round.gameMode === "undercover" || round.gameMode === "questions") {
+      myWord = round.decoyWord ?? null; // hidden imposter sees the decoy word/question
     } else {
       myWord = null; // spy imposter knows no word
     }
@@ -341,6 +359,18 @@ export const getRoundState = query({
     // Everyone in the round can always see the category — crew and imposters
     // alike. (The secret word is still gated by role/mode above.)
     const categoryVisible = revealEverything || isParticipant;
+
+    // "questions" mode: the real (crew) question becomes public from the
+    // discussion phase onward, so everyone — including the in-the-dark imposter —
+    // can judge which answer doesn't fit. (This reveals the question, never who
+    // the imposter is.)
+    const sharedPrompt =
+      round.gameMode === "questions" &&
+      (round.phase === "discussion" ||
+        round.phase === "vote" ||
+        round.phase === "resolve")
+        ? round.secretWord
+        : null;
 
     return {
       roundId: round._id,
@@ -351,12 +381,14 @@ export const getRoundState = query({
       cluePasses: round.cluePasses,
       currentBallot: round.currentBallot,
       category: categoryVisible ? round.category : null,
+      sharedPrompt,
       turnOrder: round.turnOrder,
       readyPlayerIds: round.readyPlayerIds ?? [],
       currentTurnPlayerId,
       eliminatedPlayerIds: round.eliminatedPlayerIds,
       phaseDeadline: round.phaseDeadline ?? null,
-      clues,
+      clues: cluesOut,
+      answeredPlayerIds,
       votedPlayerIds,
       players: allPlayers
         .sort((a, b) => a.joinedAt - b.joinedAt)
@@ -478,7 +510,8 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
     // reveal screen and the round auto-begins once everyone is ready.
     readyPlayerIds: players.filter((p) => p.isBot).map((p) => p._id),
     gameMode: s.gameMode,
-    cluePasses: s.cluePasses,
+    // "questions" mode is a single simultaneous answer round.
+    cluePasses: s.gameMode === "questions" ? 1 : s.cluePasses,
     imposterSeesCategory: s.imposterSeesCategory,
     impostersKnowEachOther: s.impostersKnowEachOther,
     phase: "reveal",
@@ -501,6 +534,15 @@ async function pickWords(
   ctx: QueryCtx,
   room: Doc<"rooms">,
 ): Promise<{ word: string; category: string; decoyWord?: string }> {
+  // "questions" mode draws a crew/imposter question pair from the flat pool.
+  // We reuse secretWord (crew question) + decoyWord (imposter question); there
+  // are no categories in this mode, so category is left empty.
+  if (room.settings.gameMode === "questions") {
+    const pair =
+      QUESTION_PAIRS[Math.floor(Math.random() * QUESTION_PAIRS.length)];
+    return { word: pair.crew, category: "", decoyWord: pair.imposter };
+  }
+
   // Resolve a {name, words[]} pack to draw from.
   let category: string;
   let words: string[];
@@ -535,7 +577,50 @@ async function pickWords(
   return { word, category, decoyWord };
 }
 
-/** Move room/round from reveal → clues (called by client once cards seen). */
+/**
+ * "questions" mode: leave the reveal screen for the discussion. Answers were
+ * collected as players readied up; fill any still missing (bots get a filler
+ * answer, force-skipped humans get "—") so the discussion shows one per player.
+ */
+async function startDiscussion(
+  ctx: MutationCtx,
+  room: Doc<"rooms">,
+  round: Doc<"rounds">,
+) {
+  const clues = await ctx.db
+    .query("clues")
+    .withIndex("by_round", (q) => q.eq("roundId", round._id))
+    .collect();
+  const answered = new Set(
+    clues.filter((c) => c.passNumber === 1).map((c) => c.playerId),
+  );
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_room", (q) => q.eq("roomId", room._id))
+    .collect();
+  const isBot = (id: Id<"players">) =>
+    players.find((p) => p._id === id)?.isBot === true;
+
+  for (const id of round.turnOrder) {
+    if (answered.has(id)) continue;
+    await ctx.db.insert("clues", {
+      roundId: round._id,
+      playerId: id,
+      passNumber: 1,
+      text: isBot(id) ? await botClueText(ctx, room, round) : "—",
+      createdAt: Date.now(),
+    });
+  }
+
+  await ctx.db.patch(round._id, { phase: "discussion", phaseDeadline: undefined });
+  await ctx.db.patch(room._id, { phase: "discussion" });
+  scheduleBotTick(ctx, room._id, round._id);
+}
+
+/**
+ * Host force-start from the reveal screen. Clue modes go to the clue phase;
+ * "questions" mode goes straight to discussion (answers are gathered at reveal).
+ */
 export const beginClues = mutation({
   args: { ...hostArgs(), roundId: v.id("rounds") },
   handler: async (ctx, args) => {
@@ -543,6 +628,10 @@ export const beginClues = mutation({
     const round = await ctx.db.get(args.roundId);
     if (round === null || round.roomId !== room._id) throw new Error("Ugyldig runde.");
     if (round.phase !== "reveal") return;
+    if (round.gameMode === "questions") {
+      await startDiscussion(ctx, room, round);
+      return;
+    }
     await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
     await ctx.db.patch(room._id, { phase: "clues" });
     scheduleBotTick(ctx, room._id, round._id);
@@ -550,12 +639,17 @@ export const beginClues = mutation({
 });
 
 /**
- * A player taps "ready" on the reveal screen. Once every participant is ready
- * the round auto-advances to the clue phase. (The host can still force-start
- * via beginClues.)
+ * A player taps "ready" on the reveal screen. In "questions" mode this also
+ * carries their answer (typed on the reveal screen). Once every participant is
+ * ready the round auto-advances: clue modes → clue phase; questions →
+ * discussion. (The host can still force-start via beginClues.)
  */
 export const markReady = mutation({
-  args: { ...playerArgs(), roundId: v.id("rounds") },
+  args: {
+    ...playerArgs(),
+    roundId: v.id("rounds"),
+    answerText: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const me = await requirePlayer(ctx, args);
     const { room, round } = await loadActiveRound(ctx, args.roomId, args.roundId);
@@ -563,12 +657,38 @@ export const markReady = mutation({
     // Only participants (dealt into this round) ready up; spectators wait.
     if (!round.turnOrder.some((id) => id === me._id)) return;
 
+    // "questions" mode: record the player's answer (once) as they ready up.
+    if (round.gameMode === "questions") {
+      const text = (args.answerText ?? "").trim().slice(0, 60);
+      if (text.length === 0) throw new Error("Skriv dit svar.");
+      const existing = await ctx.db
+        .query("clues")
+        .withIndex("by_round", (q) => q.eq("roundId", round._id))
+        .collect();
+      const alreadyAnswered = existing.some(
+        (c) => c.passNumber === 1 && c.playerId === me._id,
+      );
+      if (!alreadyAnswered) {
+        await ctx.db.insert("clues", {
+          roundId: round._id,
+          playerId: me._id,
+          passNumber: 1,
+          text,
+          createdAt: Date.now(),
+        });
+      }
+    }
+
     const ready = new Set(round.readyPlayerIds ?? []);
     ready.add(me._id);
     await ctx.db.patch(round._id, { readyPlayerIds: [...ready] });
 
-    // Everyone ready → begin the clue phase (mirrors beginClues).
+    // Everyone ready → advance (mirrors beginClues).
     if (round.turnOrder.every((id) => ready.has(id))) {
+      if (round.gameMode === "questions") {
+        await startDiscussion(ctx, room, round);
+        return;
+      }
       await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
       await ctx.db.patch(room._id, { phase: "clues" });
       scheduleBotTick(ctx, room._id, round._id);
@@ -801,6 +921,12 @@ async function botClueText(
   room: Doc<"rooms">,
   round: Doc<"rounds">,
 ): Promise<string> {
+  // "questions" mode: there are no predefined answers — real players type their
+  // own. Bots are just filler, so they pick a generic one-word answer.
+  if (round.gameMode === "questions") {
+    return BOT_FILLER[Math.floor(Math.random() * BOT_FILLER.length)];
+  }
+
   // Words for the round's category — works for random games (matched against the
   // DANISH_PACKS constant by name) and pinned built-in/custom packs (the table).
   let words: string[] | null = null;
@@ -851,7 +977,6 @@ export const botTick = internalMutation({
     }
 
     if (round.phase === "clues") {
-      // Whose turn is it? (first in order without a clue this pass)
       const cluesNow = await ctx.db
         .query("clues")
         .withIndex("by_round", (q) => q.eq("roundId", round._id))
@@ -859,6 +984,8 @@ export const botTick = internalMutation({
       const cluedThisPass = new Set(
         cluesNow.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
       );
+
+      // Whose turn is it? (first in order without a clue this pass)
       const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
       if (current === undefined || !isBot(current)) return; // human's turn → wait
 
