@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Forræderen — Riso Pop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4efe1;
+    --paper-d:#e7e0cc;
+    --ink:#171514;
+    --blue:#2b43d6;
+    --pink:#ff2d72;
+    --orange:#ff6b2c;
+    --teal:#10b6a0;
+    --yellow:#ffd23d;
+    --muted:#6f6a5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    color:var(--ink);min-height:100vh;padding:48px 24px 80px;
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(23,21,20,.07) 1px, transparent 0);
+    background-size:5px 5px;
+  }
+  .page-head{max-width:1200px;margin:0 auto 40px;text-align:center}
+  .eyebrow{letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:var(--pink);font-weight:700;margin-bottom:14px}
+  .page-head h1{font-family:'Archivo Black';font-size:clamp(48px,9vw,96px);line-height:.86;text-transform:uppercase;letter-spacing:-.02em;
+    color:var(--blue);text-shadow:4px 4px 0 var(--pink)}
+  .page-head p{margin:22px auto 0;max-width:560px;color:var(--muted);font-size:15px;line-height:1.6;font-weight:500}
+  .back{display:inline-block;margin-top:26px;color:var(--ink);text-decoration:none;font-weight:700;font-size:14px;background:var(--yellow);border:2.5px solid var(--ink);padding:11px 22px;box-shadow:4px 4px 0 var(--ink)}
+
+  .gallery{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:46px;justify-items:center}
+
+  .phone{width:340px;border-radius:8px;padding:12px;position:relative;
+    background:var(--ink);box-shadow:8px 8px 0 rgba(43,67,214,.35)}
+  .screen{border-radius:3px;overflow:hidden;position:relative;height:680px;display:flex;flex-direction:column;
+    background:var(--paper);
+    background-image:radial-gradient(circle at 1px 1px, rgba(23,21,20,.06) 1px, transparent 0);background-size:5px 5px}
+  .scr-label{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:5;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--paper);background:var(--ink);padding:5px 14px}
+  .pad{padding:54px 20px 20px;display:flex;flex-direction:column;height:100%;gap:14px;position:relative;z-index:2}
+
+  .badge{align-self:center;background:var(--pink);color:var(--paper);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+  .wordmark{font-family:'Archivo Black';font-size:34px;text-align:center;text-transform:uppercase;line-height:.9;color:var(--blue);letter-spacing:-.02em}
+  .wordmark span{color:var(--pink)}
+  .sub{text-align:center;color:var(--ink);font-size:13px;font-weight:600}
+
+  .card{background:var(--paper);border:2.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+  .field{padding:11px 14px}
+  .field .lab{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:3px}
+  .field .val{font-size:17px;font-weight:700}
+  .field .ph{font-size:15px;color:var(--muted);font-weight:500}
+
+  .seg{display:flex;border:2.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+  .seg button{flex:1;border:0;background:var(--paper);color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;padding:11px;cursor:pointer}
+  .seg button.on{background:var(--blue);color:var(--paper)}
+  .seg button+button{border-left:2.5px solid var(--ink)}
+
+  .code-row{display:flex;gap:7px;justify-content:center}
+  .code-row span{width:44px;height:54px;display:grid;place-items:center;font-family:'Archivo Black';font-size:24px;color:var(--paper);background:var(--blue);border:2.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+
+  .btn{border:2.5px solid var(--ink);padding:15px;font-family:'Space Grotesk';font-weight:700;font-size:15px;cursor:pointer;width:100%;box-shadow:5px 5px 0 var(--ink)}
+  .btn-blue{background:var(--blue);color:var(--paper)}
+  .btn-pink{background:var(--pink);color:var(--paper)}
+  .btn-teal{background:var(--teal);color:var(--paper)}
+  .btn-ghost{background:var(--paper);color:var(--ink)}
+
+  .avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:21px;flex:none;border:2.5px solid var(--ink)}
+
+  .roster{display:flex;flex-direction:column;gap:9px;overflow:auto}
+  .pl{display:flex;align-items:center;gap:11px;background:var(--paper);border:2.5px solid var(--ink);padding:8px 11px;box-shadow:3px 3px 0 var(--ink)}
+  .pl .nm{font-size:14px;font-weight:700;flex:1}
+  .tag{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border:2px solid var(--ink)}
+  .tag.host{background:var(--yellow)}
+  .tag.you{background:var(--teal);color:var(--paper)}
+  .tag.bot{background:var(--paper-d)}
+  .check{width:24px;height:24px;background:var(--teal);color:var(--paper);display:grid;place-items:center;font-weight:700;border:2px solid var(--ink)}
+
+  .spacer{flex:1}
+  .section-t{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);text-align:center}
+
+  .reveal-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);position:relative}
+  .reveal-imposter{background:var(--pink)}
+  .reveal-crew{background:var(--teal)}
+  .reveal-card::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px, rgba(0,0,0,.12) 1px, transparent 0);background-size:5px 5px;pointer-events:none}
+  .mask{font-size:60px;position:relative;z-index:2}
+  .reveal-role{font-family:'Archivo Black';font-size:22px;text-transform:uppercase;color:var(--paper);position:relative;z-index:2;line-height:1}
+  .reveal-word{font-family:'Archivo Black';font-size:40px;text-transform:uppercase;color:var(--paper);position:relative;z-index:2;text-shadow:3px 3px 0 var(--ink)}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--paper);border:2px solid var(--ink);padding:5px 12px;position:relative;z-index:2}
+  .reveal-hint{font-size:12px;font-weight:600;color:var(--paper);max-width:210px;line-height:1.45;position:relative;z-index:2}
+
+  .clue{display:flex;gap:11px;align-items:center;background:var(--paper);border:2.5px solid var(--ink);padding:9px 11px;box-shadow:3px 3px 0 var(--ink)}
+  .clue .who{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em}
+  .clue .txt{font-family:'Archivo Black';font-size:17px;text-transform:uppercase}
+  .turn-banner{border:2.5px solid var(--ink);background:var(--yellow);padding:13px;text-align:center;box-shadow:4px 4px 0 var(--ink)}
+  .turn-banner b{font-family:'Archivo Black';font-size:18px;text-transform:uppercase}
+
+  .cand{display:flex;align-items:center;gap:11px;background:var(--paper);border:2.5px solid var(--ink);padding:9px 11px;box-shadow:3px 3px 0 var(--ink)}
+  .cand.sel{background:var(--blue);color:var(--paper)}
+  .cand.sel .avatar{border-color:var(--paper)}
+  .cand .nm{flex:1;font-weight:700;font-size:14px}
+  .cnt{font-family:'Archivo Black';font-size:20px;min-width:30px;text-align:center}
+  .cnt small{display:block;font-family:'Space Grotesk';font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-top:6px}
+  .pod{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .pod .av{position:relative}
+  .pod .medal{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);font-size:18px}
+  .pod .nm{font-size:12px;font-weight:700}
+  .pod .bar{width:100%;display:grid;place-items:start center;padding-top:8px;font-family:'Archivo Black';font-size:18px;color:var(--paper);border:2.5px solid var(--ink);border-bottom:0}
+  .bar.g{background:var(--yellow);color:var(--ink)}
+  .bar.s{background:var(--blue)}
+  .bar.b{background:var(--orange)}
+  .win-banner{text-align:center}
+  .win-banner .big{font-family:'Archivo Black';font-size:26px;text-transform:uppercase;color:var(--blue)}
+  .lb{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;padding:8px 10px;border:2.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink);margin-top:8px;background:var(--paper)}
+  .lb .rk{font-family:'Archivo Black';color:var(--pink);width:18px}
+  .lb .nm{flex:1;font-weight:700}
+  .lb .pt{color:var(--muted);font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <div class="eyebrow">Forræderen · Designretning 04</div>
+    <h1>Riso<br>Pop</h1>
+    <p>Risograph-tryk på varmt papir. Fed duotone-overprint i el-blå &amp; fluor-pink, raster-korn, tykke konturer og kassefed display-skrift. Retro-print-energi, premium gennem skarp, behersket art direction.</p>
+    <a class="back" href="index.html">← Alle designretninger</a>
+  </div>
+
+  <div class="gallery">
+
+    <!-- HOME -->
+    <div class="phone"><div class="screen"><div class="scr-label">Forside</div><div class="pad">
+      <div class="badge">Socialt bedrag</div>
+      <div style="font-size:48px;text-align:center">🕵️</div>
+      <div class="wordmark">Forr<span>æ</span>deren</div>
+      <div class="sub">Find forræderen — eller overlev som den.</div>
+      <div class="spacer"></div>
+      <div class="seg"><button class="on">Opret</button><button>Deltag</button></div>
+      <div class="card field"><div class="lab">Dit navn</div><div class="val">Cæcilie</div></div>
+      <div class="section-t">Vælg avatar</div>
+      <div style="display:flex;gap:9px;justify-content:center">
+        <div class="avatar" style="background:var(--pink)">🦊</div>
+        <div class="avatar" style="background:var(--blue);outline:3px solid var(--ink);outline-offset:3px">🦉</div>
+        <div class="avatar" style="background:var(--yellow)">🐺</div>
+        <div class="avatar" style="background:var(--teal)">🦅</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-blue">Opret spil</button>
+    </div></div></div>
+
+    <!-- LOBBY -->
+    <div class="phone"><div class="screen"><div class="scr-label">Lobby</div><div class="pad">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark" style="font-size:26px">Lobby</div>
+        <div class="code-row" style="gap:4px">
+          <span style="width:28px;height:36px;font-size:16px">A</span><span style="width:28px;height:36px;font-size:16px">B</span><span style="width:28px;height:36px;font-size:16px">3</span><span style="width:28px;height:36px;font-size:16px">K</span>
+        </div>
+      </div>
+      <div class="sub">Del koden med dine venner</div>
+      <div class="section-t">Spillere · 6</div>
+      <div class="roster">
+        <div class="pl"><div class="avatar" style="background:var(--blue)">🦉</div><div class="nm">Cæcilie</div><div class="tag host">👑 Vært</div></div>
+        <div class="pl"><div class="avatar" style="background:var(--pink)">🦊</div><div class="nm">Frederik</div><div class="check">✓</div></div>
+        <div class="pl"><div class="avatar" style="background:var(--yellow)">🐺</div><div class="nm">Sofie</div><div class="check">✓</div></div>
+        <div class="pl"><div class="avatar" style="background:var(--teal)">🦅</div><div class="nm">Mathias</div><div class="check">✓</div></div>
+        <div class="pl"><div class="avatar" style="background:var(--orange)">🐢</div><div class="nm">Laura</div><div class="tag you">Dig</div></div>
+        <div class="pl"><div class="avatar" style="background:var(--paper-d)">🤖</div><div class="nm">Robo-Rasmus</div><div class="tag bot">Bot</div></div>
+      </div>
+      <button class="btn btn-ghost">+ Tilføj bot</button>
+      <button class="btn btn-blue">Start spil</button>
+    </div></div></div>
+
+    <!-- REVEAL -->
+    <div class="phone"><div class="screen"><div class="scr-label">Rolle</div><div class="pad">
+      <div class="section-t">Din rolle</div>
+      <div class="reveal-card reveal-crew">
+        <div class="mask">🦉</div>
+        <div class="reveal-role">Du er i besætningen</div>
+        <div class="pill">Kategori · Byer i verden</div>
+        <div style="font-size:11px;font-weight:700;color:var(--paper);text-transform:uppercase;letter-spacing:.1em;position:relative;z-index:2">Ordet er</div>
+        <div class="reveal-word">Venedig</div>
+        <div class="reveal-hint">Giv et bredt spor — tydeligt for de andre, men ikke for forræderen.</div>
+      </div>
+      <div class="section-t">4 / 6 klar</div>
+      <button class="btn btn-teal">Klar ✓</button>
+    </div></div></div>
+
+    <!-- CLUES -->
+    <div class="phone"><div class="screen"><div class="scr-label">Spor</div><div class="pad">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark" style="font-size:26px">Spor</div>
+        <div class="tag host">Runde 2 / 3</div>
+      </div>
+      <div class="turn-banner">Det er turen til<br><b>Sofie</b> tænker…</div>
+      <div class="section-t">Sporene indtil nu</div>
+      <div class="roster">
+        <div class="clue"><div class="avatar" style="background:var(--blue);width:34px;height:34px">🦉</div><div><div class="who">Cæcilie</div><div class="txt">Kanaler</div></div></div>
+        <div class="clue"><div class="avatar" style="background:var(--pink);width:34px;height:34px">🦊</div><div><div class="who">Frederik</div><div class="txt">Maske</div></div></div>
+        <div class="clue"><div class="avatar" style="background:var(--teal);width:34px;height:34px">🦅</div><div><div class="who">Mathias</div><div class="txt">Gondol</div></div></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card field"><div class="lab">Dit spor</div><div class="ph">Ét ord eller kort spor…</div></div>
+      <button class="btn btn-blue">Send spor</button>
+    </div></div></div>
+
+    <!-- VOTE -->
+    <div class="phone"><div class="screen"><div class="scr-label">Afstemning</div><div class="pad">
+      <div style="text-align:center">
+        <div class="wordmark" style="font-size:25px">Hvem er<br>forræderen?</div>
+        <div class="sub" style="margin-top:6px">Tryk for at stemme — skift når som helst</div>
+      </div>
+      <div class="roster" style="gap:10px;margin-top:4px">
+        <div class="cand"><div class="avatar" style="background:var(--pink)">🦊</div><div class="nm">Frederik</div><div class="cnt">2<small>stemmer</small></div></div>
+        <div class="cand sel"><div class="avatar" style="background:var(--yellow)">🐺</div><div class="nm">Sofie</div><div class="cnt">3<small>stemmer</small></div></div>
+        <div class="cand"><div class="avatar" style="background:var(--teal)">🦅</div><div class="nm">Mathias</div><div class="cnt">0<small>stemmer</small></div></div>
+        <div class="cand"><div class="avatar" style="background:var(--orange)">🐢</div><div class="nm">Laura</div><div class="cnt">1<small>stemmer</small></div></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="section-t">Du har stemt på Sofie</div>
+      <button class="btn btn-ghost">Skift stemme</button>
+    </div></div></div>
+
+    <!-- RESULTS -->
+    <div class="phone"><div class="screen"><div class="scr-label">Slutresultat</div><div class="pad">
+      <div class="win-banner">
+        <div class="mask" style="font-size:46px">🎉</div>
+        <div class="big">Besætningen vandt!</div>
+        <div class="sub" style="margin-top:4px">Forræderen var <b style="color:var(--pink)">Sofie</b></div>
+      </div>
+      <div class="podium">
+        <div class="pod"><div class="av"><div class="avatar" style="background:var(--pink)">🦊</div><div class="medal">🥈</div></div><div class="nm">Frederik</div><div class="bar s" style="height:70px">8</div></div>
+        <div class="pod"><div class="av"><div class="avatar" style="background:var(--blue);width:50px;height:50px">🦉</div><div class="medal">🥇</div></div><div class="nm">Cæcilie</div><div class="bar g" style="height:100px">11</div></div>
+        <div class="pod"><div class="av"><div class="avatar" style="background:var(--orange)">🐢</div><div class="medal">🥉</div></div><div class="nm">Laura</div><div class="bar b" style="height:54px">6</div></div>
+      </div>
+      <div class="lb"><span class="rk">4</span><div class="avatar" style="background:var(--teal);width:28px;height:28px">🦅</div><span class="nm">Mathias</span><span class="pt">5 point</span></div>
+      <div class="lb"><span class="rk">5</span><div class="avatar" style="background:var(--yellow);width:28px;height:28px">🐺</div><span class="nm">Sofie</span><span class="pt">3 point</span></div>
+      <div class="spacer"></div>
+      <button class="btn btn-pink">Spil igen</button>
+    </div></div></div>
+
+  </div>
+</body>
+</html>

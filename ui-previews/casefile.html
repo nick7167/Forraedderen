@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Forræderen — Casefile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0a0a0c;
+    --panel:#131318;
+    --panel2:#1b1b22;
+    --coral:#ff5a3c;
+    --coral-d:#e23d20;
+    --amber:#ffb44d;
+    --paper:#e9e2d0;
+    --paper-d:#c9bfa6;
+    --string:#d63b2f;
+    --line:#2a2a33;
+    --muted:#8a8a98;
+    --green:#37d68a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:
+      radial-gradient(800px 500px at 50% -10%, #1a1a22 0%, transparent 60%),
+      repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px),
+      #0a0a0c;
+    color:var(--paper);min-height:100vh;padding:48px 24px 80px;
+  }
+  .page-head{max-width:1200px;margin:0 auto 40px;text-align:center}
+  .eyebrow{font-family:'Special Elite';letter-spacing:.2em;font-size:12px;color:var(--coral);margin-bottom:14px}
+  .page-head h1{font-family:'Oswald';font-weight:700;font-size:clamp(48px,8vw,88px);text-transform:uppercase;letter-spacing:.04em;line-height:.92}
+  .page-head h1 span{color:var(--coral)}
+  .page-head p{margin:18px auto 0;max-width:560px;color:var(--muted);font-size:15px;line-height:1.6}
+  .redact{display:inline-block;background:var(--paper);color:var(--paper);padding:0 6px;border-radius:2px}
+  .back{display:inline-block;margin-top:26px;color:var(--paper);text-decoration:none;font-family:'Special Elite';font-size:13px;border:1px solid var(--line);padding:9px 20px;border-radius:4px}
+  .back:hover{border-color:var(--coral);color:var(--coral)}
+
+  .gallery{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:42px;justify-items:center}
+
+  .phone{width:340px;border-radius:42px;padding:13px;position:relative;
+    background:linear-gradient(160deg,#26262e,#0e0e12);
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 40px 80px -30px #000,0 0 0 1px #000}
+  .screen{border-radius:32px;overflow:hidden;position:relative;height:680px;display:flex;flex-direction:column;
+    background:
+      radial-gradient(420px 280px at 50% 0%, rgba(255,90,60,.10) 0%, transparent 60%),
+      linear-gradient(180deg,#121217,#0a0a0c);}
+  .screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.6) 100%)}
+  .scr-label{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:5;font-family:'Special Elite';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);background:rgba(10,10,12,.7);border:1px solid var(--line);padding:5px 14px;border-radius:4px}
+  .pad{padding:54px 22px 22px;display:flex;flex-direction:column;height:100%;gap:14px;position:relative;z-index:2}
+
+  .stamp{font-family:'Special Elite';color:var(--coral);border:2px solid var(--coral);display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;transform:rotate(-4deg);opacity:.85;align-self:center}
+  .wordmark{font-family:'Oswald';font-weight:700;font-size:32px;text-align:center;text-transform:uppercase;letter-spacing:.06em}
+  .wordmark span{color:var(--coral)}
+  .sub{text-align:center;color:var(--muted);font-family:'Special Elite';font-size:12px}
+
+  .field{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:11px 14px;border-left:3px solid var(--coral)}
+  .field .lab{font-family:'Special Elite';font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+  .field .val{font-size:16px;font-weight:600}
+  .field .ph{font-size:15px;color:var(--muted)}
+
+  .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{flex:1;border:0;background:var(--panel);color:var(--muted);font-family:'Oswald';font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:.06em;padding:11px;cursor:pointer}
+  .seg button.on{background:var(--coral);color:#0a0a0c}
+
+  .code-row{display:flex;gap:7px;justify-content:center}
+  .code-row span{width:44px;height:54px;border-radius:4px;display:grid;place-items:center;font-family:'Oswald';font-weight:700;font-size:26px;color:var(--coral);background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--coral)}
+
+  .btn{border:0;border-radius:6px;padding:15px;font-family:'Oswald';font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;width:100%}
+  .btn-coral{background:var(--coral);color:#0a0a0c;box-shadow:0 0 30px -8px rgba(255,90,60,.7)}
+  .btn-ghost{background:transparent;color:var(--paper);border:1px solid var(--line)}
+
+  /* polaroid avatars */
+  .avatar{width:42px;height:42px;border-radius:4px;display:grid;place-items:center;font-size:21px;flex:none;background:#222;border:2px solid var(--paper);box-shadow:0 3px 8px rgba(0,0,0,.6)}
+
+  .roster{display:flex;flex-direction:column;gap:9px;overflow:auto}
+  .pl{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 11px}
+  .pl .nm{font-size:14px;font-weight:600;flex:1;font-family:'Special Elite'}
+  .tag{font-family:'Special Elite';font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--line);padding:3px 8px;border-radius:3px}
+  .tag.you{color:var(--green);border-color:rgba(55,214,138,.4)}
+  .check{color:var(--green);font-size:15px}
+
+  .spacer{flex:1}
+  .section-t{font-family:'Special Elite';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);text-align:center}
+
+  .reveal-card{flex:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;position:relative;background:var(--panel);border:1px solid var(--line)}
+  .reveal-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 35%, rgba(255,90,60,.14), transparent 60%)}
+  .reveal-imposter{border-color:rgba(255,90,60,.5)}
+  .reveal-crew{border-color:rgba(55,214,138,.45)}
+  .mask{font-size:58px;position:relative;z-index:2;filter:grayscale(.2) drop-shadow(0 0 24px rgba(255,90,60,.4))}
+  .reveal-role{font-family:'Oswald';font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.05em;position:relative;z-index:2}
+  .reveal-imposter .reveal-role{color:var(--coral)}
+  .reveal-crew .reveal-role{color:var(--green)}
+  .reveal-word{font-family:'Oswald';font-weight:700;font-size:38px;letter-spacing:.08em;color:var(--paper);position:relative;z-index:2}
+  .pill{font-family:'Special Elite';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--line);padding:5px 12px;border-radius:3px;position:relative;z-index:2}
+  .reveal-hint{font-size:12px;color:var(--muted);max-width:210px;line-height:1.5;position:relative;z-index:2}
+
+  .clue{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 11px;position:relative}
+  .clue::before{content:"●";position:absolute;left:-4px;top:50%;transform:translateY(-50%);color:var(--string);font-size:8px}
+  .clue .who{font-family:'Special Elite';font-size:11px;color:var(--amber)}
+  .clue .txt{font-family:'Oswald';font-weight:500;font-size:17px;letter-spacing:.04em}
+  .turn-banner{border:1px dashed var(--coral);border-radius:6px;padding:13px;text-align:center;background:rgba(255,90,60,.06)}
+  .turn-banner b{font-family:'Oswald';font-weight:700;font-size:19px;text-transform:uppercase;color:var(--coral)}
+
+  .cand{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 11px}
+  .cand.sel{border-color:var(--coral);box-shadow:0 0 24px -10px rgba(255,90,60,.8)}
+  .cand .nm{flex:1;font-weight:600;font-size:14px;font-family:'Special Elite'}
+  .cnt{font-family:'Oswald';font-weight:700;font-size:20px;color:var(--coral);min-width:30px;text-align:center}
+  .cnt small{display:block;font-family:'Special Elite';font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:.08em}
+
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-top:6px}
+  .pod{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .pod .av{position:relative}
+  .pod .medal{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);font-size:18px}
+  .pod .nm{font-family:'Special Elite';font-size:11px}
+  .pod .bar{width:100%;border-radius:4px 4px 0 0;background:var(--panel2);border:1px solid var(--line);border-bottom:0;border-top:2px solid var(--amber);display:grid;place-items:start center;padding-top:8px;font-family:'Oswald';font-weight:700;font-size:18px;color:var(--amber)}
+  .win-banner{text-align:center}
+  .win-banner .big{font-family:'Oswald';font-weight:700;font-size:26px;text-transform:uppercase;color:var(--green)}
+  .lb{display:flex;align-items:center;gap:10px;font-size:13px;padding:7px 8px;border-bottom:1px solid var(--line);font-family:'Special Elite'}
+  .lb .rk{color:var(--coral);width:18px}
+  .lb .nm{flex:1}
+  .lb .pt{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <div class="eyebrow">Forræderen · Sag nr. 03</div>
+    <h1>Case<span>file</span></h1>
+    <p>Filmisk noir-efterforskning. Kulsort med én glødende koral-accent, opslagstavle med rød snor, polaroid-avatarer og skrivemaskine-skrift. Mystik der passer perfekt til spillet.</p>
+    <a class="back" href="index.html">← Alle designretninger</a>
+  </div>
+
+  <div class="gallery">
+
+    <!-- HOME -->
+    <div class="phone"><div class="screen"><div class="scr-label">Forside</div><div class="pad">
+      <div class="stamp">Fortroligt</div>
+      <div class="mask" style="font-size:48px;text-align:center;display:block">🕵️</div>
+      <div class="wordmark">Forr<span>æ</span>deren</div>
+      <div class="sub">Find forræderen — eller overlev som den.</div>
+      <div class="spacer"></div>
+      <div class="seg"><button class="on">Opret</button><button>Deltag</button></div>
+      <div class="field"><div class="lab">Dit navn</div><div class="val">Cæcilie</div></div>
+      <div class="section-t">Vælg avatar</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <div class="avatar" style="background:#3a2222">🦊</div>
+        <div class="avatar" style="background:#22323a;outline:2px solid var(--coral);outline-offset:2px">🦉</div>
+        <div class="avatar" style="background:#2a2238">🐺</div>
+        <div class="avatar" style="background:#38322a">🦅</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-coral">Opret sag</button>
+    </div></div></div>
+
+    <!-- LOBBY -->
+    <div class="phone"><div class="screen"><div class="scr-label">Lobby</div><div class="pad">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark" style="font-size:22px">Lobby</div>
+        <div class="code-row" style="gap:4px">
+          <span style="width:28px;height:36px;font-size:16px">A</span><span style="width:28px;height:36px;font-size:16px">B</span><span style="width:28px;height:36px;font-size:16px">3</span><span style="width:28px;height:36px;font-size:16px">K</span>
+        </div>
+      </div>
+      <div class="sub">Del koden med dine mistænkte</div>
+      <div class="section-t">Mistænkte · 6</div>
+      <div class="roster">
+        <div class="pl"><div class="avatar" style="background:#22323a">🦉</div><div class="nm">Cæcilie</div><div class="tag">👑 Vært</div></div>
+        <div class="pl"><div class="avatar" style="background:#3a2222">🦊</div><div class="nm">Frederik</div><div class="check">✓</div></div>
+        <div class="pl"><div class="avatar" style="background:#2a2238">🐺</div><div class="nm">Sofie</div><div class="check">✓</div></div>
+        <div class="pl"><div class="avatar" style="background:#38322a">🦅</div><div class="nm">Mathias</div><div class="check">✓</div></div>
+        <div class="pl"><div class="avatar" style="background:#223a30">🐢</div><div class="nm">Laura</div><div class="tag you">dig</div></div>
+        <div class="pl"><div class="avatar" style="background:#2c2c34">🤖</div><div class="nm">Agent Bot</div><div class="tag">Bot</div></div>
+      </div>
+      <button class="btn btn-ghost">+ Tilføj bot</button>
+      <button class="btn btn-coral">Start spil</button>
+    </div></div></div>
+
+    <!-- REVEAL -->
+    <div class="phone"><div class="screen"><div class="scr-label">Klassificeret</div><div class="pad">
+      <div class="section-t">Din rolle</div>
+      <div class="reveal-card reveal-imposter">
+        <div class="mask">🎭</div>
+        <div class="reveal-role">Du er forræderen</div>
+        <div class="pill">Kategori · Byer i verden</div>
+        <div class="reveal-hint">Du kender ikke ordet. Lyt til de andre og bluf et spor — bliv ikke afsløret.</div>
+        <div style="display:flex;gap:6px;margin-top:4px;position:relative;z-index:2">
+          <div class="avatar" style="background:#2a2238;width:32px;height:32px">🐺</div>
+        </div>
+        <div style="font-family:'Special Elite';font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--coral);position:relative;z-index:2">Din medforræder</div>
+      </div>
+      <div class="section-t">3 / 6 klar</div>
+      <button class="btn btn-coral">Klar</button>
+    </div></div></div>
+
+    <!-- CLUES -->
+    <div class="phone"><div class="screen"><div class="scr-label">Beviser</div><div class="pad">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark" style="font-size:22px">Spor</div>
+        <div class="tag">Runde 2 / 3</div>
+      </div>
+      <div class="turn-banner">Det er turen til<br><b>Sofie</b> <span style="color:var(--muted);font-family:'Special Elite';font-size:12px">tænker…</span></div>
+      <div class="section-t">Indsamlede spor</div>
+      <div class="roster">
+        <div class="clue"><div class="avatar" style="background:#22323a;width:32px;height:32px">🦉</div><div><div class="who">Cæcilie</div><div class="txt">KANALER</div></div></div>
+        <div class="clue"><div class="avatar" style="background:#3a2222;width:32px;height:32px">🦊</div><div><div class="who">Frederik</div><div class="txt">MASKE</div></div></div>
+        <div class="clue"><div class="avatar" style="background:#38322a;width:32px;height:32px">🦅</div><div><div class="who">Mathias</div><div class="txt">GONDOL</div></div></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="field"><div class="lab">Dit spor</div><div class="ph">Skriv ét ord…</div></div>
+      <button class="btn btn-coral">Send spor</button>
+    </div></div></div>
+
+    <!-- VOTE -->
+    <div class="phone"><div class="screen"><div class="scr-label">Anklage</div><div class="pad">
+      <div style="text-align:center">
+        <div class="wordmark" style="font-size:24px">Hvem er forræderen?</div>
+        <div class="sub" style="margin-top:4px">Tryk for at stemme — skift når som helst</div>
+      </div>
+      <div class="roster" style="gap:10px;margin-top:4px">
+        <div class="cand"><div class="avatar" style="background:#3a2222">🦊</div><div class="nm">Frederik</div><div class="cnt">2<small>stemmer</small></div></div>
+        <div class="cand sel"><div class="avatar" style="background:#2a2238">🐺</div><div class="nm">Sofie</div><div class="cnt">3<small>stemmer</small></div></div>
+        <div class="cand"><div class="avatar" style="background:#38322a">🦅</div><div class="nm">Mathias</div><div class="cnt">0<small>stemmer</small></div></div>
+        <div class="cand"><div class="avatar" style="background:#223a30">🐢</div><div class="nm">Laura</div><div class="cnt">1<small>stemmer</small></div></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="section-t">Du har anklaget Sofie</div>
+      <button class="btn btn-ghost">Skift stemme</button>
+    </div></div></div>
+
+    <!-- RESULTS -->
+    <div class="phone"><div class="screen"><div class="scr-label">Sagen lukket</div><div class="pad">
+      <div class="win-banner">
+        <div class="mask" style="font-size:44px">🔦</div>
+        <div class="big">Besætningen vandt!</div>
+        <div class="sub" style="margin-top:4px">Forræderen var <b style="color:var(--coral)">Sofie</b></div>
+      </div>
+      <div class="podium">
+        <div class="pod"><div class="av"><div class="avatar" style="background:#3a2222">🦊</div><div class="medal">🥈</div></div><div class="nm">Frederik</div><div class="bar" style="height:72px">8</div></div>
+        <div class="pod"><div class="av"><div class="avatar" style="background:#22323a;width:48px;height:48px">🦉</div><div class="medal">🥇</div></div><div class="nm">Cæcilie</div><div class="bar" style="height:102px;border-top-color:var(--coral);color:var(--coral)">11</div></div>
+        <div class="pod"><div class="av"><div class="avatar" style="background:#223a30">🐢</div><div class="medal">🥉</div></div><div class="nm">Laura</div><div class="bar" style="height:56px">6</div></div>
+      </div>
+      <div style="margin-top:4px">
+        <div class="lb"><span class="rk">4</span><div class="avatar" style="background:#38322a;width:28px;height:28px">🦅</div><span class="nm">Mathias</span><span class="pt">5 point</span></div>
+        <div class="lb"><span class="rk">5</span><div class="avatar" style="background:#2a2238;width:28px;height:28px">🐺</div><span class="nm">Sofie</span><span class="pt">3 point</span></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-coral">Spil igen</button>
+    </div></div></div>
+
+  </div>
+</body>
+</html>

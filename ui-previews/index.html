@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Forræderen — UI/UX retninger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    background:radial-gradient(1000px 600px at 50% -10%, #221634 0%, transparent 55%),#0c0a14;
+    color:#f2eef7;min-height:100vh;padding:64px 24px 90px;
+  }
+  .head{max-width:1080px;margin:0 auto 56px;text-align:center}
+  .eyebrow{letter-spacing:.4em;text-transform:uppercase;font-size:12px;color:#a98bff;font-weight:700;margin-bottom:18px}
+  .head h1{font-family:'Fraunces';font-weight:800;font-size:clamp(44px,7vw,82px);line-height:.95;letter-spacing:-.01em}
+  .head h1 .it{font-style:italic;font-weight:500;color:#c9b3ff}
+  .head p{margin:22px auto 0;max-width:620px;color:#a59cba;font-size:16px;line-height:1.65}
+  .note{margin:18px auto 0;max-width:560px;font-size:13px;color:#7d748f;line-height:1.6}
+
+  .grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:28px}
+  @media(max-width:520px){.grid{grid-template-columns:1fr}}
+
+  .card{display:block;text-decoration:none;color:inherit;border-radius:26px;overflow:hidden;position:relative;
+    border:1px solid rgba(255,255,255,.08);transition:transform .25s ease, box-shadow .25s ease;min-height:300px}
+  .card:hover{transform:translateY(-6px)}
+  .card .inner{padding:30px 30px 26px;position:relative;z-index:2;height:100%;display:flex;flex-direction:column}
+  .num{font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.75;font-weight:700}
+  .card h2{font-size:38px;margin-top:auto;line-height:1}
+  .card .tag{font-size:14px;margin-top:10px;opacity:.92;font-weight:600;max-width:340px;line-height:1.45}
+  .swatches{display:flex;gap:8px;margin-top:20px}
+  .swatches span{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.25)}
+  .screens{font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-top:18px;opacity:.7;font-weight:700}
+  .go{position:absolute;top:26px;right:28px;z-index:2;font-size:22px;opacity:.7}
+
+  /* Soirée */
+  .c-soiree{background:radial-gradient(600px 300px at 100% 0%, #0e2a23, transparent 60%),linear-gradient(160deg,#1c0f2b,#0c0712)}
+  .c-soiree h2{font-family:'Fraunces';font-weight:800;color:#f2d489}
+  .c-soiree .num{color:#d9b15f}
+  /* Funhouse */
+  .c-funhouse{background:linear-gradient(160deg,#7c4dff,#ff5d9e)}
+  .c-funhouse h2{font-family:'Fraunces';font-weight:800;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.18)}
+  .c-funhouse .num,.c-funhouse .tag,.c-funhouse .screens{color:#fff}
+  /* Casefile */
+  .c-casefile{background:radial-gradient(500px 280px at 50% 0%, rgba(255,90,60,.18), transparent 60%),#0e0e12}
+  .c-casefile h2{font-family:'Oswald','Manrope';text-transform:uppercase;letter-spacing:.04em;color:#ff5a3c}
+  .c-casefile .num{color:#ffb44d}
+  /* Riso */
+  .c-riso{background:#f4efe1;color:#171514;background-image:radial-gradient(circle at 1px 1px, rgba(23,21,20,.08) 1px, transparent 0);background-size:5px 5px}
+  .c-riso h2{font-family:'Fraunces';font-weight:800;color:#2b43d6;text-shadow:3px 3px 0 #ff2d72}
+  .c-riso .num{color:#ff2d72}
+  .c-riso .tag,.c-riso .screens{color:#4a4538}
+  .c-riso{border-color:#171514}
+
+  .foot{max-width:1080px;margin:48px auto 0;text-align:center;color:#6f6783;font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="eyebrow">Forræderen</div>
+    <h1>Fire kreative <span class="it">retninger</span></h1>
+    <p>Designoplæg til appen — fra elegant maskebal til slik-clay, noir-efterforskning og risograph-tryk. Hver retning viser hele spilforløbet: forside, lobby, rolle, spor, afstemning og slutresultat.</p>
+    <p class="note">Statiske previews. Ikke koblet på den rigtige app — bare til at vælge ud fra. Klik en retning for at se alle skærme.</p>
+  </div>
+
+  <div class="grid">
+    <a class="card c-soiree" href="soiree.html">
+      <span class="go">→</span>
+      <div class="inner">
+        <div class="num">01 · Masquerade</div>
+        <h2>Soirée</h2>
+        <div class="tag">Hemmeligt selskab ved midnat. Velourdyb plomme &amp; smaragd, antikt guld, masker og spillekort.</div>
+        <div class="swatches"><span style="background:#1c0f2b"></span><span style="background:#0e2a23"></span><span style="background:#d9b15f"></span><span style="background:#b3434f"></span></div>
+        <div class="screens">6 skærme · elegant &amp; teatralsk</div>
+      </div>
+    </a>
+
+    <a class="card c-funhouse" href="funhouse.html">
+      <span class="go">→</span>
+      <div class="inner">
+        <div class="num">02 · Liquid clay</div>
+        <h2>Funhouse</h2>
+        <div class="tag">Blød 3D-clay i slik-farver. Buttede, glossy knapper og bounce. Maks. leg, premium dybde.</div>
+        <div class="swatches"><span style="background:#7c4dff"></span><span style="background:#ff5d9e"></span><span style="background:#ffd23d"></span><span style="background:#34e0b0"></span></div>
+        <div class="screens">6 skærme · sjov &amp; taktil</div>
+      </div>
+    </a>
+
+    <a class="card c-casefile" href="casefile.html">
+      <span class="go">→</span>
+      <div class="inner">
+        <div class="num">03 · Neon noir</div>
+        <h2>Casefile</h2>
+        <div class="tag">Filmisk efterforskning. Kulsort med glødende koral, opslagstavle, polaroids og skrivemaskine.</div>
+        <div class="swatches"><span style="background:#0a0a0c"></span><span style="background:#ff5a3c"></span><span style="background:#ffb44d"></span><span style="background:#e9e2d0"></span></div>
+        <div class="screens">6 skærme · mystisk &amp; filmisk</div>
+      </div>
+    </a>
+
+    <a class="card c-riso" href="risopop.html">
+      <span class="go">→</span>
+      <div class="inner">
+        <div class="num">04 · Risograph</div>
+        <h2>Riso Pop</h2>
+        <div class="tag">Trykt på varmt papir. Fed duotone-overprint, raster-korn, tykke konturer og kassefed skrift.</div>
+        <div class="swatches"><span style="background:#2b43d6"></span><span style="background:#ff2d72"></span><span style="background:#ffd23d"></span><span style="background:#10b6a0"></span></div>
+        <div class="screens">6 skærme · fed &amp; grafisk</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="foot">Vælg den retning (eller de detaljer på tværs) du bedst kan lide — så bygger vi den ind i appen bagefter.</div>
+</body>
+</html>
