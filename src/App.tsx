@@ -16,8 +16,11 @@ export default function App() {
         // Fixed viewport height (not min-height) so inner regions can own their
         // own scrolling — this is what makes per-screen sticky footers work.
         height: "100dvh",
-        // Keep content clear of the notch / rounded corners on installed PWAs.
+        // Keep content clear of the notch / home-indicator / rounded corners on
+        // installed PWAs (the shell owns all four insets; sticky footers use plain
+        // padding so they don't double up).
         paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
       }}

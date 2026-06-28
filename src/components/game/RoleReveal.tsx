@@ -201,7 +201,6 @@ export function RoleReveal({
           ) : isQuestions ? (
             <div className="space-y-2">
               <Input
-                autoFocus
                 value={answer}
                 maxLength={60}
                 placeholder={t.answerPlaceholder}

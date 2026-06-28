@@ -81,7 +81,6 @@ export function CluePhase({
           </p>
           <div className="flex gap-2">
             <Input
-              autoFocus={isMyTurn}
               value={text}
               maxLength={60}
               placeholder={t.cluePlaceholder}
@@ -119,7 +118,8 @@ export function CluePhase({
     <Screen
       header={
         <PhaseHero
-          icon={<Lightbulb className="size-7" />}
+          size="compact"
+          icon={<Lightbulb className="size-6" />}
           title={t.cluePhase.toUpperCase()}
           pill={`${t.pass} ${round.currentPass}/${round.cluePasses}`}
         />

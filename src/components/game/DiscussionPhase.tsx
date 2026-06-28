@@ -57,12 +57,9 @@ export function DiscussionPhase({
       header={
         <div className="flex flex-col gap-3">
           <PhaseHero
-            size="lg"
-            icon={<MessagesSquare className="size-9" />}
+            size="compact"
+            icon={<MessagesSquare className="size-6" />}
             title={t.discussTitle.toUpperCase()}
-            subtitle={
-              round.gameMode === "questions" ? t.discussPromptQuestions : t.discussPrompt
-            }
           />
           {round.gameMode === "questions" && round.sharedPrompt && (
             <div className="glass rounded-2xl p-4 text-center">
@@ -82,7 +79,6 @@ export function DiscussionPhase({
             size="hero"
             onClick={handleAdvance}
             disabled={busy}
-            className="animate-pulse"
           >
             {busy ? (
               <Loader2 className="animate-spin" />

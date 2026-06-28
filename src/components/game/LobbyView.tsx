@@ -176,10 +176,10 @@ export function LobbyView({
             {/* Room code hero */}
             <button
               onClick={copyCode}
-              className="w-full rounded-3xl gradient-primary p-6 text-center text-white glow-primary active:scale-[0.99]"
+              className="w-full rounded-3xl gradient-primary p-5 text-center text-white glow-primary active:scale-[0.99]"
             >
               <p className="text-xs font-medium opacity-80">{t.shareCode}</p>
-              <p className="mt-1 inline-flex items-center gap-2 text-5xl font-extrabold tracking-[0.15em]">
+              <p className="mt-1 inline-flex items-center gap-2 text-4xl font-extrabold tracking-[0.15em]">
                 {room.code}
                 <Copy className="size-5 opacity-80" />
               </p>

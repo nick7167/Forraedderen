@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
@@ -27,17 +28,23 @@ export function VotePhase({
   const castVote = useMutation(api.round.castVote);
   const skipPhase = useMutation(api.round.skipPhase);
 
+  // Your current pick is private (the server never returns vote targets), so we
+  // track it locally just to show/return your own selection on this device.
+  const [myVote, setMyVote] = useState<Id<"players"> | null>(null);
+
   const myId = round.me?.playerId;
   const iAmEliminated = round.eliminatedPlayerIds.some((id) => id === myId);
-  const iVoted = !!myId && round.votedPlayerIds.some((id) => id === myId);
   const playerById = (id: Id<"players">) => round.players.find((p) => p._id === id);
 
   // Eligible vote targets: active players not eliminated.
   const candidates = round.turnOrder.filter(
     (id) => !round.eliminatedPlayerIds.some((e) => e === id),
   );
+  const voted = round.votedPlayerIds.length;
+  const progress = candidates.length > 0 ? voted / candidates.length : 0;
 
   async function vote(targetPlayerId: Id<"players">) {
+    setMyVote(targetPlayerId);
     try {
       await castVote({ ...authArgs, roundId: round.roundId, targetPlayerId });
       feedback.confirm();
@@ -46,20 +53,58 @@ export function VotePhase({
     }
   }
 
-  const footer = (
-    <div className="space-y-2 text-center">
-      {iAmEliminated ? (
-        <p className="text-sm text-muted-foreground">{t.eliminatedHint}</p>
-      ) : iVoted ? (
-        <p className="text-sm text-muted-foreground">
-          <Check className="mr-1 inline size-4 text-green-500" />
-          {t.youVoted} · {t.changeVote.toLowerCase()}
+  const header = (
+    <div className="flex flex-col gap-3">
+      <PhaseHero
+        size="compact"
+        icon={<Vote className="size-6" />}
+        title={t.votePhase.toUpperCase()}
+        pill={
+          round.currentBallot > 1
+            ? `${t.ballotNumber} ${round.currentBallot}`
+            : undefined
+        }
+      />
+
+      {/* Questions mode: keep the real question in view while voting. */}
+      {round.gameMode === "questions" && round.sharedPrompt && (
+        <p className="px-1 text-center text-sm font-semibold">
+          <span className="text-muted-foreground">{t.theRealQuestion}: </span>
+          {round.sharedPrompt}
         </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">{t.voteChangeHint}</p>
       )}
-      <p className="text-xs text-muted-foreground">
-        {round.votedPlayerIds.length}/{candidates.length} {t.votes}
+
+      {/* Slim, scrollable clue recap to inform the vote. */}
+      {round.clues.length > 0 && (
+        <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {round.clues.map((c) => {
+            const p = playerById(c.playerId);
+            return (
+              <span
+                key={c._id}
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                <span className="text-sm">{p?.avatarEmoji}</span>
+                {c.text}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const footer = (
+    <div className="space-y-2.5">
+      {/* Live vote-progress bar (who has voted — never whom they voted for). */}
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full gradient-primary transition-all duration-300"
+          style={{ width: `${Math.round(progress * 100)}%` }}
+        />
+      </div>
+      <p className="text-center text-xs text-muted-foreground">
+        {iAmEliminated ? t.eliminatedHint : t.voteChangeHint} · {voted}/{candidates.length}
       </p>
       {isHost && (
         <Button
@@ -74,85 +119,40 @@ export function VotePhase({
     </div>
   );
 
-  const header = (
-    <div className="flex flex-col gap-5">
-      <PhaseHero
-        icon={<Vote className="size-7" />}
-        title={t.votePhase.toUpperCase()}
-        subtitle={
-          round.gameMode === "questions"
-            ? t.voteInstructionQuestions
-            : t.voteInstruction
-        }
-        pill={
-          round.currentBallot > 1
-            ? `${t.ballotNumber} ${round.currentBallot} · ${round.eliminatedPlayerIds.length} ${t.eliminated.toLowerCase()}`
-            : undefined
-        }
-      />
-
-      {/* Questions mode: keep the real question in view while voting. */}
-      {round.gameMode === "questions" && round.sharedPrompt && (
-        <div className="glass rounded-2xl p-3 text-center">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {t.theRealQuestion}
-          </p>
-          <p className="mt-0.5 text-base font-bold leading-snug">
-            {round.sharedPrompt}
-          </p>
-        </div>
-      )}
-
-      {/* Clue recap to inform the vote */}
-      <div className="glass rounded-2xl p-3">
-        <div className="flex flex-wrap gap-1.5">
-          {round.clues.map((c) => {
-            const p = playerById(c.playerId);
-            return (
-              <span
-                key={c._id}
-                className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs"
-              >
-                <span>{p?.avatarEmoji}</span>
-                {c.text}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <Screen header={header} footer={footer}>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {candidates.map((id) => {
           const p = playerById(id);
           if (!p) return null;
           const isMe = id === myId;
           const disabled = iAmEliminated || isMe;
+          const hasVoted = round.votedPlayerIds.some((v) => v === id);
+          const isMyPick = !disabled && myVote === id;
           return (
             <button
               key={id}
               disabled={disabled}
               onClick={() => vote(id)}
               className={cn(
-                "glass flex flex-col items-center gap-2 rounded-2xl p-3 transition-all",
-                disabled
-                  ? "opacity-50"
-                  : "hover:ring-2 hover:ring-primary/60 active:scale-95",
+                "relative flex flex-col items-center gap-2.5 rounded-2xl p-4 transition-all",
+                isMyPick
+                  ? "gradient-primary glow-ring text-white"
+                  : "glass",
+                disabled ? "opacity-50" : "active:scale-95",
               )}
             >
-              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={48} />
-              <span className="text-sm font-semibold">
-                {p.name}
-                {isMe && <span className="text-muted-foreground"> ({t.you})</span>}
-              </span>
-              {round.votedPlayerIds.some((v) => v === id) && (
-                <span className="text-[10px] text-muted-foreground">
-                  <Check className="inline size-3" /> {t.youVoted.toLowerCase()}
+              {/* Secret-vote indicator: this player has cast a vote (not whom for). */}
+              {hasVoted && (
+                <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-crew text-white">
+                  <Check className="size-3.5" strokeWidth={3} />
                 </span>
               )}
+              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={56} ring={isMyPick} />
+              <span className="text-sm font-semibold">
+                {p.name}
+                {isMe && <span className="opacity-70"> ({t.you})</span>}
+              </span>
             </button>
           );
         })}

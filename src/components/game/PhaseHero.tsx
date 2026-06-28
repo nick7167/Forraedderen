@@ -16,8 +16,23 @@ export function PhaseHero({
   title: string;
   subtitle?: React.ReactNode;
   pill?: React.ReactNode;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "compact";
 }) {
+  // Compact: a slim one-line banner so the screen's list/grid is the focus.
+  if (size === "compact") {
+    return (
+      <div className="relative flex items-center gap-3 overflow-hidden rounded-2xl gradient-primary px-5 py-3 text-white glow-primary duration-500 animate-in fade-in">
+        {icon && <span className="flex shrink-0 opacity-90">{icon}</span>}
+        <h1 className="text-xl font-extrabold tracking-tight text-glow">{title}</h1>
+        {pill && (
+          <span className="ml-auto shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+            {pill}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   const large = size === "lg";
   return (
     <div
