@@ -7,6 +7,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./PlayerBadge";
 import { Screen } from "./Screen";
+import { NeonBackdrop } from "./NeonBackdrop";
 import { t } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 import { Crown } from "lucide-react";
@@ -89,6 +90,8 @@ export function MatchResults({
   );
 
   return (
+    <>
+    <NeonBackdrop density="full" />
     <Screen
       header={header}
       footer={
@@ -125,5 +128,6 @@ export function MatchResults({
         </div>
       )}
     </Screen>
+    </>
   );
 }

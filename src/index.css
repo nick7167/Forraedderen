@@ -4,39 +4,41 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Forræderen design system — deep indigo/purple dark theme with a single
- * vibrant-violet accent. Tokens are dark by default (no `.dark` toggle needed)
- * so every shadcn component picks up the theme automatically.
+ * Forræderen "Neon Glow" design system — values taken verbatim from the user's
+ * Stitch home design: indigo base with a top-center glow, 3D "pressable" buttons,
+ * indigo frosted glass, a cyan→pink→purple neon tile, and floating neon shapes.
  */
 :root {
   --radius: 1.25rem;
 
-  /* Surfaces — deep indigo base, translucent "glass" cards. */
-  --background: oklch(0.18 0.045 285);
-  --foreground: oklch(0.97 0.01 285);
-  --card: oklch(0.26 0.05 285 / 55%);
-  --card-foreground: oklch(0.97 0.01 285);
-  --popover: oklch(0.22 0.05 285);
-  --popover-foreground: oklch(0.97 0.01 285);
+  /* Surfaces — deep indigo base (#0d091a / #1a1236), translucent indigo glass. */
+  --background: oklch(0.10 0.035 295);
+  --foreground: oklch(0.98 0.01 290);
+  --card: oklch(0.26 0.06 292 / 60%);
+  --card-foreground: oklch(0.98 0.01 290);
+  --popover: oklch(0.17 0.045 293);
+  --popover-foreground: oklch(0.98 0.01 290);
 
-  /* Accent — vibrant violet. */
-  --primary: oklch(0.62 0.22 290);
-  --primary-foreground: oklch(0.99 0.005 285);
+  /* Accent — vivid purple (#b026ff) primary + royal blue secondary. */
+  --primary: oklch(0.60 0.27 306);
+  --primary-foreground: oklch(0.99 0.005 290);
+  --accent-blue: oklch(0.62 0.18 264);
+  --accent-blue-foreground: oklch(0.99 0.005 290);
 
-  --secondary: oklch(0.3 0.05 285 / 70%);
-  --secondary-foreground: oklch(0.97 0.01 285);
-  --muted: oklch(0.3 0.04 285 / 60%);
-  --muted-foreground: oklch(0.72 0.03 285);
-  --accent: oklch(0.34 0.07 290 / 70%);
-  --accent-foreground: oklch(0.98 0.01 285);
+  --secondary: oklch(0.30 0.05 293 / 65%);
+  --secondary-foreground: oklch(0.97 0.01 290);
+  --muted: oklch(0.30 0.045 293 / 60%);
+  --muted-foreground: oklch(0.76 0.035 290);
+  --accent: oklch(0.36 0.08 300 / 65%);
+  --accent-foreground: oklch(0.98 0.01 290);
 
-  /* Roles — reserved for imposter/crew moments only. */
-  --destructive: oklch(0.62 0.23 18);
-  --crew: oklch(0.7 0.17 160);
+  /* Roles — imposter/crew moments only. */
+  --destructive: oklch(0.63 0.24 18);
+  --crew: oklch(0.74 0.16 162);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.62 0.22 290);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.60 0.27 306);
 }
 
 @theme inline {
@@ -53,6 +55,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-blue-foreground: var(--accent-blue-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -76,15 +80,11 @@
   #root {
     @apply h-full;
   }
-  /* Gradient lives on <html> so it always covers the FULL screen (incl. the
-     safe-area strips under the notch / home indicator) in an installed PWA.
-     Safe-area insets are applied to the content in App.tsx, not here. */
+  /* Top-center indigo glow fading to near-black, on <html> so it covers the
+     full screen incl. safe-area strips in an installed PWA. */
   html {
-    background-color: oklch(0.16 0.045 285);
-    background-image:
-      radial-gradient(120% 80% at 50% -10%, oklch(0.32 0.13 295 / 70%), transparent 60%),
-      radial-gradient(100% 60% at 100% 110%, oklch(0.3 0.14 320 / 45%), transparent 55%),
-      linear-gradient(180deg, oklch(0.18 0.05 285), oklch(0.14 0.04 280));
+    background-color: #0d091a;
+    background-image: radial-gradient(circle at top center, #1a1236 0%, #0d091a 100%);
     background-attachment: fixed;
   }
   body {
@@ -95,22 +95,136 @@
   }
   h1, h2, h3 {
     @apply tracking-tight;
-    font-weight: 800;
+    font-weight: 700;
   }
 }
 
 @layer components {
-  /* Glassy translucent card surface used across the game screens. */
+  /* Frosted indigo glass (glass-panel from the design). */
   .glass {
-    background-color: var(--card);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
+    background-color: rgba(30, 24, 60, 0.6);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
-  /* Subtle top-gloss highlight for primary buttons / hero cards. */
+  /* Inset indigo input/field surface. */
+  .glass-input {
+    background-color: rgba(40, 32, 75, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  /* Rounded glass chip ("Log ind", "Fortsæt spil"). */
+  .glass-pill {
+    background-color: rgba(30, 24, 60, 0.6);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+  }
+
+  /* Glowing white text for headings. */
+  .text-glow {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+
+  /* ---- 3D "pressable" buttons (the signature element) ---- */
+  .btn3d {
+    border-bottom-width: 4px;
+    border-bottom-style: solid;
+    transition: transform 0.06s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  }
+  .btn3d:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+  }
+  .btn3d-purple {
+    background: linear-gradient(180deg, #b026ff 0%, #8b1ce6 100%);
+    border-bottom-color: #6b14b3;
+    box-shadow: 0 4px 15px rgba(176, 38, 255, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+  .btn3d-blue {
+    background: linear-gradient(180deg, #2b3a7a 0%, #1a2552 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 4px solid #101836;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  }
+  .btn3d-danger {
+    background: linear-gradient(180deg, #ff3b5c 0%, #c81e3c 100%);
+    border-bottom-color: #8f1228;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+  .btn3d-crew {
+    background: linear-gradient(180deg, #34d399 0%, #0f9b6c 100%);
+    border-bottom-color: #0a6e4c;
+    box-shadow: 0 4px 15px rgba(52, 211, 153, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+  /* Bigger glow for the main bottom CTA (kept after the color classes so it wins). */
+  .bottom-btn-glow {
+    box-shadow:
+      0 0 30px rgba(176, 38, 255, 0.6),
+      0 4px 15px rgba(176, 38, 255, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Legacy aliases (pass-1 utilities still referenced by heroes/cards). */
+  .gradient-primary { background-image: linear-gradient(135deg, #b026ff, #ff2d9b); }
+  .gradient-secondary { background-image: linear-gradient(180deg, #2b3a7a, #1a2552); }
+  .glow-primary {
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+      0 8px 28px -6px rgba(176, 38, 255, 0.55),
+      0 0 22px -2px rgba(176, 38, 255, 0.45);
+  }
+  .glow-secondary { box-shadow: 0 8px 28px -8px rgba(43, 58, 122, 0.7); }
+  .glow-danger { box-shadow: 0 8px 26px -8px rgba(239, 68, 68, 0.55), 0 0 18px -3px rgba(239, 68, 68, 0.45); }
+  .glow-crew { box-shadow: 0 8px 26px -8px rgba(52, 211, 153, 0.5), 0 0 18px -3px rgba(52, 211, 153, 0.4); }
+  .glow-ring { box-shadow: 0 0 0 1.5px rgba(176, 38, 255, 0.55), 0 0 22px -4px rgba(176, 38, 255, 0.55); }
   .gloss {
     box-shadow:
-      inset 0 1px 0 0 oklch(1 0 0 / 25%),
-      0 8px 24px -8px oklch(0.62 0.22 290 / 55%);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+      0 8px 28px -6px rgba(176, 38, 255, 0.55);
   }
+
+  /* Neon hero tile: cyan→pink→purple 135° border (sharp ::after + blurred ::before). */
+  .neon-tile {
+    position: relative;
+    background: #1a1236;
+    border-radius: 24px;
+  }
+  .neon-tile::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 27px;
+    background: linear-gradient(135deg, #00f0ff, #ff007f, #7000ff);
+    z-index: -1;
+    filter: blur(8px);
+  }
+  .neon-tile::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, #00f0ff, #ff007f, #7000ff);
+    z-index: -1;
+  }
+  .neon-tile > * {
+    border-radius: 22px;
+    background: #1a1236;
+  }
+}
+
+/* Floating neon shapes (decorative). */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+.floating-shape { animation: float 6s ease-in-out infinite; }
+.shape-delay-1 { animation-delay: 1s; }
+.shape-delay-2 { animation-delay: 2.5s; }
+.shape-delay-3 { animation-delay: 4s; }
+@media (prefers-reduced-motion: reduce) {
+  .floating-shape { animation: none; }
 }

@@ -76,10 +76,10 @@ export function RoundReveal({
   const header = (
     <div
       className={cn(
-        "w-full rounded-2xl p-6 text-center text-white",
+        "w-full rounded-3xl p-6 text-center text-white",
         crewWon
-          ? "bg-gradient-to-br from-emerald-400 to-teal-600"
-          : "bg-gradient-to-br from-red-500 to-rose-700",
+          ? "bg-gradient-to-br from-emerald-400 to-teal-600 glow-crew"
+          : "bg-gradient-to-br from-red-500 to-rose-700 glow-danger",
       )}
     >
       <p className="text-3xl font-black">

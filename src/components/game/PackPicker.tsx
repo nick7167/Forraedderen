@@ -109,7 +109,7 @@ export function PackPicker({
                   }}
                   className={cn(
                     "glass relative flex flex-col items-start rounded-2xl p-3 text-left transition-all active:scale-95",
-                    selectedPackId === undefined && "ring-2 ring-primary",
+                    selectedPackId === undefined && "ring-2 ring-primary glow-ring",
                   )}
                 >
                   {selectedPackId === undefined && (
@@ -128,7 +128,7 @@ export function PackPicker({
                     }}
                     className={cn(
                       "glass relative flex flex-col items-start rounded-2xl p-3 text-left transition-all active:scale-95",
-                      selectedPackId === p._id && "ring-2 ring-primary",
+                      selectedPackId === p._id && "ring-2 ring-primary glow-ring",
                     )}
                   >
                     {selectedPackId === p._id && (

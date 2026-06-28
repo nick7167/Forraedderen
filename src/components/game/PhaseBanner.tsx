@@ -14,8 +14,8 @@ export function PhaseBanner({
       className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-md duration-200 animate-in fade-in"
     >
       <div className="flex flex-col items-center gap-3 duration-500 animate-in zoom-in-75">
-        <span className="text-7xl drop-shadow-lg">{emoji}</span>
-        <span className="bg-gradient-to-br from-violet-300 to-fuchsia-400 bg-clip-text text-5xl font-black tracking-tight text-transparent">
+        <span className="text-7xl drop-shadow-[0_0_24px_rgba(168,85,247,0.55)]">{emoji}</span>
+        <span className="bg-gradient-to-br from-cyan-300 via-fuchsia-400 to-purple-500 bg-clip-text text-5xl font-black tracking-tight text-transparent">
           {label}
         </span>
       </div>

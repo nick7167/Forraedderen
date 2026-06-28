@@ -90,11 +90,11 @@ export function RoleReveal({
         className={cn(
           "relative flex aspect-[3/4] w-64 max-w-full items-center justify-center rounded-3xl shadow-xl transition-all duration-500",
           !flipped &&
-            "cursor-pointer bg-gradient-to-br from-slate-700 to-slate-900 text-white hover:scale-[1.02] active:scale-95",
+            "cursor-pointer bg-gradient-to-br from-slate-800 to-slate-950 text-white ring-1 ring-white/10 hover:scale-[1.02] active:scale-95",
           flipped &&
             (isImposter
-              ? "bg-gradient-to-br from-red-500 to-rose-700 text-white"
-              : "bg-gradient-to-br from-emerald-400 to-teal-600 text-white"),
+              ? "bg-gradient-to-br from-red-500 to-rose-700 text-white glow-danger"
+              : "bg-gradient-to-br from-emerald-400 to-teal-600 text-white glow-crew"),
         )}
       >
         {!flipped ? (

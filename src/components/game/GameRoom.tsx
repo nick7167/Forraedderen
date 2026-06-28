@@ -20,6 +20,7 @@ import { RoundReveal } from "./RoundReveal";
 import { MatchResults } from "./MatchResults";
 import { PhaseBanner } from "./PhaseBanner";
 import { RoundContextBar } from "./RoundContextBar";
+import { NeonBackdrop } from "./NeonBackdrop";
 
 // Phases that get an announcing banner when entered.
 const PHASE_BANNERS: Record<string, { emoji: string; label: string }> = {
@@ -175,6 +176,7 @@ export function GameRoom() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <NeonBackdrop density="subtle" />
       {banner && (
         <PhaseBanner
           emoji={banner.emoji}

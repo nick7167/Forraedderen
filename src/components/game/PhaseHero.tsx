@@ -22,14 +22,14 @@ export function PhaseHero({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-center text-white gloss duration-500 animate-in fade-in zoom-in",
+        "relative overflow-hidden rounded-3xl gradient-primary text-center text-white glow-primary duration-500 animate-in fade-in zoom-in",
         large ? "p-6" : "p-5",
       )}
     >
       {icon && <div className="flex justify-center opacity-90">{icon}</div>}
       <h1
         className={cn(
-          "font-black tracking-tight",
+          "font-extrabold tracking-tight text-glow",
           large ? "mt-2 text-4xl" : "mt-1 text-3xl",
           icon ? "" : "mt-0",
         )}

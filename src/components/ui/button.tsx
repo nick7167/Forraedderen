@@ -10,15 +10,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground gloss hover:brightness-110 active:scale-[0.98]",
+          "btn3d btn3d-purple text-white hover:brightness-110",
+        accent:
+          "btn3d btn3d-blue text-gray-100 hover:brightness-110",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+          "btn3d btn3d-danger text-white hover:brightness-110 focus-visible:ring-destructive/30",
+        crew:
+          "btn3d btn3d-crew text-white hover:brightness-110",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border border-border bg-white/5 backdrop-blur-md hover:bg-white/10 active:scale-[0.98]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "glass text-secondary-foreground hover:bg-white/10 active:scale-[0.98]",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+          "hover:bg-white/10 hover:text-foreground active:scale-[0.98]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -26,7 +30,7 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 gap-1.5 rounded-lg px-3 has-[>svg]:px-2.5",
         lg: "h-11 rounded-xl px-6 has-[>svg]:px-4",
-        hero: "h-14 w-full rounded-2xl px-6 text-base font-bold has-[>svg]:px-5 [&_svg:not([class*='size-'])]:size-5",
+        hero: "h-[3.5rem] w-full rounded-[1rem] px-6 text-lg font-bold tracking-tight has-[>svg]:px-5 [&_svg:not([class*='size-'])]:size-5",
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
