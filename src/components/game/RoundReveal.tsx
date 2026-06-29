@@ -141,7 +141,7 @@ export function RoundReveal({
               >
                 <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={28} />
                 <span className="text-sm font-medium">{p.name}</span>
-                {wasImposter && <span className="text-xs">🕵️</span>}
+                {wasImposter && <span className="text-xs">🦎</span>}
                 <span className="ml-auto text-sm font-bold tabular-nums">
                   {count} {t.votes}
                 </span>

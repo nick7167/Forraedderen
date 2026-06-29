@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/strings";
 import { toast } from "sonner";
-import { Check, Plus, Loader2 } from "lucide-react";
+import { Check, Plus, Loader2, Search } from "lucide-react";
 
 export function PackPicker({
   open,
@@ -34,6 +34,12 @@ export function PackPicker({
   const [packName, setPackName] = useState("");
   const [wordsText, setWordsText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const filtered = (packs ?? []).filter((p) =>
+    p.name.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const showRandom = query.trim().length === 0;
 
   async function handleCreate() {
     const words = wordsText
@@ -57,15 +63,20 @@ export function PackPicker({
     }
   }
 
+  function choose(id: Id<"packs"> | undefined) {
+    onSelect(id);
+    onOpenChange(false);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0">
+        <DialogHeader className="px-5 pt-5">
           <DialogTitle>{creating ? "Ny pakke" : t.choosePack}</DialogTitle>
         </DialogHeader>
 
         {creating ? (
-          <div className="space-y-3">
+          <div className="space-y-3 px-5 pb-5 pt-3">
             <div>
               <Label className="mb-1.5 block">Navn</Label>
               <Input
@@ -73,6 +84,7 @@ export function PackPicker({
                 maxLength={40}
                 placeholder="Vores pakke"
                 onChange={(e) => setPackName(e.target.value)}
+                className="glass-input border-0"
               />
             </div>
             <div>
@@ -80,12 +92,12 @@ export function PackPicker({
               <textarea
                 value={wordsText}
                 onChange={(e) => setWordsText(e.target.value)}
-                rows={8}
+                rows={7}
                 placeholder={"Æble\nBanan\nKiwi"}
-                className="w-full resize-none rounded-md border bg-transparent p-2 text-sm"
+                className="glass-input no-scrollbar w-full resize-none rounded-xl p-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1" onClick={() => setCreating(false)}>
                 {t.back}
               </Button>
@@ -95,64 +107,102 @@ export function PackPicker({
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
-            {packs === undefined ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          <>
+            {/* Search */}
+            <div className="px-5 pt-3">
+              <div className="glass-input flex items-center gap-2 rounded-xl px-3">
+                <Search className="size-4 shrink-0 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Søg kategori…"
+                  className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => {
-                    onSelect(undefined);
-                    onOpenChange(false);
-                  }}
-                  className={cn(
-                    "glass relative flex flex-col items-start rounded-2xl p-3 text-left transition-all active:scale-95",
-                    selectedPackId === undefined && "ring-2 ring-primary glow-ring",
+            </div>
+
+            {/* Scrollable grid */}
+            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-3">
+              {packs === undefined ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {showRandom && (
+                    <PackCard
+                      emoji="🎲"
+                      name={t.randomCategoryOption}
+                      sub={t.randomCategoryNote}
+                      selected={selectedPackId === undefined}
+                      onClick={() => choose(undefined)}
+                    />
                   )}
-                >
-                  {selectedPackId === undefined && (
-                    <Check className="absolute top-2 right-2 size-4 text-primary" />
+                  {filtered.map((p) => (
+                    <PackCard
+                      key={p._id}
+                      emoji={p.emoji}
+                      name={p.name}
+                      sub={`${p.wordCount} ord${p.isMine ? " · egen" : ""}`}
+                      selected={selectedPackId === p._id}
+                      onClick={() => choose(p._id)}
+                    />
+                  ))}
+                  {filtered.length === 0 && !showRandom && (
+                    <p className="col-span-2 py-6 text-center text-sm text-muted-foreground">
+                      Ingen kategorier matcher "{query}".
+                    </p>
                   )}
-                  <span className="text-2xl">🎲</span>
-                  <span className="mt-1 text-sm font-semibold">{t.randomCategoryOption}</span>
-                  <span className="text-xs text-muted-foreground">Skifter hver runde</span>
-                </button>
-                {packs.map((p) => (
-                  <button
-                    key={p._id}
-                    onClick={() => {
-                      onSelect(p._id);
-                      onOpenChange(false);
-                    }}
-                    className={cn(
-                      "glass relative flex flex-col items-start rounded-2xl p-3 text-left transition-all active:scale-95",
-                      selectedPackId === p._id && "ring-2 ring-primary glow-ring",
-                    )}
-                  >
-                    {selectedPackId === p._id && (
-                      <Check className="absolute top-2 right-2 size-4 text-primary" />
-                    )}
-                    <span className="text-2xl">{p.emoji}</span>
-                    <span className="mt-1 text-sm font-semibold">{p.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {p.wordCount} ord{p.isMine ? " · egen" : ""}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setCreating(true)}
-            >
-              <Plus className="size-4" /> Lav egen pakke
-            </Button>
-          </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 pb-5 pt-1">
+              <Button variant="outline" className="w-full" onClick={() => setCreating(true)}>
+                <Plus className="size-4" /> Lav egen pakke
+              </Button>
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PackCard({
+  emoji,
+  name,
+  sub,
+  selected,
+  onClick,
+}: {
+  emoji: string;
+  name: string;
+  sub: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "glass relative flex items-center gap-2.5 rounded-2xl p-3 text-left transition-all active:scale-95",
+        selected && "glow-ring ring-2 ring-primary",
+      )}
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xl">
+        {emoji}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold">{name}</p>
+        <p className="truncate text-xs text-muted-foreground">{sub}</p>
+      </div>
+      {selected && (
+        <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-white">
+          <Check className="size-3.5" strokeWidth={3} />
+        </span>
+      )}
+    </button>
   );
 }

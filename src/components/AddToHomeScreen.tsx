@@ -85,7 +85,7 @@ export function AddToHomeScreen() {
         </button>
 
         <div className="neon-tile mx-auto size-20">
-          <div className="flex size-full items-center justify-center text-4xl">🕵️</div>
+          <div className="flex size-full items-center justify-center text-4xl">🦎</div>
         </div>
 
         <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-glow">{t.a2hsTitle}</h2>

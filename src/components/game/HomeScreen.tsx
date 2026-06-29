@@ -123,15 +123,16 @@ export function HomeScreen() {
           </button>
         )}
 
-        {/* Hero — neon-bordered tile + title */}
+        {/* Hero — Kamæleon logo (mascot + wordmark) */}
         <div className="text-center">
-          <div className="neon-tile mx-auto size-32">
-            <div className="flex size-full items-center justify-center text-6xl">
-              🕵️
-            </div>
-          </div>
-          <h1 className="mt-6 text-5xl font-bold tracking-tight text-glow">{t.appName}</h1>
-          <p className="mx-auto mt-3 max-w-[18rem] text-lg font-medium text-gray-300">
+          <img
+            src="/kamaeleon-logo.webp"
+            alt={t.appName}
+            width={720}
+            height={720}
+            className="mx-auto w-full max-w-[20rem] drop-shadow-[0_0_34px_rgba(124,58,237,0.45)]"
+          />
+          <p className="mx-auto mt-1 max-w-[18rem] text-lg font-medium text-gray-300">
             {t.tagline}
           </p>
         </div>

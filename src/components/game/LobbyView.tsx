@@ -157,7 +157,7 @@ export function LobbyView({
           <DrawerHeader>
             <DrawerTitle>{t.settings}</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-8">
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
             <SettingsPanel
               settings={room.settings}
               playerCount={room.players.length}

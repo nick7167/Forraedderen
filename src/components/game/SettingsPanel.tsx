@@ -10,6 +10,14 @@ import type { Doc } from "../../../convex/_generated/dataModel";
 
 type Settings = Doc<"rooms">["settings"];
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {children}
+    </p>
+  );
+}
+
 function Stepper({
   value,
   min,
@@ -26,17 +34,19 @@ function Stepper({
   return (
     <div className="flex items-center gap-3">
       <button
-        className="flex size-8 items-center justify-center rounded-full bg-secondary text-foreground disabled:opacity-40 active:scale-90"
+        className="glass flex size-9 items-center justify-center rounded-full text-foreground disabled:opacity-30 active:scale-90"
         disabled={disabled || value <= min}
         onClick={() => onChange(value - 1)}
+        aria-label="−"
       >
         <Minus className="size-4" />
       </button>
-      <span className="w-5 text-center text-lg font-bold tabular-nums">{value}</span>
+      <span className="w-6 text-center text-lg font-bold tabular-nums">{value}</span>
       <button
-        className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 active:scale-90"
+        className="gradient-primary glow-primary flex size-9 items-center justify-center rounded-full text-white disabled:opacity-30 active:scale-90"
         disabled={disabled || value >= max}
         onClick={() => onChange(value + 1)}
+        aria-label="+"
       >
         <Plus className="size-4" />
       </button>
@@ -60,7 +70,7 @@ function Toggle({
       onClick={() => onChange(!value)}
       className={cn(
         "relative h-7 w-12 rounded-full transition-colors disabled:opacity-50",
-        value ? "bg-primary" : "bg-white/15",
+        value ? "gradient-primary glow-primary" : "bg-white/15",
       )}
     >
       <span
@@ -75,12 +85,18 @@ function Toggle({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between py-3">
+    <div className="flex items-center justify-between py-3.5">
       <Label className="text-[15px] font-medium">{label}</Label>
       {children}
     </div>
   );
 }
+
+const MODES = [
+  { id: "spy", emoji: "🦎", label: t.modeSpy },
+  { id: "undercover", emoji: "🎭", label: t.modeUndercover },
+  { id: "questions", emoji: "❓", label: t.modeQuestions },
+] as const;
 
 export function SettingsPanel({
   settings,
@@ -102,80 +118,111 @@ export function SettingsPanel({
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     onChange({ ...settings, [key]: value });
 
-  return (
-    <div className="glass divide-y divide-border rounded-3xl px-4">
-      {/* Game mode */}
-      <div className="py-3">
-        <Label className="mb-2 block text-[15px] font-medium">{t.mode}</Label>
-        <div className="flex gap-1 rounded-2xl bg-black/20 p-1">
-          {(["spy", "undercover", "questions"] as const).map((m) => (
-            <button
-              key={m}
-              disabled={!editable}
-              onClick={() => set("gameMode", m)}
-              className={cn(
-                "flex-1 rounded-xl py-2 text-xs font-semibold transition-all",
-                settings.gameMode === m
-                  ? "bg-primary text-primary-foreground gloss"
-                  : "text-muted-foreground",
-              )}
-            >
-              {m === "spy" ? t.modeSpy : m === "undercover" ? t.modeUndercover : t.modeQuestions}
-            </button>
-          ))}
-        </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          {settings.gameMode === "spy"
-            ? t.modeSpyDesc
-            : settings.gameMode === "undercover"
-              ? t.modeUndercoverDesc
-              : t.modeQuestionsDesc}
-        </p>
-      </div>
+  const modeDesc =
+    settings.gameMode === "spy"
+      ? t.modeSpyDesc
+      : settings.gameMode === "undercover"
+        ? t.modeUndercoverDesc
+        : t.modeQuestionsDesc;
 
-      {/* Word packs aren't used in "questions" mode (it draws question themes). */}
+  return (
+    <div className="space-y-5">
+      {/* Game mode */}
+      <section className="space-y-2">
+        <SectionLabel>{t.mode}</SectionLabel>
+        <div className="grid grid-cols-3 gap-2">
+          {MODES.map((m) => {
+            const active = settings.gameMode === m.id;
+            return (
+              <button
+                key={m.id}
+                disabled={!editable}
+                onClick={() => set("gameMode", m.id)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-all active:scale-95",
+                  active
+                    ? "gradient-primary glow-primary text-white"
+                    : "glass text-muted-foreground",
+                )}
+              >
+                <span className="text-2xl">{m.emoji}</span>
+                <span className="text-xs font-semibold">{m.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="px-1 text-xs leading-snug text-muted-foreground">{modeDesc}</p>
+      </section>
+
+      {/* Category (not used in "questions" mode). */}
       {!isQuestions && (
-        <div className="py-1.5">
+        <section className="space-y-2">
+          <SectionLabel>{t.pack}</SectionLabel>
           <button
             onClick={editable ? () => setPackOpen(true) : undefined}
             disabled={!editable}
-            className="flex w-full items-center justify-between py-2 text-left"
+            className="glass flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-all active:scale-[0.99]"
           >
-            <Label className="text-[15px] font-medium">{t.pack}</Label>
-            <span className="flex items-center gap-1 font-semibold">
-              {currentPack ? `${currentPack.emoji} ${currentPack.name}` : `🎲 ${t.randomCategory}`}
-              {editable && <ChevronRight className="size-4 text-muted-foreground" />}
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/5 text-2xl">
+              {currentPack ? currentPack.emoji : "🎲"}
             </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold">
+                {currentPack ? currentPack.name : t.randomCategory}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {currentPack ? `${currentPack.wordCount} ord` : t.randomCategoryNote}
+              </p>
+            </div>
+            {editable && <ChevronRight className="size-5 shrink-0 text-muted-foreground" />}
           </button>
-          {!currentPack && (
-            <p className="pb-1 text-xs text-muted-foreground">{t.randomCategoryNote}</p>
-          )}
-        </div>
+        </section>
       )}
 
-      <Row label={t.imposters}>
-        <Stepper value={settings.imposterCount} min={1} max={maxImposters}
-          disabled={!editable} onChange={(v) => set("imposterCount", v)} />
-      </Row>
-      {/* "questions" mode is always a single simultaneous answer round. */}
-      {!isQuestions && (
-        <Row label={t.cluePasses}>
-          <Stepper value={settings.cluePasses} min={1} max={3}
-            disabled={!editable} onChange={(v) => set("cluePasses", v)} />
-        </Row>
-      )}
-      <Row label={t.roundCount}>
-        <Stepper value={settings.roundCount} min={1} max={20}
-          disabled={!editable} onChange={(v) => set("roundCount", v)} />
-      </Row>
-      {/* Only meaningful in spy mode (undercover imposters don't know they're
-          imposters, so they can't "know each other"). */}
-      {settings.gameMode === "spy" && (
-        <Row label={t.impostersKnowEachOther}>
-          <Toggle value={settings.impostersKnowEachOther}
-            disabled={!editable} onChange={(v) => set("impostersKnowEachOther", v)} />
-        </Row>
-      )}
+      {/* Round settings */}
+      <section className="space-y-2">
+        <SectionLabel>{t.settings}</SectionLabel>
+        <div className="glass divide-y divide-white/5 rounded-2xl px-4">
+          <Row label={t.imposters}>
+            <Stepper
+              value={settings.imposterCount}
+              min={1}
+              max={maxImposters}
+              disabled={!editable}
+              onChange={(v) => set("imposterCount", v)}
+            />
+          </Row>
+          {!isQuestions && (
+            <Row label={t.cluePasses}>
+              <Stepper
+                value={settings.cluePasses}
+                min={1}
+                max={3}
+                disabled={!editable}
+                onChange={(v) => set("cluePasses", v)}
+              />
+            </Row>
+          )}
+          <Row label={t.roundCount}>
+            <Stepper
+              value={settings.roundCount}
+              min={1}
+              max={20}
+              disabled={!editable}
+              onChange={(v) => set("roundCount", v)}
+            />
+          </Row>
+          {settings.gameMode === "spy" && (
+            <Row label={t.impostersKnowEachOther}>
+              <Toggle
+                value={settings.impostersKnowEachOther}
+                disabled={!editable}
+                onChange={(v) => set("impostersKnowEachOther", v)}
+              />
+            </Row>
+          )}
+        </div>
+      </section>
 
       <PackPicker
         open={packOpen}

@@ -120,7 +120,7 @@ export function RoleReveal({
               </>
             ) : isImposter ? (
               <>
-                <span className="text-5xl">🕵️</span>
+                <span className="text-5xl">🦎</span>
                 <span className="text-2xl font-black">{t.youAreImposter}</span>
                 {round.category && (
                   <span className="mt-1 text-sm opacity-90">

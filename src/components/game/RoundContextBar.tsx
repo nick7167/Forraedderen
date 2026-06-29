@@ -25,7 +25,7 @@ export function RoundContextBar({ round }: { round: Round }) {
         </span>
       ) : (
         <span className="rounded-full bg-destructive/20 px-3 py-1 text-sm font-bold text-red-300">
-          🕵️ {t.youAreImposter}
+          🦎 {t.youAreImposter}
         </span>
       )}
       {category && (

@@ -2,8 +2,8 @@
 // without touching components.
 
 export const t = {
-  appName: "Forræderen",
-  tagline: "Find forræderen — eller overlev som den.",
+  appName: "Kamæleon",
+  tagline: "Find kamæleonen — eller overlev som den.",
 
   // Home / join
   yourName: "Dit navn",
@@ -38,11 +38,11 @@ export const t = {
   waitingNextRound: "Du er med fra næste runde",
 
   // Settings
-  imposters: "Forrædere",
+  imposters: "Kamæleoner",
   cluePasses: "Spor-runder",
   roundCount: "Antal runder",
-  imposterSeesCategory: "Forræder ser kategorien",
-  impostersKnowEachOther: "Forrædere kender hinanden",
+  imposterSeesCategory: "Kamæleon ser kategorien",
+  impostersKnowEachOther: "Kamæleoner kender hinanden",
   timers: "Tidsbegrænsning",
   pack: "Kategori",
   choosePack: "Vælg kategori",
@@ -54,9 +54,9 @@ export const t = {
   modeSpy: "Klassisk",
   modeUndercover: "Undercover",
   modeQuestions: "Spørgsmål",
-  modeSpyDesc: "Forræderen kender ikke ordet.",
-  modeUndercoverDesc: "Forræderen får et lignende ord — uden at vide det.",
-  modeQuestionsDesc: "Alle svarer på et spørgsmål. Forræderen får et lidt andet spørgsmål — uden at vide det.",
+  modeSpyDesc: "Kamæleonen kender ikke ordet.",
+  modeUndercoverDesc: "Kamæleonen får et lignende ord — uden at vide det.",
+  modeQuestionsDesc: "Alle svarer på et spørgsmål. Kamæleonen får et lidt andet spørgsmål — uden at vide det.",
   randomCategory: "Tilfældig",
   randomCategoryOption: "Tilfældig kategori",
   randomCategoryNote: "Skifter hver runde",
@@ -64,12 +64,12 @@ export const t = {
   // Reveal
   yourRole: "Din rolle",
   tapToReveal: "Tryk for at se din rolle",
-  youAreImposter: "Du er FORRÆDEREN",
+  youAreImposter: "Du er KAMÆLEONEN",
   youAreCrew: "Du er i besætningen",
   theWord: "Ordet",
   category: "Kategori",
   imposterHint: "Bluf dig igennem — du kender ikke ordet!",
-  yourTeammates: "Dine medforrædere",
+  yourTeammates: "Dine medkamæleoner",
   ready: "Klar",
   readyWaiting: "Venter på de andre…",
   readyCount: "klar",
@@ -101,7 +101,7 @@ export const t = {
   bannerAnswer: "Svar",
   voteInstructionQuestions: "Hvem fik et andet spørgsmål?",
   theCrewQuestion: "Spørgsmålet",
-  theImposterQuestion: "Forræderens spørgsmål",
+  theImposterQuestion: "Kamæleonens spørgsmål",
   theRealQuestion: "Det rigtige spørgsmål",
   discussPromptQuestions: "Hvem svarede på et andet spørgsmål?",
 
@@ -123,7 +123,7 @@ export const t = {
 
   // Vote
   votePhase: "Stem",
-  voteInstruction: "Hvem er forræderen?",
+  voteInstruction: "Hvem er kamæleonen?",
   voteFor: "Stem på",
   youVoted: "Du har stemt",
   changeVote: "Skift stemme",
@@ -135,10 +135,10 @@ export const t = {
 
   // Reveal / resolve
   crewWon: "Besætningen vandt!",
-  impostersWon: "Forræderne vandt!",
-  theImposterWas: "Forræderen var",
-  theImpostersWere: "Forræderne var",
-  imposterWordWas: "Forræderens ord",
+  impostersWon: "Kamæleonerne vandt!",
+  theImposterWas: "Kamæleonen var",
+  theImpostersWere: "Kamæleonerne var",
+  imposterWordWas: "Kamæleonens ord",
   votes: "stemmer",
   nextRound: "Næste runde",
   scoreboard: "Stilling",
@@ -165,7 +165,7 @@ export const t = {
   continueGame: "Fortsæt spil",
 
   // Clue hint (broad-clue guidance)
-  clueHintCrew: "Giv et bredt spor — tydeligt nok for andre med ordet, men ikke så tydeligt at forræderen kan gætte det.",
+  clueHintCrew: "Giv et bredt spor — tydeligt nok for andre med ordet, men ikke så tydeligt at kamæleonen kan gætte det.",
   clueHintSpyImposter: "Du kender ikke ordet. Lyt til de andre og bluf et spor.",
   clueHintUndercover: "Giv et bredt spor til dit ord.",
 
@@ -174,27 +174,27 @@ export const t = {
   howTo: {
     goal: {
       title: "Målet",
-      body: "Alle får det samme hemmelige ord — undtagen forræderen. Find forræderen ved at lytte til hinandens spor. Forræderen vil overleve uden at blive afsløret.",
+      body: "Alle får det samme hemmelige ord — undtagen kamæleonen. Find kamæleonen ved at lytte til hinandens spor. Kamæleonen vil overleve uden at blive afsløret.",
     },
     clues: {
       title: "Spor",
-      body: "På skift giver alle ét bredt spor til ordet. Et godt spor er tydeligt nok for dem, der kender ordet, men ikke så afslørende, at forræderen kan gætte det.",
+      body: "På skift giver alle ét bredt spor til ordet. Et godt spor er tydeligt nok for dem, der kender ordet, men ikke så afslørende, at kamæleonen kan gætte det.",
     },
     vote: {
       title: "Afstemning",
-      body: "Bagefter stemmer alle i hemmelighed på, hvem de tror er forræderen. Flest stemmer ryger ud. Står det lige, slipper forræderen fri.",
+      body: "Bagefter stemmer alle i hemmelighed på, hvem de tror er kamæleonen. Flest stemmer ryger ud. Står det lige, slipper kamæleonen fri.",
     },
     klassisk: {
       title: "Klassisk",
-      body: "Forræderen ved, at de er forræder, men kender ikke ordet og må bluffe sig igennem.",
+      body: "Kamæleonen ved, at de er kamæleon, men kender ikke ordet og må bluffe sig igennem.",
     },
     undercover: {
       title: "Undercover",
-      body: "Forræderen ved IKKE, at de er forræder — de får bare et lignende ord. Deres spor kommer til at passe lidt skævt.",
+      body: "Kamæleonen ved IKKE, at de er kamæleon — de får bare et lignende ord. Deres spor kommer til at passe lidt skævt.",
     },
     questions: {
       title: "Spørgsmål",
-      body: "Alle får et spørgsmål og svarer med ét ord på samme tid. Forræderen får et lidt andet spørgsmål — uden at vide det. Find ud af, hvem der svarede på et andet spørgsmål.",
+      body: "Alle får et spørgsmål og svarer med ét ord på samme tid. Kamæleonen får et lidt andet spørgsmål — uden at vide det. Find ud af, hvem der svarede på et andet spørgsmål.",
     },
   },
 
@@ -206,7 +206,7 @@ export const t = {
 
   // Add to home screen
   a2hsTitle: "Få den fulde oplevelse",
-  a2hsBody: "Føj Forræderen til din hjemmeskærm for fuld skærm og hurtig adgang.",
+  a2hsBody: "Føj Kamæleon til din hjemmeskærm for fuld skærm og hurtig adgang.",
   a2hsInstall: "Føj til hjemmeskærm",
   a2hsContinue: "Fortsæt i browser",
   a2hsIosIntro: "Sådan gør du i Safari:",

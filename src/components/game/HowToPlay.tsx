@@ -29,7 +29,7 @@ export function HowToPlay({ trigger }: { trigger: React.ReactNode }) {
         <DrawerHeader>
           <DrawerTitle>{t.howToTitle}</DrawerTitle>
         </DrawerHeader>
-        <div className="space-y-4 px-5 pb-8">
+        <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
           <Section emoji="🎯" title={h.goal.title} body={h.goal.body} />
           <Section emoji="💬" title={h.clues.title} body={h.clues.body} />
           <Section emoji="🗳️" title={h.vote.title} body={h.vote.body} />
@@ -37,7 +37,7 @@ export function HowToPlay({ trigger }: { trigger: React.ReactNode }) {
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {t.mode}
           </p>
-          <Section emoji="🕵️" title={h.klassisk.title} body={h.klassisk.body} />
+          <Section emoji="🦎" title={h.klassisk.title} body={h.klassisk.body} />
           <Section emoji="🎭" title={h.undercover.title} body={h.undercover.body} />
           <Section emoji="❓" title={h.questions.title} body={h.questions.body} />
         </div>

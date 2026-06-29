@@ -104,3 +104,52 @@ export const seedBuiltInPacks = mutation({
     return { inserted, total: DANISH_PACKS.length };
   },
 });
+
+/**
+ * Fully SYNC the built-in packs to match DANISH_PACKS: insert new ones, update
+ * the emoji/words of existing ones (e.g. after a merge), and delete built-ins
+ * whose category was renamed/removed. Run once after changing packData.ts:
+ *   npx convex run packs:reseedBuiltInPacks
+ * Rooms pinned to a deleted pack fall back to a random category (see round.ts).
+ */
+export const reseedBuiltInPacks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db
+      .query("packs")
+      .withIndex("by_owner", (q) => q.eq("ownerUserId", undefined))
+      .collect();
+    const byName = new Map(existing.map((p) => [p.name, p]));
+    const wanted = new Set(DANISH_PACKS.map((p) => p.name));
+    let inserted = 0;
+    let updated = 0;
+    let removed = 0;
+
+    for (const pack of DANISH_PACKS) {
+      const words = pack.words.map((word) => ({ word }));
+      const current = byName.get(pack.name);
+      if (!current) {
+        await ctx.db.insert("packs", {
+          ownerUserId: undefined,
+          name: pack.name,
+          language: "da",
+          emoji: pack.emoji,
+          isBuiltIn: true,
+          words,
+        });
+        inserted++;
+      } else {
+        await ctx.db.patch(current._id, { emoji: pack.emoji, words });
+        updated++;
+      }
+    }
+    // Remove built-in packs no longer in the constant (renamed/merged away).
+    for (const p of existing) {
+      if (p.isBuiltIn && !wanted.has(p.name)) {
+        await ctx.db.delete(p._id);
+        removed++;
+      }
+    }
+    return { inserted, updated, removed, total: DANISH_PACKS.length };
+  },
+});
