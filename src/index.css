@@ -80,12 +80,20 @@
   #root {
     @apply h-full;
   }
-  /* Top-center indigo glow fading to near-black, on <html> so it covers the
-     full screen incl. safe-area strips in an installed PWA. */
   html {
     background-color: #0d091a;
+  }
+  /* The background lives on a FIXED, full-viewport layer (not `background-
+     attachment: fixed`, which mis-paints the bottom safe-area in installed iOS
+     PWAs and leaves a band). Fixed inset-0 always covers the whole screen,
+     incl. under the notch/home-indicator, so the screen never looks cut off. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -20;
+    background-color: #0d091a;
     background-image: radial-gradient(circle at top center, #1a1236 0%, #0d091a 100%);
-    background-attachment: fixed;
   }
   body {
     @apply text-foreground overscroll-none antialiased;
