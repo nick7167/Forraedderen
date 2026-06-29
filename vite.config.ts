@@ -12,40 +12,45 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon-180x180.png", "logo.svg"],
-      manifest: {
-        name: "Kamæleon",
-        short_name: "Kamæleon",
-        description: "Find kamæleonen — et socialt gættespil til festen.",
-        theme_color: "#0d091a",
-        background_color: "#0d091a",
-        display: "standalone",
-        orientation: "portrait",
-        start_url: "/",
-        scope: "/",
-        icons: [
-          {
-            src: "pwa-64x64.png",
-            sizes: "64x64",
-            type: "image/png",
-          },
-          {
-            src: "pwa-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "maskable-icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
+        manifest: {
+          name: "Kamæleon",
+          short_name: "Kamæleon",
+          description: "Find kamæleonen — et socialt gættespil til festen.",
+          theme_color: "#0d091a",
+          background_color: "#0d091a",
+          display: "standalone",
+          orientation: "portrait",
+          start_url: "/",
+          scope: "/",
+          icons: [
+            {
+              src: "pwa-64x64.png",
+              sizes: "64x64",
+              type: "image/png",
+            },
+            {
+              src: "pwa-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: "pwa-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
+            {
+              src: "maskable-icon-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
+            {
+              src: "kamaeleon-logo-512x512.webp",
+              sizes: "512x512",
+              type: "image/webp",
+            },
+          ],
+        },
       workbox: {
         // Cache the app shell + static assets and fall back to index.html
         // so the installed app loads offline (then shows the offline state,
