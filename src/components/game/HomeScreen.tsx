@@ -126,7 +126,7 @@ export function HomeScreen() {
         {/* Hero — Kamæleon logo (mascot + wordmark) */}
         <div className="text-center">
           <img
-            src="/kamaeleon-logo.webp"
+            src="/kamaeleon-logo-512x512.webp"
             alt={t.appName}
             width={720}
             height={720}
