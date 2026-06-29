@@ -19,15 +19,17 @@ export function TopBar({
   return (
     <div
       className={cn(
-        "sticky top-0 z-20 flex h-12 items-center justify-between bg-background/80 px-3 backdrop-blur-md",
+        "pt-safe sticky top-0 z-20 bg-background/80 px-3 backdrop-blur-md",
         className,
       )}
     >
-      <div className="flex w-16 justify-start">{left}</div>
-      <div className="truncate text-sm font-semibold text-foreground/90">
-        {title}
+      <div className="flex h-12 items-center justify-between">
+        <div className="flex w-16 justify-start">{left}</div>
+        <div className="truncate text-sm font-semibold text-foreground/90">
+          {title}
+        </div>
+        <div className="flex w-16 justify-end">{right}</div>
       </div>
-      <div className="flex w-16 justify-end">{right}</div>
     </div>
   );
 }

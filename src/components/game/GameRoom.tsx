@@ -99,6 +99,7 @@ export function GameRoom() {
         body={t.removedBody}
         actionLabel={t.goHome}
         onAction={leave}
+        topInset
       />
     );
   }
@@ -159,7 +160,7 @@ export function GameRoom() {
   if (round.me && !round.me.isParticipant && round.phase !== "resolve") {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="z-20 shrink-0 bg-background/80 backdrop-blur-md">
+        <div className="pt-safe z-20 shrink-0 bg-background/80 backdrop-blur-md">
           {header}
         </div>
         <HostGoneBanner room={room} authArgs={authArgs} />
@@ -184,7 +185,7 @@ export function GameRoom() {
           onDone={() => setBanner(null)}
         />
       )}
-      <div className="z-20 shrink-0 bg-background/80 backdrop-blur-md">
+      <div className="pt-safe z-20 shrink-0 bg-background/80 backdrop-blur-md">
         {header}
         {(round.phase === "clues" ||
           round.phase === "discussion" ||

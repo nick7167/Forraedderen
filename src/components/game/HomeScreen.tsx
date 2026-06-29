@@ -77,7 +77,7 @@ export function HomeScreen() {
       <NeonBackdrop density="full" />
 
       {/* Optional account (unlocks saving custom packs). */}
-      <div className="absolute top-2 right-4 z-10">
+      <div className="absolute right-4 z-10 top-[calc(env(safe-area-inset-top)+0.5rem)]">
         <SignedOut>
           <SignInButton mode="modal">
             <button className="glass-pill flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-foreground/90 active:scale-95">
@@ -92,6 +92,7 @@ export function HomeScreen() {
 
       <Screen
         center
+        topInset
         footer={
           <Button
             size="hero"

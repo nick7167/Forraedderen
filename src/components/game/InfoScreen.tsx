@@ -8,15 +8,18 @@ export function InfoScreen({
   body,
   actionLabel,
   onAction,
+  topInset = false,
 }: {
   emoji: string;
   title: string;
   body?: string;
   actionLabel: string;
   onAction: () => void;
+  /** Set when this is the topmost element (no top bar above it). */
+  topInset?: boolean;
 }) {
   return (
-    <Screen center footer={<Button size="hero" onClick={onAction}>{actionLabel}</Button>}>
+    <Screen center topInset={topInset} footer={<Button size="hero" onClick={onAction}>{actionLabel}</Button>}>
       <div className="text-center">
         <p className="text-5xl">{emoji}</p>
         <h1 className="mt-3 text-2xl font-extrabold">{title}</h1>

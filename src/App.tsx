@@ -15,14 +15,10 @@ export default function App() {
       style={{
         // Fixed viewport height (not min-height) so inner regions can own their
         // own scrolling — this is what makes per-screen sticky footers work.
+        // The shell fills the viewport EDGE-TO-EDGE (no safe-area padding here):
+        // top bars and footers apply the insets internally (.pt-safe/.pb-safe),
+        // so the background + chrome reach every edge with no visible strips.
         height: "100dvh",
-        // Keep content clear of the notch / home-indicator / rounded corners on
-        // installed PWAs (the shell owns all four insets; sticky footers use plain
-        // padding so they don't double up).
-        paddingTop: "env(safe-area-inset-top)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-        paddingLeft: "env(safe-area-inset-left)",
-        paddingRight: "env(safe-area-inset-right)",
       }}
     >
       <OfflineIndicator />

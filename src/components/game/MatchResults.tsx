@@ -94,6 +94,7 @@ export function MatchResults({
     <NeonBackdrop density="full" />
     <Screen
       header={header}
+      topInset
       footer={
         <div className="space-y-2">
           {isHost && (
