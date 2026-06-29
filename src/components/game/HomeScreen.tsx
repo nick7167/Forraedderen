@@ -130,7 +130,7 @@ export function HomeScreen() {
             alt={t.appName}
             width={720}
             height={720}
-            className="mx-auto w-full max-w-[20rem] drop-shadow-[0_0_34px_rgba(124,58,237,0.45)]"
+            className="mx-auto w-full max-w-[20rem] drop-shadow-[0_0_34px_rgba(124,58,237,0.45)] scale-75"
           />
           <p className="mx-auto mt-1 max-w-[18rem] text-lg font-medium text-gray-300">
             {t.tagline}
