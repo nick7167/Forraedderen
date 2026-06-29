@@ -98,7 +98,7 @@
   body {
     @apply text-foreground overscroll-none antialiased;
     font-family: var(--font-sans);
-    min-height: 100dvh;
+    min-height: var(--app-h, 100dvh);
     background: transparent;
   }
   h1, h2, h3 {

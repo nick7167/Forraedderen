@@ -203,4 +203,13 @@ export const t = {
   roomNotFound: "Rummet findes ikke.",
   connecting: "Forbinder…",
   offline: "Du er offline — genopretter…",
+
+  // Add to home screen
+  a2hsTitle: "Få den fulde oplevelse",
+  a2hsBody: "Føj Forræderen til din hjemmeskærm for fuld skærm og hurtig adgang.",
+  a2hsInstall: "Føj til hjemmeskærm",
+  a2hsContinue: "Fortsæt i browser",
+  a2hsIosIntro: "Sådan gør du i Safari:",
+  a2hsIosStep1: "Tryk på Del-knappen nederst",
+  a2hsIosStep2: 'Vælg "Føj til hjemmeskærm"',
 } as const;

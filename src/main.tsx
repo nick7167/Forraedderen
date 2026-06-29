@@ -24,6 +24,24 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 const convex = new ConvexReactClient(CONVEX_URL);
 
+// --- Viewport height (fixes iOS where `100dvh` isn't finalized until a scroll) ---
+// Drive the app height from JS so the first paint already has the right pixel
+// height. `innerHeight` (not visualViewport) stays stable when the keyboard opens.
+function setAppHeight() {
+  document.documentElement.style.setProperty("--app-h", `${window.innerHeight}px`);
+}
+setAppHeight(); // synchronous, before render → correct on first paint
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", setAppHeight);
+window.addEventListener("pageshow", setAppHeight);
+window.visualViewport?.addEventListener("resize", setAppHeight);
+
+// --- Capture the install prompt early (it can fire before React mounts) ---
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  (window as unknown as { __deferredInstall?: Event }).__deferredInstall = e;
+});
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>

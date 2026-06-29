@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/drawer";
 import { Screen } from "./Screen";
 import { NeonBackdrop } from "./NeonBackdrop";
+import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { AvatarPicker } from "./AvatarPicker";
 import { Avatar } from "./PlayerBadge";
 import { AVATAR_COLORS, AVATAR_EMOJIS, randomFrom } from "@/lib/avatars";
@@ -75,6 +76,8 @@ export function HomeScreen() {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <NeonBackdrop density="full" />
+      <AddToHomeScreen />
+
 
       {/* Optional account (unlocks saving custom packs). */}
       <div className="absolute right-4 z-10 top-[calc(env(safe-area-inset-top)+0.5rem)]">
