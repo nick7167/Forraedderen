@@ -20,8 +20,10 @@ export type QuestionPair = {
   imposter: string;
 };
 
+// Newer additions are kept first so they become part of the same draw pool as
+// the original pairs below. `QUESTION_PAIRS` exports their combined list.
 const QUESTION_PAIRS_EXTRA: QuestionPair[] = [
-  // Originale par
+  // Nye par
   {
     crew: "Hvor mange uåbnede faner har du åbne i din browser på mobilen?",
     imposter: "Hvor mange apps har du installeret, som du aldrig har åbnet?",
@@ -424,7 +426,7 @@ const QUESTION_PAIRS_EXTRA: QuestionPair[] = [
   },
 ];
 
-export const QUESTION_PAIRS: QuestionPair[] = [
+const QUESTION_PAIRS_BASE: QuestionPair[] = [
   // Originale par
   {
     crew: "Hvor mange timer sov du i nat?",
@@ -1310,4 +1312,10 @@ export const QUESTION_PAIRS: QuestionPair[] = [
     crew: "Hvem i gruppen ville være den hurtigste til at kede sig på en strandferie?",
     imposter: "Hvem i gruppen kan ligge i en liggestol en hel uge uden at lave noget som helst?",
   },
+];
+
+/** Complete question-mode draw pool: newer additions plus the original pairs. */
+export const QUESTION_PAIRS: QuestionPair[] = [
+  ...QUESTION_PAIRS_EXTRA,
+  ...QUESTION_PAIRS_BASE,
 ];
