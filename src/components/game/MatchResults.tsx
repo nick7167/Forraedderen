@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import confetti from "canvas-confetti";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
@@ -14,6 +14,8 @@ import { Crown } from "lucide-react";
 
 type Room = NonNullable<FunctionReturnType<typeof api.games.getRoomState>>;
 type Player = Room["players"][number];
+type Analytics = NonNullable<FunctionReturnType<typeof api.round.getMatchAnalytics>>;
+type Highlight = Analytics["bestDetective"];
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -23,6 +25,41 @@ const PODIUM_SLOTS = [
   { rank: 0, h: "h-28", grad: "from-amber-300/40 to-amber-500/10", size: 72 },
   { rank: 2, h: "h-16", grad: "from-orange-400/30 to-orange-600/10", size: 52 },
 ];
+
+function HighlightCard({
+  emoji,
+  label,
+  highlight,
+  detail,
+}: {
+  emoji: string;
+  label: string;
+  highlight: Highlight;
+  detail: (value: number) => string;
+}) {
+  if (!highlight) return null;
+  return (
+    <div className="glass flex items-center gap-3 rounded-2xl p-3">
+      <span className="text-2xl">{emoji}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          {highlight.players.map((player) => (
+            <span key={player.playerId} className="inline-flex items-center gap-1 text-sm font-bold">
+              <Avatar emoji={player.avatarEmoji} color={player.avatarColor} size={24} />
+              {player.name}
+            </span>
+          ))}
+        </div>
+      </div>
+      <span className="shrink-0 text-right text-sm font-black text-primary">
+        {detail(highlight.value)}
+      </span>
+    </div>
+  );
+}
 
 export function MatchResults({
   room,
@@ -36,6 +73,7 @@ export function MatchResults({
   onLeave: () => void;
 }) {
   const backToLobby = useMutation(api.round.backToLobby);
+  const analytics = useQuery(api.round.getMatchAnalytics, authArgs);
   const ranked = [...room.players].sort((a, b) => b.score - a.score);
   const top3 = ranked.slice(0, 3);
   const rest = ranked.slice(3);
@@ -108,6 +146,38 @@ export function MatchResults({
         </div>
       }
     >
+      {analytics && (
+        <section className="space-y-2">
+          <h2 className="px-1 text-sm font-semibold text-muted-foreground">
+            {t.matchHighlights}
+          </h2>
+          <HighlightCard
+            emoji="🔎"
+            label={t.bestDetective}
+            highlight={analytics.bestDetective}
+            detail={(value) => `${value}% ${t.accuracy}`}
+          />
+          <HighlightCard
+            emoji="🎯"
+            label={t.mostCorrectVotes}
+            highlight={analytics.mostCorrectVotes}
+            detail={(value) => `${value} ${t.correctVotes}`}
+          />
+          <HighlightCard
+            emoji="👀"
+            label={t.mostSuspected}
+            highlight={analytics.mostSuspected}
+            detail={(value) => `${value} ${t.receivedVotes}`}
+          />
+          <HighlightCard
+            emoji="🦎"
+            label={t.bestBluff}
+            highlight={analytics.bestBluff}
+            detail={(value) => `${value} ${t.imposterWins}`}
+          />
+        </section>
+      )}
+
       {/* Remaining ranks */}
       {rest.length > 0 && (
         <div className="space-y-1.5">

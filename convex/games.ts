@@ -14,7 +14,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
 const DEFAULT_SETTINGS = {
-  gameMode: "spy" as "spy" | "undercover" | "questions",
+  gameMode: "spy" as "spy" | "undercover" | "questions" | "scale",
   imposterCount: 1,
   cluePasses: 1,
   imposterSeesCategory: true,

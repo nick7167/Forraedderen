@@ -99,15 +99,19 @@ export function RoundReveal({
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <div className="inline-block rounded-xl bg-white/20 px-4 py-2">
           <span className="text-xs opacity-80">
-            {reveal.gameMode === "questions" ? t.theCrewQuestion : t.theWord}
+            {reveal.gameMode === "questions" || reveal.gameMode === "scale"
+              ? t.theCrewQuestion
+              : t.theWord}
           </span>
           <p className="text-xl font-black">{reveal.secretWord}</p>
         </div>
-        {(reveal.gameMode === "undercover" || reveal.gameMode === "questions") &&
+        {(reveal.gameMode === "undercover" ||
+          reveal.gameMode === "questions" ||
+          reveal.gameMode === "scale") &&
           reveal.decoyWord && (
             <div className="inline-block rounded-xl bg-black/25 px-4 py-2">
               <span className="text-xs opacity-80">
-                {reveal.gameMode === "questions"
+                {reveal.gameMode === "questions" || reveal.gameMode === "scale"
                   ? t.theImposterQuestion
                   : t.imposterWordWas}
               </span>

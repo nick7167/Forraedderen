@@ -9,10 +9,13 @@ import { v } from "convex/values";
 //                  different-but-related question and is NOT told they're the
 //                  imposter. Crew question is stored in `secretWord`, the
 //                  imposter's question in `decoyWord`, the theme in `category`.
+//  - "scale":      everyone answers a prompt from 1–5; the imposter secretly
+//                  receives a related-but-different prompt.
 export const gameModeValidator = v.union(
   v.literal("spy"),
   v.literal("undercover"),
   v.literal("questions"),
+  v.literal("scale"),
 );
 
 // Per-room game settings (host-configurable in the lobby / between rounds).

@@ -32,8 +32,10 @@ export function RoleReveal({
   const markReady = useMutation(api.round.markReady);
   const me = round.me;
   const isImposter = me?.isImposter ?? false;
-  const isQuestions = round.gameMode === "questions";
-  // In questions mode the player's own answer is visible in their clues row.
+  const isPromptMode =
+    round.gameMode === "questions" || round.gameMode === "scale";
+  const isScale = round.gameMode === "scale";
+  // In prompt modes the player's own answer is visible in their clues row.
   const myAnswer = me
     ? round.clues.find((c) => c.playerId === me.playerId)?.text
     : undefined;
@@ -54,13 +56,13 @@ export function RoleReveal({
     participants.length > 0 && participants.every((p) => readySet.has(p._id));
 
   async function handleReady() {
-    if (isQuestions && !answer.trim()) return;
+    if (isPromptMode && !answer.trim()) return;
     feedback.tap();
     try {
       await markReady({
         ...authArgs,
         roundId: round.roundId,
-        answerText: isQuestions ? answer.trim() : undefined,
+        answerText: isPromptMode ? answer.trim() : undefined,
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fejl");
@@ -78,7 +80,7 @@ export function RoleReveal({
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-4">
       <span className="rounded-full bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {isQuestions ? t.yourQuestion : t.yourRole} · {t.pass} {round.roundNumber}
+        {isPromptMode ? t.yourQuestion : t.yourRole} · {t.pass} {round.roundNumber}
       </span>
 
       <button
@@ -106,7 +108,7 @@ export function RoleReveal({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2 px-6 text-center duration-300 animate-in fade-in zoom-in">
-            {isQuestions ? (
+            {isPromptMode ? (
               <>
                 <span className="text-xs font-medium uppercase opacity-80">
                   {t.yourQuestion}
@@ -115,7 +117,7 @@ export function RoleReveal({
                   {me?.secretWord}
                 </span>
                 <span className="mt-1 text-xs opacity-80">
-                  {t.questionAnswerHint}
+                  {isScale ? t.scaleAnswerHint : t.questionAnswerHint}
                 </span>
               </>
             ) : isImposter ? (
@@ -189,7 +191,7 @@ export function RoleReveal({
 
           {iAmReady ? (
             <div className="space-y-1">
-              {isQuestions && myAnswer && (
+              {isPromptMode && myAnswer && (
                 <p className="text-sm text-muted-foreground">
                   {t.youAnswered}: <b className="text-foreground">{myAnswer}</b>
                 </p>
@@ -198,15 +200,37 @@ export function RoleReveal({
                 <Check className="mr-1 inline size-4" /> {t.ready} · {t.readyWaiting}
               </p>
             </div>
-          ) : isQuestions ? (
+          ) : isPromptMode ? (
             <div className="space-y-2">
-              <Input
-                value={answer}
-                maxLength={60}
-                placeholder={t.answerPlaceholder}
-                onChange={(e) => setAnswer(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleReady()}
-              />
+              {isScale ? (
+                <>
+                  <p className="text-sm text-muted-foreground">{t.chooseScale}</p>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-label={String(value)}
+                        onClick={() => setAnswer(String(value))}
+                        className={cn(
+                          "glass aspect-square rounded-2xl text-xl font-black transition-all active:scale-95",
+                          answer === String(value) && "gradient-primary glow-ring text-white",
+                        )}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <Input
+                  value={answer}
+                  maxLength={60}
+                  placeholder={t.answerPlaceholder}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleReady()}
+                />
+              )}
               <Button
                 size="lg"
                 className="w-full font-bold"

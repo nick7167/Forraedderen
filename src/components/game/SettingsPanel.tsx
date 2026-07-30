@@ -96,6 +96,7 @@ const MODES = [
   { id: "spy", emoji: "🦎", label: t.modeSpy },
   { id: "undercover", emoji: "🎭", label: t.modeUndercover },
   { id: "questions", emoji: "❓", label: t.modeQuestions },
+  { id: "scale", emoji: "📊", label: t.modeScale },
 ] as const;
 
 export function SettingsPanel({
@@ -113,7 +114,8 @@ export function SettingsPanel({
   const currentPack = packs?.find((p) => p._id === settings.packId);
   const [packOpen, setPackOpen] = useState(false);
   const maxImposters = Math.max(1, playerCount - 2);
-  const isQuestions = settings.gameMode === "questions";
+  const isPromptMode =
+    settings.gameMode === "questions" || settings.gameMode === "scale";
 
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     onChange({ ...settings, [key]: value });
@@ -123,14 +125,16 @@ export function SettingsPanel({
       ? t.modeSpyDesc
       : settings.gameMode === "undercover"
         ? t.modeUndercoverDesc
-        : t.modeQuestionsDesc;
+        : settings.gameMode === "questions"
+          ? t.modeQuestionsDesc
+          : t.modeScaleDesc;
 
   return (
     <div className="space-y-5">
       {/* Game mode */}
       <section className="space-y-2">
         <SectionLabel>{t.mode}</SectionLabel>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {MODES.map((m) => {
             const active = settings.gameMode === m.id;
             return (
@@ -154,8 +158,8 @@ export function SettingsPanel({
         <p className="px-1 text-xs leading-snug text-muted-foreground">{modeDesc}</p>
       </section>
 
-      {/* Category (not used in "questions" mode). */}
-      {!isQuestions && (
+      {/* Categories are not used by the prompt-based modes. */}
+      {!isPromptMode && (
         <section className="space-y-2">
           <SectionLabel>{t.pack}</SectionLabel>
           <button
@@ -192,7 +196,7 @@ export function SettingsPanel({
               onChange={(v) => set("imposterCount", v)}
             />
           </Row>
-          {!isQuestions && (
+          {!isPromptMode && (
             <Row label={t.cluePasses}>
               <Stepper
                 value={settings.cluePasses}

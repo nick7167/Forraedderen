@@ -15,6 +15,7 @@ import type * as packs from "../packs.js";
 import type * as presence from "../presence.js";
 import type * as questionData from "../questionData.js";
 import type * as round from "../round.js";
+import type * as scaleData from "../scaleData.js";
 import type * as users from "../users.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   presence: typeof presence;
   questionData: typeof questionData;
   round: typeof round;
+  scaleData: typeof scaleData;
   users: typeof users;
 }>;
 

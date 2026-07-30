@@ -66,8 +66,8 @@ export function VotePhase({
         }
       />
 
-      {/* Questions mode: keep the real question in view while voting. */}
-      {round.gameMode === "questions" && round.sharedPrompt && (
+      {/* Prompt modes: keep the real prompt in view while voting. */}
+      {(round.gameMode === "questions" || round.gameMode === "scale") && round.sharedPrompt && (
         <p className="px-1 text-center text-sm font-semibold">
           <span className="text-muted-foreground">{t.theRealQuestion}: </span>
           {round.sharedPrompt}

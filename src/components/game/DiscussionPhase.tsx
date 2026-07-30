@@ -61,7 +61,7 @@ export function DiscussionPhase({
             icon={<MessagesSquare className="size-6" />}
             title={t.discussTitle.toUpperCase()}
           />
-          {round.gameMode === "questions" && round.sharedPrompt && (
+          {(round.gameMode === "questions" || round.gameMode === "scale") && round.sharedPrompt && (
             <div className="glass rounded-2xl p-4 text-center">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {t.theRealQuestion}

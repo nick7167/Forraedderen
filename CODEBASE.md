@@ -45,6 +45,7 @@ Home → create/join → lobby → role/question reveal + ready
 | `spy` / Klassisk | Secret word | Their imposter role, but no word | Imposters can optionally know each other. |
 | `undercover` | Secret word | A related decoy word | Imposters are not told their role until resolution. |
 | `questions` / Spørgsmål | Crew question | Related-but-different question | Everyone answers privately, then answers are revealed for discussion. |
+| `scale` / Måleren | Crew prompt | Related-but-different prompt | Everyone privately chooses 1–5; answers reveal together for discussion. |
 
 Clue rounds run in randomized sequential order. Question answers are stored in
 the `clues` table and are hidden from other players until discussion. Votes are
@@ -71,12 +72,13 @@ before changing Convex code.
 | --- | --- |
 | `schema.ts` | `users`, `rooms`, `players`, `rounds`, `clues`, `votes`, and `packs` tables. |
 | `games.ts` | Room lifecycle, host controls, player/bot management, settings, room read model. |
-| `round.ts` | Match/round engine, role deal, privacy-projected round read model, scoring, voting, and bot scheduler. |
+| `round.ts` | Match/round engine, role deal, privacy-projected round read model, scoring, voting, bot scheduler, and match highlights. |
 | `lib.ts` | Guest-or-Clerk player authorization, presence projection, code generation, active-player queries. |
 | `presence.ts` | Heartbeat mutation; online threshold is 12 seconds. |
 | `packs.ts` | Built-in pack seeding/reseeding, listing, and custom pack creation. |
 | `packData.ts` | Built-in Danish word categories. |
 | `questionData.ts` | Built-in question pairs. `QUESTION_PAIRS` is the complete exported draw pool. |
+| `scaleData.ts` | Dedicated 1–5 prompt pairs for Måleren. |
 | `users.ts`, `auth.config.ts` | Clerk identity mirroring and JWT configuration. |
 
 Authorization is server-side. A player acts either through their signed-in
@@ -93,6 +95,17 @@ they are allowed to see in the current phase.
 - `QUESTION_PAIRS` combines `QUESTION_PAIRS_EXTRA` and
   `QUESTION_PAIRS_BASE`. Add every new valid `{ crew, imposter }` pair to one
   of those arrays; do not create a standalone unused question list.
+- `SCALE_PAIRS` is used only by Måleren. Every pair must work with the same
+  1–5 response scale; word-pack modes must never read either prompt pool.
+
+## Match highlights
+
+The final-results screen subscribes to `round.getMatchAnalytics`, which derives
+four authoritative highlights from stored role assignments and secret ballots:
+best detective (highest crew voting accuracy), most correct votes, most
+suspected (votes received), and best bluff (surviving imposter wins). Ties are
+shown together. The query only returns results to a verified room member after
+the room enters `finished`.
 
 ## Operations and verification
 
@@ -113,8 +126,8 @@ PWA service-worker settings live in `vite.config.ts`; application icons live in
 ## Test coverage and current verification
 
 Playwright covers the home screen, install prompt, avatar picker, lobby,
-rules/settings/packs, a full Klassisk round and match result, and the
-Spørgsmål flow. Screenshots are retained in `Test Screenshots/` and
+rules/settings/packs, a full Klassisk round and match result, the Spørgsmål
+flow, and Måleren through match highlights. Screenshots are retained in `Test Screenshots/` and
 `qa-screenshots/`.
 
 Last verified after the question-pool fix: `pnpm lint`, `pnpm build`, and

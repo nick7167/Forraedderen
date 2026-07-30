@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { DANISH_PACKS } from "./packData";
 import { QUESTION_PAIRS } from "./questionData";
+import { SCALE_PAIRS } from "./scaleData";
 import {
   shuffle,
   requirePlayer,
@@ -277,28 +278,28 @@ export const getRoundState = query({
     const iAmImposter =
       isParticipant && round.imposterPlayerIds.some((id) => id === me!._id);
     const revealEverything = round.phase === "resolve";
-    // In undercover/questions mode the imposter must NOT know they're the
+    // In undercover/prompt modes the imposter must NOT know they're the
     // imposter during play — they're shown a normal word/question card (the
     // decoy). The truth only comes out at the reveal.
     const hideImposter =
-      (round.gameMode === "undercover" || round.gameMode === "questions") &&
+      (round.gameMode === "undercover" || isPromptMode(round.gameMode)) &&
       !revealEverything;
 
     // Whose turn / who still needs to act this pass (turn order is sequential).
     const cluedThisPass = new Set(
       clues.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
     );
-    // "questions" mode answers simultaneously (no turn order, no current turn).
+    // Prompt modes answer simultaneously (no turn order, no current turn).
     const currentTurnPlayerId =
-      round.phase === "clues" && round.gameMode !== "questions"
+      round.phase === "clues" && !isPromptMode(round.gameMode)
         ? round.turnOrder.find((id) => !cluedThisPass.has(id)) ?? null
         : null;
 
-    // In "questions" mode, answers are collected on the reveal screen. Hide
+    // In prompt modes, answers are collected on the reveal screen. Hide
     // everyone else's answer text until reveal ends (simultaneous reveal at
     // discussion). You always see your own.
     const answersHidden =
-      round.gameMode === "questions" && round.phase === "reveal";
+      isPromptMode(round.gameMode) && round.phase === "reveal";
     const cluesOut = answersHidden
       ? clues.map((c) => ({
           ...c,
@@ -350,7 +351,7 @@ export const getRoundState = query({
       myWord = null; // spectator / not dealt into this round
     } else if (revealEverything || !iAmImposter) {
       myWord = round.secretWord; // crew (and everyone at reveal) see the real word/question
-    } else if (round.gameMode === "undercover" || round.gameMode === "questions") {
+    } else if (round.gameMode === "undercover" || isPromptMode(round.gameMode)) {
       myWord = round.decoyWord ?? null; // hidden imposter sees the decoy word/question
     } else {
       myWord = null; // spy imposter knows no word
@@ -360,12 +361,12 @@ export const getRoundState = query({
     // alike. (The secret word is still gated by role/mode above.)
     const categoryVisible = revealEverything || isParticipant;
 
-    // "questions" mode: the real (crew) question becomes public from the
+    // Prompt modes: the real crew prompt becomes public from the
     // discussion phase onward, so everyone — including the in-the-dark imposter —
     // can judge which answer doesn't fit. (This reveals the question, never who
     // the imposter is.)
     const sharedPrompt =
-      round.gameMode === "questions" &&
+      isPromptMode(round.gameMode) &&
       (round.phase === "discussion" ||
         round.phase === "vote" ||
         round.phase === "resolve")
@@ -436,8 +437,155 @@ function playerArgs() {
   };
 }
 
+type MatchStat = {
+  playerId: Id<"players">;
+  correctVotes: number;
+  crewVotesCast: number;
+  votesReceived: number;
+  imposterWins: number;
+};
+
+type AnalyticsPlayer = {
+  playerId: Id<"players">;
+  name: string;
+  avatarEmoji: string;
+  avatarColor: string;
+};
+
+type MatchHighlight = {
+  value: number;
+  players: AnalyticsPlayer[];
+};
+
+function analyticsPlayer(player: Doc<"players">): AnalyticsPlayer {
+  return {
+    playerId: player._id,
+    name: player.name,
+    avatarEmoji: player.avatarEmoji,
+    avatarColor: player.avatarColor,
+  };
+}
+
+function leadersFor(
+  stats: MatchStat[],
+  playerById: Map<Id<"players">, Doc<"players">>,
+  valueFor: (stat: MatchStat) => number,
+): MatchHighlight | null {
+  const candidates = stats.filter((stat) => playerById.has(stat.playerId));
+  const topValue = Math.max(0, ...candidates.map(valueFor));
+  if (topValue === 0) return null;
+  return {
+    value: topValue,
+    players: candidates
+      .filter((stat) => valueFor(stat) === topValue)
+      .map((stat) => analyticsPlayer(playerById.get(stat.playerId)!))
+      .sort((a, b) => a.name.localeCompare(b.name, "da")),
+  };
+}
+
+/**
+ * Match-end highlights calculated from the authoritative rounds and ballots.
+ * The room is deliberately capped at 12 players and a match at 20 rounds, so
+ * the bounded reads below cover the full match without unbounded queries.
+ */
+export const getMatchAnalytics = query({
+  args: playerArgs(),
+  handler: async (ctx, args) => {
+    await requirePlayer(ctx, args);
+    const room = await ctx.db.get(args.roomId);
+    if (room === null || room.phase !== "finished") return null;
+
+    const roomPlayers = await ctx.db
+      .query("players")
+      .withIndex("by_room", (q) => q.eq("roomId", room._id))
+      .take(12);
+    const playerById = new Map(roomPlayers.map((player) => [player._id, player]));
+    const stats = new Map<Id<"players">, MatchStat>(
+      roomPlayers.map((player) => [
+        player._id,
+        {
+          playerId: player._id,
+          correctVotes: 0,
+          crewVotesCast: 0,
+          votesReceived: 0,
+          imposterWins: 0,
+        },
+      ]),
+    );
+
+    const rounds = await ctx.db
+      .query("rounds")
+      .withIndex("by_room", (q) => q.eq("roomId", room._id))
+      .take(20);
+
+    for (const round of rounds) {
+      const imposters = new Set(round.imposterPlayerIds);
+      for (const imposterId of round.imposterPlayerIds) {
+        const stat = stats.get(imposterId);
+        if (
+          stat &&
+          round.outcome === "imposters" &&
+          !round.eliminatedPlayerIds.some((id) => id === imposterId)
+        ) {
+          stat.imposterWins++;
+        }
+      }
+
+      const votes = await ctx.db
+        .query("votes")
+        .withIndex("by_round", (q) => q.eq("roundId", round._id))
+        .take(300);
+      for (const vote of votes) {
+        const targetStat = stats.get(vote.targetPlayerId);
+        if (targetStat) targetStat.votesReceived++;
+
+        const voterStat = stats.get(vote.voterPlayerId);
+        if (voterStat && !imposters.has(vote.voterPlayerId)) {
+          voterStat.crewVotesCast++;
+          if (imposters.has(vote.targetPlayerId)) voterStat.correctVotes++;
+        }
+      }
+    }
+
+    const allStats = [...stats.values()];
+    const detectiveCandidates = allStats.filter((stat) => stat.crewVotesCast > 0);
+    const topAccuracy = Math.max(
+      0,
+      ...detectiveCandidates.map(
+        (stat) => Math.round((stat.correctVotes / stat.crewVotesCast) * 100),
+      ),
+    );
+    const bestDetective: MatchHighlight | null =
+      topAccuracy === 0
+        ? null
+        : {
+            value: topAccuracy,
+            players: detectiveCandidates
+              .filter(
+                (stat) =>
+                  Math.round((stat.correctVotes / stat.crewVotesCast) * 100) ===
+                  topAccuracy,
+              )
+              .map((stat) => analyticsPlayer(playerById.get(stat.playerId)!))
+              .sort((a, b) => a.name.localeCompare(b.name, "da")),
+          };
+
+    return {
+      bestDetective,
+      mostCorrectVotes: leadersFor(allStats, playerById, (stat) => stat.correctVotes),
+      mostSuspected: leadersFor(allStats, playerById, (stat) => stat.votesReceived),
+      bestBluff: leadersFor(allStats, playerById, (stat) => stat.imposterWins),
+    };
+  },
+});
+
 function validateForStart(playerCount: number) {
   if (playerCount < 3) throw new Error("Mindst 3 spillere skal være med.");
+}
+
+/** Modes that use a private prompt and simultaneous reveal-screen answer. */
+function isPromptMode(gameMode: Doc<"rounds">["gameMode"]): boolean {
+  return gameMode === "questions" || gameMode === "scale";
 }
 
 /** Clamp the configured imposter count to what the player count allows. */
@@ -510,8 +658,8 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
     // reveal screen and the round auto-begins once everyone is ready.
     readyPlayerIds: players.filter((p) => p.isBot).map((p) => p._id),
     gameMode: s.gameMode,
-    // "questions" mode is a single simultaneous answer round.
-    cluePasses: s.gameMode === "questions" ? 1 : s.cluePasses,
+    // Prompt modes are a single simultaneous answer round.
+    cluePasses: isPromptMode(s.gameMode) ? 1 : s.cluePasses,
     imposterSeesCategory: s.imposterSeesCategory,
     impostersKnowEachOther: s.impostersKnowEachOther,
     phase: "reveal",
@@ -534,12 +682,13 @@ async function pickWords(
   ctx: QueryCtx,
   room: Doc<"rooms">,
 ): Promise<{ word: string; category: string; decoyWord?: string }> {
-  // "questions" mode draws a crew/imposter question pair from the flat pool.
-  // We reuse secretWord (crew question) + decoyWord (imposter question); there
-  // are no categories in this mode, so category is left empty.
-  if (room.settings.gameMode === "questions") {
-    const pair =
-      QUESTION_PAIRS[Math.floor(Math.random() * QUESTION_PAIRS.length)];
+  // Prompt modes draw a crew/imposter pair from their dedicated flat pool. We
+  // reuse secretWord (crew prompt) + decoyWord (imposter prompt); there are no
+  // categories in these modes, so category is left empty.
+  if (isPromptMode(room.settings.gameMode)) {
+    const pairs =
+      room.settings.gameMode === "scale" ? SCALE_PAIRS : QUESTION_PAIRS;
+    const pair = pairs[Math.floor(Math.random() * pairs.length)];
     return { word: pair.crew, category: "", decoyWord: pair.imposter };
   }
 
@@ -578,7 +727,7 @@ async function pickWords(
 }
 
 /**
- * "questions" mode: leave the reveal screen for the discussion. Answers were
+ * Prompt modes: leave the reveal screen for the discussion. Answers were
  * collected as players readied up; fill any still missing (bots get a filler
  * answer, force-skipped humans get "—") so the discussion shows one per player.
  */
@@ -619,7 +768,7 @@ async function startDiscussion(
 
 /**
  * Host force-start from the reveal screen. Clue modes go to the clue phase;
- * "questions" mode goes straight to discussion (answers are gathered at reveal).
+ * Prompt modes go straight to discussion (answers are gathered at reveal).
  */
 export const beginClues = mutation({
   args: { ...hostArgs(), roundId: v.id("rounds") },
@@ -628,7 +777,7 @@ export const beginClues = mutation({
     const round = await ctx.db.get(args.roundId);
     if (round === null || round.roomId !== room._id) throw new Error("Ugyldig runde.");
     if (round.phase !== "reveal") return;
-    if (round.gameMode === "questions") {
+    if (isPromptMode(round.gameMode)) {
       await startDiscussion(ctx, room, round);
       return;
     }
@@ -639,9 +788,9 @@ export const beginClues = mutation({
 });
 
 /**
- * A player taps "ready" on the reveal screen. In "questions" mode this also
+ * A player taps "ready" on the reveal screen. In prompt modes this also
  * carries their answer (typed on the reveal screen). Once every participant is
- * ready the round auto-advances: clue modes → clue phase; questions →
+ * ready the round auto-advances: clue modes → clue phase; prompt modes →
  * discussion. (The host can still force-start via beginClues.)
  */
 export const markReady = mutation({
@@ -657,10 +806,13 @@ export const markReady = mutation({
     // Only participants (dealt into this round) ready up; spectators wait.
     if (!round.turnOrder.some((id) => id === me._id)) return;
 
-    // "questions" mode: record the player's answer (once) as they ready up.
-    if (round.gameMode === "questions") {
+    // Prompt modes: record the player's answer (once) as they ready up.
+    if (isPromptMode(round.gameMode)) {
       const text = (args.answerText ?? "").trim().slice(0, 60);
       if (text.length === 0) throw new Error("Skriv dit svar.");
+      if (round.gameMode === "scale" && !/^[1-5]$/.test(text)) {
+        throw new Error("Vælg et tal fra 1 til 5.");
+      }
       const existing = await ctx.db
         .query("clues")
         .withIndex("by_round", (q) => q.eq("roundId", round._id))
@@ -685,7 +837,7 @@ export const markReady = mutation({
 
     // Everyone ready → advance (mirrors beginClues).
     if (round.turnOrder.every((id) => ready.has(id))) {
-      if (round.gameMode === "questions") {
+      if (isPromptMode(round.gameMode)) {
         await startDiscussion(ctx, room, round);
         return;
       }
@@ -921,8 +1073,13 @@ async function botClueText(
   room: Doc<"rooms">,
   round: Doc<"rounds">,
 ): Promise<string> {
-  // "questions" mode: there are no predefined answers — real players type their
-  // own. Bots are just filler, so they pick a generic one-word answer.
+  // Måleren bots give a valid private scale answer.
+  if (round.gameMode === "scale") {
+    return String(1 + Math.floor(Math.random() * 5));
+  }
+
+  // Questions mode has no predefined answers — real players type their own.
+  // Bots are just filler, so they pick a generic one-word answer.
   if (round.gameMode === "questions") {
     return BOT_FILLER[Math.floor(Math.random() * BOT_FILLER.length)];
   }

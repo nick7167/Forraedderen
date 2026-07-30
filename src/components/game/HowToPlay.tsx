@@ -40,6 +40,7 @@ export function HowToPlay({ trigger }: { trigger: React.ReactNode }) {
           <Section emoji="🦎" title={h.klassisk.title} body={h.klassisk.body} />
           <Section emoji="🎭" title={h.undercover.title} body={h.undercover.body} />
           <Section emoji="❓" title={h.questions.title} body={h.questions.body} />
+          <Section emoji="📊" title={h.scale.title} body={h.scale.body} />
         </div>
       </DrawerContent>
     </Drawer>

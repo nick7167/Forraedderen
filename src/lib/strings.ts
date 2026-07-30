@@ -54,9 +54,11 @@ export const t = {
   modeSpy: "Klassisk",
   modeUndercover: "Undercover",
   modeQuestions: "Spørgsmål",
+  modeScale: "Måleren",
   modeSpyDesc: "Kamæleonen kender ikke ordet.",
   modeUndercoverDesc: "Kamæleonen får et lignende ord — uden at vide det.",
   modeQuestionsDesc: "Alle svarer på et spørgsmål. Kamæleonen får et lidt andet spørgsmål — uden at vide det.",
+  modeScaleDesc: "Alle svarer fra 1–5. Kamæleonen får et lidt andet spørgsmål — uden at vide det.",
   randomCategory: "Tilfældig",
   randomCategoryOption: "Tilfældig kategori",
   randomCategoryNote: "Skifter hver runde",
@@ -91,6 +93,8 @@ export const t = {
   // Questions mode
   yourQuestion: "Dit spørgsmål",
   questionAnswerHint: "Svar ærligt med ÉT ord.",
+  scaleAnswerHint: "Svar ærligt på skalaen fra 1 til 5.",
+  chooseScale: "Vælg et tal fra 1 til 5",
   answerPhase: "Svar",
   answerPlaceholder: "Skriv dit svar (ét ord)",
   submitAnswer: "Send svar",
@@ -196,7 +200,22 @@ export const t = {
       title: "Spørgsmål",
       body: "Alle får et spørgsmål og svarer med ét ord på samme tid. Kamæleonen får et lidt andet spørgsmål — uden at vide det. Find ud af, hvem der svarede på et andet spørgsmål.",
     },
+    scale: {
+      title: "Måleren",
+      body: "Alle svarer privat fra 1 til 5 på det samme spørgsmål. Kamæleonen får et lignende, men anderledes spørgsmål. Sammenlign tallene og find den, der svarer skævt.",
+    },
   },
+
+  // Match highlights
+  matchHighlights: "Højdepunkter",
+  bestDetective: "Bedste detektiv",
+  bestBluff: "Bedste bluff",
+  mostSuspected: "Mest mistænkt",
+  mostCorrectVotes: "Flest rigtige stemmer",
+  accuracy: "træfsikker",
+  correctVotes: "rigtige stemmer",
+  receivedVotes: "modtagne stemmer",
+  imposterWins: "sejre som Kamæleon",
 
   // Errors / misc
   loading: "Indlæser…",
