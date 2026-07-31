@@ -8,7 +8,6 @@
  * @module
  */
 
-import type * as avatars from "../avatars.js";
 import type * as cleanup from "../cleanup.js";
 import type * as crons from "../crons.js";
 import type * as engine from "../engine.js";
@@ -20,6 +19,7 @@ import type * as presence from "../presence.js";
 import type * as questionData from "../questionData.js";
 import type * as round from "../round.js";
 import type * as scaleData from "../scaleData.js";
+import type * as shared from "../shared.js";
 import type * as users from "../users.js";
 
 import type {
@@ -29,7 +29,6 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  avatars: typeof avatars;
   cleanup: typeof cleanup;
   crons: typeof crons;
   engine: typeof engine;
@@ -41,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   questionData: typeof questionData;
   round: typeof round;
   scaleData: typeof scaleData;
+  shared: typeof shared;
   users: typeof users;
 }>;
 
