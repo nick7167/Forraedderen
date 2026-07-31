@@ -39,3 +39,6 @@ dev-dist/
 # Playwright (keep "Test Screenshots/" — it's the deliverable gallery)
 /test-results/
 /playwright-report/
+
+# Concept-parity comparison renders (regenerate with e2e/concept-parity.spec.ts)
+concept-parity/

@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "convex/react";
-import { Loader2, Volume2, VolumeX } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useGameRoom } from "@/hooks/useGameRoom";
 import { forgetRoomPlayer, recallRoomPlayer } from "@/lib/guest";
-import { feedback, isMuted, setMuted } from "@/lib/feedback";
+import { feedback } from "@/lib/feedback";
 import { t } from "@/lib/strings";
-import { LeaveButton } from "./LeaveButton";
 import { InfoScreen } from "./InfoScreen";
 import { HostGoneBanner } from "./HostGoneBanner";
 import { LobbyView } from "./LobbyView";
@@ -19,7 +18,6 @@ import { VotePhase } from "./VotePhase";
 import { RoundReveal } from "./RoundReveal";
 import { MatchResults } from "./MatchResults";
 import { PhaseBanner } from "./PhaseBanner";
-import { RoundContextBar } from "./RoundContextBar";
 import { NeonBackdrop } from "./NeonBackdrop";
 
 // Phases that get an announcing banner when entered.
@@ -34,8 +32,6 @@ export function GameRoom() {
   const roomId = roomIdParam as Id<"rooms"> | undefined;
   const navigate = useNavigate();
   const { room, round, authArgs } = useGameRoom(roomId);
-
-  const [muted, setMutedState] = useState(isMuted());
 
   // Announce phase changes with a brief banner.
   const phase = round?.phase ?? null;
@@ -130,39 +126,11 @@ export function GameRoom() {
     );
   }
 
-  const header = (
-    <div className="flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground">
-      <div className="flex items-center gap-2">
-        <LeaveButton onLeave={leave} confirm />
-        <span className="rounded-full bg-white/5 px-2.5 py-1 font-mono tracking-wider">
-          {room.code}
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="rounded-full bg-white/5 px-2.5 py-1">
-          Runde {room.currentRoundNumber}/{room.settings.roundCount}
-        </span>
-        <button
-          onClick={() => {
-            setMuted(!muted);
-            setMutedState(!muted);
-          }}
-          aria-label={muted ? "Slå lyd til" : "Slå lyd fra"}
-          className="flex size-7 items-center justify-center rounded-full bg-white/5 text-muted-foreground active:scale-90"
-        >
-          {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-        </button>
-      </div>
-    </div>
-  );
-
   // Joined mid-match (not dealt into this round) → wait for the next one.
   if (round.me && !round.me.isParticipant && round.phase !== "resolve") {
     return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="pt-safe z-20 shrink-0 bg-background/80 backdrop-blur-md">
-          {header}
-        </div>
+      <div className="cscreen s-home">
+        <NeonBackdrop />
         <HostGoneBanner room={room} authArgs={authArgs} />
         <InfoScreen
           emoji="⏳"
@@ -170,23 +138,17 @@ export function GameRoom() {
           body={t.waitingBody}
           actionLabel={t.leave}
           onAction={leave}
+          topInset
         />
       </div>
     );
   }
 
+  // Each phase screen owns its full concept layout (its own aurora, header
+  // padding and footer), so there is no shared top bar here — the leave and
+  // mute controls ride along inside each screen via PhaseChrome.
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <NeonBackdrop
-        density="subtle"
-        variant={
-          round.phase === "vote"
-            ? "danger"
-            : round.phase === "resolve"
-              ? "success"
-              : undefined
-        }
-      />
+    <>
       {banner && (
         <PhaseBanner
           emoji={banner.emoji}
@@ -194,12 +156,6 @@ export function GameRoom() {
           onDone={() => setBanner(null)}
         />
       )}
-      <div className="pt-safe z-20 shrink-0 bg-background/80 backdrop-blur-md">
-        {header}
-        {(round.phase === "clues" ||
-          round.phase === "discussion" ||
-          round.phase === "vote") && <RoundContextBar round={round} />}
-      </div>
       <HostGoneBanner room={room} authArgs={authArgs} />
       {round.phase === "reveal" && (
         <RoleReveal
@@ -207,20 +163,28 @@ export function GameRoom() {
           authArgs={authArgs}
           isHost={room.isHost}
           players={round.players}
+          totalRounds={room.settings.roundCount}
+          onLeave={leave}
         />
       )}
       {round.phase === "clues" && (
-        <CluePhase round={round} authArgs={authArgs} isHost={room.isHost} />
+        <CluePhase
+          round={round}
+          authArgs={authArgs}
+          isHost={room.isHost}
+          totalRounds={room.settings.roundCount}
+          onLeave={leave}
+        />
       )}
       {round.phase === "discussion" && (
-        <DiscussionPhase round={round} authArgs={authArgs} isHost={room.isHost} />
+        <DiscussionPhase round={round} authArgs={authArgs} isHost={room.isHost} onLeave={leave} />
       )}
       {round.phase === "vote" && (
-        <VotePhase round={round} authArgs={authArgs} isHost={room.isHost} />
+        <VotePhase round={round} authArgs={authArgs} isHost={room.isHost} onLeave={leave} />
       )}
       {round.phase === "resolve" && (
-        <RoundReveal round={round} authArgs={authArgs} isHost={room.isHost} />
+        <RoundReveal round={round} authArgs={authArgs} isHost={room.isHost} onLeave={leave} />
       )}
-    </div>
+    </>
   );
 }

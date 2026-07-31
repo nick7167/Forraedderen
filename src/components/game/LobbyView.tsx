@@ -1,20 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useMutation } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Screen } from "./Screen";
 import { NeonBackdrop } from "./NeonBackdrop";
-import { TopBar } from "./TopBar";
-import { Avatar } from "./PlayerBadge";
+import { Av } from "./Av";
+import { RoomCode } from "./RoomCode";
 import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
 import { SettingsCoach } from "./SettingsCoach";
@@ -22,12 +20,23 @@ import { HostGoneBanner } from "./HostGoneBanner";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
-import { Copy, Crown, LogOut, X, Loader2, Settings2, Bot, HelpCircle } from "lucide-react";
+import { Loader2, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type RoomShape = NonNullable<FunctionReturnType<typeof api.games.getRoomState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
 
+/**
+ * Lobby — concept screen 2 (`.s-lobby`).
+ *
+ * Concept structure: aurora → .header (icon-btn · room-code-pill · icon-btn) →
+ * .content (sec-header, .player-card list, waiting dots, dashed add-bot) →
+ * .footer (glow-pulsing start button).
+ *
+ * One deviation from the concept: it draws a single icon button on the right,
+ * but the app needs both help and host settings there, so the right slot holds
+ * two. Everything else is the concept verbatim.
+ */
 export function LobbyView({
   room,
   authArgs,
@@ -43,13 +52,32 @@ export function LobbyView({
   const addBot = useMutation(api.games.addBot);
   const [starting, setStarting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // The coach spotlight measures this button so the two stay aligned.
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
   // Host nudge toward the settings gear — shown on every freshly-created lobby
   // (HomeScreen passes `justCreated` via router state on create).
+  //
+  // Driven by an effect, not a lazy useState initialiser: `room.isHost` is
+  // false on the first render while the Convex snapshot still resolves this
+  // device's player, and an initialiser only runs once — so the nudge was
+  // being latched off before it could ever show. `settled` keeps it to one
+  // appearance per lobby, and makes dismissal stick.
   const location = useLocation();
   const justCreated = (location.state as { justCreated?: boolean } | null)?.justCreated === true;
-  const [coach, setCoach] = useState(() => room.isHost && justCreated);
+  const [coach, setCoach] = useState(false);
+  const coachSettled = useRef(false);
+
+  useEffect(() => {
+    if (coachSettled.current) return;
+    if (room.isHost && justCreated) {
+      coachSettled.current = true;
+      setCoach(true);
+    }
+  }, [room.isHost, justCreated]);
+
   function dismissCoach() {
+    coachSettled.current = true;
     setCoach(false);
   }
 
@@ -64,12 +92,6 @@ export function LobbyView({
 
   // Random category is valid, so no pack pick is required to start.
   const canStart = room.isHost && room.players.length >= 3;
-
-  async function copyCode() {
-    await navigator.clipboard.writeText(room.code);
-    feedback.tap();
-    toast.success(t.copied);
-  }
 
   async function saveSettings(settings: Doc<"rooms">["settings"]) {
     try {
@@ -91,14 +113,15 @@ export function LobbyView({
     }
   }
 
-  const startLabel =
-    room.players.length < 3 ? "Mindst 3 spillere" : t.startGame;
+  const startLabel = room.players.length < 3 ? "Mindst 3 spillere" : t.startGame;
 
   return (
-    <>
-      <NeonBackdrop density="full" />
+    <div className="cscreen s-lobby">
+      <NeonBackdrop />
+
       {coach && (
         <SettingsCoach
+          anchor={settingsBtnRef}
           onDismiss={dismissCoach}
           onOpenSettings={() => {
             dismissCoach();
@@ -106,191 +129,122 @@ export function LobbyView({
           }}
         />
       )}
-      <TopBar
-        title={t.lobby}
-        left={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-9 rounded-full text-muted-foreground"
-            onClick={onLeave}
-            aria-label={t.leave}
-          >
-            <LogOut className="size-5" />
-          </Button>
-        }
-        right={
-          <div className="flex items-center gap-1">
-            <HowToPlay
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-9 rounded-full text-muted-foreground"
-                  aria-label={t.howToTitle}
-                >
-                  <HelpCircle className="size-5" />
-                </Button>
-              }
-            />
-            {room.isHost && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-9 rounded-full text-muted-foreground"
-                aria-label={t.settings}
-                onClick={() => {
-                  dismissCoach();
-                  setSettingsOpen(true);
-                }}
-              >
-                <Settings2 className="size-5" />
-              </Button>
-            )}
-          </div>
-        }
-      />
 
       {/* Host settings, controlled so the coach can open it too. */}
       <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DrawerContent>
-          <DrawerHeader>
+        <DrawerContent className="c-drawer-shell">
+          <DrawerHeader className="sr-only">
             <DrawerTitle>{t.settings}</DrawerTitle>
           </DrawerHeader>
-          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
-            <SettingsPanel
-              settings={room.settings}
-              playerCount={room.players.length}
-              editable
-              onChange={saveSettings}
-            />
-          </div>
+          <SettingsPanel
+            settings={room.settings}
+            playerCount={room.players.length}
+            editable
+            onChange={saveSettings}
+          />
         </DrawerContent>
       </Drawer>
 
-      <Screen
-        header={
-          <div className="flex flex-col gap-5">
-            <HostGoneBanner room={room} authArgs={authArgs} />
+      <div className="header">
+        <button className="icon-btn" onClick={onLeave} aria-label={t.leave}>
+          ←
+        </button>
 
-            {/* Room code hero — transparent pill with glowing monospace code */}
+        <div className="flex items-center gap-1.5">
+          <HowToPlay
+            trigger={
+              <button className="icon-btn" aria-label={t.howToTitle}>
+                ?
+              </button>
+            }
+          />
+          {room.isHost && (
             <button
-              onClick={copyCode}
-              className="w-full active:scale-[0.99]"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 4,
-                padding: "12px 20px",
-                borderRadius: 20,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                boxShadow: "0 1px 0 rgba(255,255,255,0.1) inset, 0 8px 32px rgba(0,0,0,0.28)",
-                cursor: "pointer",
+              ref={settingsBtnRef}
+              className="icon-btn"
+              aria-label={t.settings}
+              onClick={() => {
+                dismissCoach();
+                setSettingsOpen(true);
               }}
             >
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(245,243,255,0.38)" }}>
-                {t.shareCode}
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                <span
-                  className="p-roomcode"
-                  style={{
-                    fontSize: 28,
-                    fontWeight: 800,
-                    letterSpacing: "0.14em",
-                    color: "#c4b5fd",
-                    fontFamily: "'SF Mono','Fira Code','Courier New',monospace",
-                    textShadow: "0 0 22px rgba(196,181,253,0.6)",
-                  }}
-                >
-                  {room.code}
-                </span>
-                <Copy style={{ width: 18, height: 18, color: "rgba(245,243,255,0.4)" }} />
-              </span>
-            </button>
-          </div>
-        }
-        footer={
-          room.isHost ? (
-            <Button
-              size="hero"
-              className={cn(canStart && !starting && "p-glow-pulse")}
-              disabled={!canStart || starting}
-              onClick={handleStart}
-            >
-              {starting ? <Loader2 className="animate-spin" /> : startLabel}
-            </Button>
-          ) : (
-            <p className="flex items-center justify-center gap-2 py-3 text-center text-sm text-muted-foreground">
-              <span className="p-wait-dots">
-                <i />
-                <i />
-                <i />
-              </span>
-              {t.waitingForHost}
-            </p>
-          )
-        }
-      >
-        {/* Players (the only scrolling region) */}
-        <div>
-          <h2 className="mb-2 px-1 text-sm font-semibold text-muted-foreground">
-            {t.players} · {room.players.length}/12
-          </h2>
-          <div className="flex flex-col gap-1.5">
-            {room.players.map((p) => (
-              <div
-                key={p._id}
-                className={cn(
-                  "glass p-in flex items-center gap-3 rounded-2xl p-2.5",
-                  !p.isOnline && "opacity-50",
-                )}
-              >
-                <Avatar emoji={p.avatarEmoji} color={p.avatarColor} dimmed={!p.isOnline} />
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 truncate font-semibold">
-                    {p.name}
-                    {p.isHost && <Crown className="size-4 text-amber-400" />}
-                    {p.isBot && (
-                      <span className="rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                        {t.bot}
-                      </span>
-                    )}
-                  </p>
-                  {p._id === room.myPlayerId ? (
-                    <p className="text-xs text-muted-foreground">{t.you}</p>
-                  ) : p.activeFromRound > Math.max(1, room.currentRoundNumber) ? (
-                    <p className="text-xs text-muted-foreground">{t.waitingNextRound}</p>
-                  ) : null}
-                </div>
-                {room.isHost && p._id !== room.myPlayerId && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-8 rounded-full text-muted-foreground"
-                    onClick={() => kickPlayer({ ...authArgs, targetPlayerId: p._id })}
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {room.isHost && room.players.length < 12 && (
-            <button
-              onClick={handleAddBot}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-white/5 active:scale-[0.99]"
-            >
-              <Bot className="size-4" /> {t.addBot}
+              <SlidersHorizontal className="size-5" />
             </button>
           )}
         </div>
-      </Screen>
-    </>
+      </div>
+
+      <div className="content">
+        <HostGoneBanner room={room} authArgs={authArgs} />
+
+        <RoomCode code={room.code} />
+
+        <div className="sec-header">
+          <div className="sec-label">{t.players}</div>
+          <div className="count-badge">{room.players.length} / 12</div>
+        </div>
+
+        {room.players.map((p) => (
+          <div
+            key={p._id}
+            className={cn("player-card", p.isHost && "host", !p.isOnline && "opacity-50")}
+          >
+            <Av emoji={p.avatarEmoji} color={p.avatarColor} size="sm" dimmed={!p.isOnline} />
+            <div className="player-name">
+              {p.name}
+              {p._id === room.myPlayerId && (
+                <span className="text-[rgba(245,243,255,0.38)]"> ({t.you})</span>
+              )}
+            </div>
+            {p.isHost && <div className="host-badge">{t.host} 👑</div>}
+            {p.isBot && <div className="bot-badge">Bot</div>}
+            {room.isHost && p._id !== room.myPlayerId && (
+              <button
+                className="rcp-copy shrink-0 px-1 text-lg leading-none"
+                aria-label={t.kick}
+                onClick={() => kickPlayer({ ...authArgs, targetPlayerId: p._id })}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+
+        {room.players.length < 3 && (
+          <div className="waiting-row">
+            <div className="pdot" />
+            <div className="pdot" />
+            <div className="pdot" />
+            <div className="waiting-text">Venter på spillere…</div>
+          </div>
+        )}
+
+        {room.isHost && room.players.length < 12 && (
+          <button className="add-bot-btn" onClick={handleAddBot}>
+            ＋ {t.addBot}
+          </button>
+        )}
+      </div>
+
+      <div className="footer">
+        {room.isHost ? (
+          <button
+            className={cn("btn btn-primary start-btn", canStart && !starting && "glow-pulse")}
+            disabled={!canStart || starting}
+            onClick={handleStart}
+            style={!canStart || starting ? { opacity: 0.55 } : undefined}
+          >
+            {starting ? <Loader2 className="animate-spin" /> : startLabel}
+          </button>
+        ) : (
+          <div className="waiting-row">
+            <div className="pdot" />
+            <div className="pdot" />
+            <div className="pdot" />
+            <div className="waiting-text">{t.waitingForHost}</div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

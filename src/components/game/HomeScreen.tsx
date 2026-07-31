@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Drawer,
   DrawerContent,
@@ -11,11 +9,10 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Screen } from "./Screen";
 import { NeonBackdrop } from "./NeonBackdrop";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { AvatarPicker } from "./AvatarPicker";
-import { Avatar } from "./PlayerBadge";
+import { Av } from "./Av";
 import { AVATAR_COLORS, AVATAR_EMOJIS, randomFrom } from "@/lib/avatars";
 import {
   getGuestSecret,
@@ -28,9 +25,16 @@ import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2 } from "lucide-react";
 // Clerk auth UI removed — Clerk is not active; re-add when authentication is wired up.
 
+/**
+ * Home — concept screen 1 (`.s-home`).
+ *
+ * Structure is the concept's verbatim: aurora → .content (logo-area +
+ * .identity-card holding the avatar row, divider and the create/join pair) →
+ * .footer with the glow-pulsing hero CTA.
+ */
 export function HomeScreen() {
   const navigate = useNavigate();
   const saved = loadProfile();
@@ -74,69 +78,37 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
-      <NeonBackdrop density="full" />
+    <div className="cscreen s-home">
+      <NeonBackdrop />
+
       <AddToHomeScreen />
 
-
-      {/* Account button placeholder — Clerk auth disabled; re-enable when authentication is wired up. */}
-
-      <Screen
-        center
-        topInset
-        footer={
-          <Button
-            size="hero"
-            variant="default"
-            className={cn("bottom-btn-glow", !busy && "p-glow-pulse")}
-            onClick={go}
-            disabled={busy}
-          >
-            {busy ? (
-              <Loader2 className="animate-spin" />
-            ) : mode === "create" ? (
-              t.createGame
-            ) : (
-              t.joinGame
-            )}
-          </Button>
-        }
-      >
+      <div className="content">
         {rememberedRoom && (
           <button
             onClick={() => navigate(`/room/${rememberedRoom}`)}
-            className="glass-pill mx-auto -mt-2 mb-1 px-4 py-1.5 text-sm font-semibold text-foreground/90 active:scale-95"
+            className="btn-ghost mx-auto mb-3 shrink-0 font-semibold active:scale-95"
           >
             ↩ {t.continueGame}
           </button>
         )}
 
-        {/* Hero — floating gecko emoji + gradient wordmark (mockup logo-area) */}
-        <div className="p-in text-center">
-          <span
-            className="p-float block text-[70px] leading-none drop-shadow-[0_0_30px_rgba(124,58,237,0.65)]"
-            aria-hidden
-          >
+        <div className="logo-area">
+          <span className="logo-emoji" aria-hidden>
             🦎
           </span>
-          <h1 className="mt-1 bg-gradient-to-br from-[#c4b5fd] via-[#a78bfa] to-[#7c3aed] bg-clip-text text-[30px] font-extrabold tracking-[-0.035em] text-transparent">
-            {t.appName}
-          </h1>
-          <p className="mx-auto mt-1.5 max-w-[18rem] text-[14.5px] font-medium text-[rgba(245,243,255,0.4)]">
-            {t.tagline}
-          </p>
+          <h1 className="logo-text">{t.appName}</h1>
+          <p className="logo-tagline">{t.tagline}</p>
         </div>
 
-        {/* Identity + mode panel */}
-        <div className="glass p-in-2 space-y-5 rounded-3xl p-5">
-          {/* Identity: large avatar (tap to edit) + name */}
-          <div className="glass-input flex items-center gap-3 rounded-2xl p-3">
+        <div className="c-glass identity-card">
+          <div className="avatar-row">
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="relative shrink-0 active:scale-95">
-                  <Avatar emoji={emoji} color={color} size={52} />
-                  <span className="absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full gradient-primary text-white">
-                    <Pencil className="size-3" />
+                <button className="avatar-edit-btn" aria-label={t.chooseAvatar}>
+                  <Av emoji={emoji} color={color} size="md" />
+                  <span className="avatar-edit-badge" aria-hidden>
+                    ✏️
                   </span>
                 </button>
               </DrawerTrigger>
@@ -154,57 +126,68 @@ export function HomeScreen() {
                 </div>
               </DrawerContent>
             </Drawer>
-            <Input
+            <input
+              className="name-input"
               value={name}
               maxLength={20}
               placeholder={t.yourName}
+              aria-label={t.yourName}
               onChange={(e) => setName(e.target.value)}
-              className="h-11 border-0 bg-transparent text-lg font-semibold focus-visible:ring-0"
             />
           </div>
 
-          {/* Create / Join — two 3D buttons (purple + blue), like the design */}
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant="default"
-              className={cn(
-                "h-auto rounded-[1rem] py-3.5 text-base",
-                mode !== "create" && "opacity-70",
-              )}
+          <div className="divider" />
+
+          <div className="mode-buttons">
+            <button
+              className={cn("mode-btn create", mode !== "create" && "opacity-[.78]")}
               onClick={() => {
                 feedback.tap();
                 setMode("create");
               }}
             >
               {t.createGame}
-            </Button>
-            <Button
-              variant="accent"
-              className={cn(
-                "h-auto rounded-[1rem] py-3.5 text-base",
-                mode !== "join" && "opacity-80",
-              )}
+            </button>
+            <button
+              className={cn("mode-btn join", mode !== "join" && "opacity-[.78]")}
               onClick={() => {
                 feedback.tap();
                 setMode("join");
               }}
             >
               {t.joinGame}
-            </Button>
+            </button>
           </div>
 
           {mode === "join" && (
-            <Input
+            <input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder={t.codePlaceholder}
+              aria-label={t.roomCode}
               maxLength={6}
-              className="glass-input h-14 rounded-[1rem] border-0 text-center text-2xl font-bold tracking-[0.4em] uppercase"
               onKeyDown={(e) => e.key === "Enter" && go()}
+              className="clue-input mt-2.5 w-full text-center text-2xl font-extrabold tracking-[0.4em] uppercase"
             />
           )}
         </div>
-      </Screen>
+      </div>
+
+      <div className="footer">
+        <button
+          className={cn("btn btn-primary hero-btn", !busy && "glow-pulse")}
+          onClick={go}
+          disabled={busy}
+        >
+          {busy ? (
+            <Loader2 className="animate-spin" />
+          ) : mode === "create" ? (
+            t.createGame
+          ) : (
+            t.joinGame
+          )}
+        </button>
+      </div>
     </div>
   );
 }

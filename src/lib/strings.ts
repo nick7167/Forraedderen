@@ -3,7 +3,8 @@
 
 export const t = {
   appName: "Kamæleon",
-  tagline: "Find kamæleonen — eller overlev som den.",
+  // Home tagline and room-code label are the concept's verbatim (screens 1–2).
+  tagline: "Find kamæleonen iblandt jer",
 
   // Home / join
   yourName: "Dit navn",
@@ -11,7 +12,7 @@ export const t = {
   chooseAvatar: "Vælg avatar",
   createGame: "Opret spil",
   joinGame: "Deltag i spil",
-  roomCode: "Rumkode",
+  roomCode: "Rum-kode",
   codePlaceholder: "ABCD",
   join: "Deltag",
   create: "Opret",
@@ -140,6 +141,11 @@ export const t = {
   // Reveal / resolve
   crewWon: "Besætningen vandt!",
   impostersWon: "Kamæleonerne vandt!",
+  // Short result headlines — the concept's `.result-headline` copy (screen 7).
+  // The long forms above overflow the 28px headline at 375px wide.
+  caught: "Fanget!",
+  escaped: "Slap væk!",
+  vote: "stemme",
   theImposterWas: "Kamæleonen var",
   theImpostersWere: "Kamæleonerne var",
   imposterWordWas: "Kamæleonens ord",

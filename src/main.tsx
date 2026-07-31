@@ -5,7 +5,9 @@ import { ConvexReactClient, ConvexProvider } from "convex/react";
 import App from "./App.tsx";
 import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
-import "./polish.css";
+// Ported verbatim from ui-concepts/kamaeleon-polish-concepts.html — the app's
+// visual source of truth. Loaded last so its values win.
+import "./concept.css";
 
 const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
 
