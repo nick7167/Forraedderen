@@ -6,6 +6,8 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
 import { Av } from "./Av";
+import { Announce } from "./Announce";
+import { RoundHistory } from "./RoundHistory";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -93,7 +95,19 @@ export function CluePhase({
   return (
     <div className="cscreen s-clue">
       <NeonBackdrop variant="clue" />
-      <PhaseChrome onLeave={onLeave} />
+      <PhaseChrome
+        onLeave={onLeave}
+        history={<RoundHistory authArgs={authArgs} players={round.players} />}
+      />
+      <Announce
+        message={
+          isMyTurn
+            ? t.a11yYourTurn
+            : `${t.a11yWaitingTurn.replace("{name}", currentName)} ${t.a11yClueCount
+                .replace("{done}", String(cluesThisPass.length))
+                .replace("{total}", String(round.turnOrder.length))}`
+        }
+      />
 
       <div className="clue-header">
         <div className="phase-row">
@@ -107,7 +121,7 @@ export function CluePhase({
             {t.pass} {round.roundNumber} / {totalRounds}
           </div>
         </div>
-        <div className="phase-title">Giv et spor 💬</div>
+        <div className="phase-title">{t.cluePhaseTitle}</div>
 
         <div className="player-seq">
           {round.turnOrder.map((id, i) => {

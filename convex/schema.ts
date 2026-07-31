@@ -115,6 +115,12 @@ export default defineSchema({
     eliminatedPlayerIds: v.array(v.id("players")), // for iterative elimination
     currentBallot: v.number(), // 1..N voting rounds (iterative for 2+ imposters)
     outcome: v.optional(v.union(v.literal("crew"), v.literal("imposters"))),
+    // Points awarded when this round resolved, so the result screen can show
+    // each player's change rather than just raw vote counts. Optional for
+    // back-compat with rounds resolved before this field existed.
+    scoreDeltas: v.optional(
+      v.array(v.object({ playerId: v.id("players"), delta: v.number() })),
+    ),
     phaseDeadline: v.optional(v.number()), // epoch ms when timed phase auto-advances
   })
     .index("by_room", ["roomId"])

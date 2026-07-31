@@ -7,6 +7,7 @@ import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
 import { Confetti } from "./Confetti";
 import { Av } from "./Av";
+import { Announce } from "./Announce";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,10 @@ export function RoundReveal({
     .map(playerById)
     .filter((p): p is Round["players"][number] => !!p);
 
+  const deltaByPlayer = new Map(
+    reveal.scoreDeltas.map((d) => [d.playerId, d.delta] as const),
+  );
+
   // Tally votes per target across all ballots for the breakdown.
   const voteCounts = new Map<Id<"players">, number>();
   for (const v of reveal.voteBreakdown) {
@@ -83,6 +88,7 @@ export function RoundReveal({
       {crewWon && <Confetti />}
       <NeonBackdrop variant="success" />
       <PhaseChrome onLeave={onLeave} />
+      <Announce message={crewWon ? t.a11yResultCrew : t.a11yResultImposters} />
 
       <div className="content">
         <div className="result-banner">
@@ -98,7 +104,7 @@ export function RoundReveal({
           <div key={p._id} className="imposter-card">
             <Av emoji={p.avatarEmoji} color={p.avatarColor} size="md" />
             <div className="imp-info">
-              <div className="imp-role">Kamæleonen</div>
+              <div className="imp-role">{t.roleImposter}</div>
               <div className="imp-name">{p.name}</div>
               <div className="imp-word">
                 {wordLabel}: <span>{reveal.secretWord}</span>
@@ -112,21 +118,31 @@ export function RoundReveal({
           </div>
         ))}
 
+        {/* The concept's "Pointopdatering" list. Showing the delta next to the
+            vote count is the only place scoring is ever explained in play — see
+            HowToPlay for the rules themselves. */}
         <div className="scores-list">
-          <div className="scores-lbl">{t.votes}</div>
+          <div className="scores-lbl">{t.scoreUpdate}</div>
           {round.turnOrder.map((id) => {
             const p = playerById(id);
             if (!p) return null;
             const count = voteCounts.get(id) ?? 0;
+            const delta = deltaByPlayer.get(id) ?? 0;
             const wasImposter = reveal.imposterPlayerIds.some((im) => im === id);
             return (
-              <div key={id} className={cn("score-row", wasImposter && "winner")}>
+              <div key={id} className={cn("score-row", delta > 0 && "winner")}>
                 <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
                 <div className="score-pname">
                   {p.name} {wasImposter && "🦎"}
                 </div>
-                <div className="score-total tabular-nums">
+                <div className="vote-psub shrink-0 tabular-nums">
                   {count} {count === 1 ? t.vote : t.votes}
+                </div>
+                <div className={cn("score-delta tabular-nums", delta === 0 && "neg")}>
+                  +{delta}
+                </div>
+                <div className="score-total tabular-nums">
+                  {p.score} {t.pointsShort}
                 </div>
               </div>
             );

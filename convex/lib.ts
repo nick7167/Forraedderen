@@ -1,6 +1,9 @@
 import type { QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./users";
+import { PRESENCE_TIMEOUT_MS } from "./shared";
+
+export { PRESENCE_TIMEOUT_MS };
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no easily-confused chars
 
@@ -31,17 +34,25 @@ export type PublicPlayer = {
   score: number;
   activeFromRound: number;
   joinedAt: number;
-  isOnline: boolean;
+  /** Last heartbeat, epoch ms. Clients derive online-ness from this. */
+  lastSeen: number;
   isHost: boolean;
   isBot: boolean;
 };
 
-export const PRESENCE_TIMEOUT_MS = 12_000;
-
+/**
+ * Project a player for the client.
+ *
+ * Deliberately returns raw `lastSeen` rather than a computed `isOnline`. The
+ * old shape forced `Date.now()` into `getRoomState`, which made the query's
+ * result time-dependent — Convex could never cache it, and it recomputed on
+ * every one of the heartbeat writes landing several times a second. Presence is
+ * a clock-driven display concern, so the clock lives on the client (see
+ * `usePresence`).
+ */
 export function toPublicPlayer(
   player: Doc<"players">,
   hostPlayerId: Id<"players"> | undefined,
-  now: number,
 ): PublicPlayer {
   return {
     _id: player._id,
@@ -51,8 +62,8 @@ export function toPublicPlayer(
     score: player.score,
     activeFromRound: player.activeFromRound,
     joinedAt: player.joinedAt,
-    // Bots are always "present"; humans rely on the heartbeat.
-    isOnline: player.isBot === true || now - player.lastSeen < PRESENCE_TIMEOUT_MS,
+    // Bots never heartbeat, so they're pinned to "always present".
+    lastSeen: player.isBot === true ? Number.MAX_SAFE_INTEGER : player.lastSeen,
     isHost: hostPlayerId !== undefined && player._id === hostPlayerId,
     isBot: player.isBot === true,
   };
@@ -92,7 +103,7 @@ export async function requirePlayer(
     }
   }
 
-  throw new Error("Not a member of this room (or invalid credentials).");
+  throw new Error("Du er ikke med i dette rum.");
 }
 
 /**
@@ -109,6 +120,21 @@ export async function resolvePlayer(
   } catch {
     return null;
   }
+}
+
+/**
+ * Authorize the acting player AND assert they are the room's host.
+ * Previously duplicated verbatim in games.ts and round.ts.
+ */
+export async function requireHost(
+  ctx: QueryCtx,
+  args: { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret?: string },
+): Promise<Doc<"rooms">> {
+  const room = await ctx.db.get(args.roomId);
+  if (room === null) throw new Error("Rummet findes ikke.");
+  const me = await requirePlayer(ctx, args);
+  if (room.hostPlayerId !== me._id) throw new Error("Kun værten kan gøre det.");
+  return room;
 }
 
 /** Players in a room who are active for the given round number. */

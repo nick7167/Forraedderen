@@ -10,7 +10,7 @@ test("home screen — branding, install prompt, avatar picker, join mode", async
   await page.waitForTimeout(1500);
 
   // Page title
-  await expect(page).toHaveTitle("Kamæleon");
+  await expect(page).toHaveTitle(/^Kamæleon/);
 
   // Add-to-home pop-up may appear (only fires in real browsers — skipped in headless)
   const addToHome = page.getByText("Få den fulde oplevelse");
@@ -20,16 +20,16 @@ test("home screen — branding, install prompt, avatar picker, join mode", async
   }
 
   // Logo + tagline + both mode buttons visible
-  await expect(page.locator('img[alt="Kamæleon"]')).toBeVisible();
+  await expect(page.locator(".logo-emoji")).toBeVisible();
+  await expect(page.locator(".logo-text")).toHaveText("Kamæleon");
   await expect(page.getByText("Find kamæleonen", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "Opret spil" }).last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Deltag i spil" })).toBeVisible();
-  // "Log ind" appears once Clerk has loaded (top-right corner)
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(500);
   await shot(page, "01-home");
 
   // Avatar picker — open, screenshot, close
-  await page.locator("button:has(svg.lucide-pencil)").first().click();
+  await page.locator(".avatar-edit-btn").first().click();
   await expect(page.getByText("Vælg avatar")).toBeVisible({ timeout: 5_000 });
   await shot(page, "03-avatar-picker");
   await page.keyboard.press("Escape");

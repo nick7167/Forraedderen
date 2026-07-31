@@ -33,6 +33,8 @@ export function HowToPlay({ trigger }: { trigger: React.ReactNode }) {
           <Section emoji="🎯" title={h.goal.title} body={h.goal.body} />
           <Section emoji="💬" title={h.clues.title} body={h.clues.body} />
           <Section emoji="🗳️" title={h.vote.title} body={h.vote.body} />
+          <Section emoji="🤝" title={h.tie.title} body={h.tie.body} />
+          <Section emoji="⭐" title={h.points.title} body={h.points.body} />
           <div className="my-1 h-px bg-border" />
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {t.mode}

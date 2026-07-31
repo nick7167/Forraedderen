@@ -18,10 +18,10 @@ type Settings = Doc<"rooms">["settings"];
 
 /** Mode icons and taglines are the concept's verbatim (screen 3). */
 const MODES = [
-  { id: "spy", emoji: "🕵️", label: t.modeSpy, tagline: "Kamæleonen ved intet" },
-  { id: "undercover", emoji: "🦎", label: t.modeUndercover, tagline: "Lignende ord til spionen" },
-  { id: "questions", emoji: "❓", label: t.modeQuestions, tagline: "Ét ords svar på spørgsmål" },
-  { id: "scale", emoji: "📊", label: t.modeScale, tagline: "Tal fra 1 til 5" },
+  { id: "spy", emoji: "🕵️", label: t.modeSpy, tagline: t.modeSpyTag },
+  { id: "undercover", emoji: "🦎", label: t.modeUndercover, tagline: t.modeUndercoverTag },
+  { id: "questions", emoji: "❓", label: t.modeQuestions, tagline: t.modeQuestionsTag },
+  { id: "scale", emoji: "📊", label: t.modeScale, tagline: t.modeScaleTag },
 ] as const;
 
 function Stepper({
@@ -159,7 +159,7 @@ export function SettingsPanel({
 
       <div className="mode-desc-box">{modeDesc}</div>
 
-      <SettingRow label={t.roundCount} sub="Pr. kamp">
+      <SettingRow label={t.roundCount} sub={t.roundCountSub}>
         <Stepper
           value={settings.roundCount}
           min={1}
@@ -169,7 +169,7 @@ export function SettingsPanel({
         />
       </SettingRow>
 
-      <SettingRow label={t.imposters} sub="Antal per runde">
+      <SettingRow label={t.imposters} sub={t.impostersSub}>
         <Stepper
           value={settings.imposterCount}
           min={1}
@@ -180,7 +180,7 @@ export function SettingsPanel({
       </SettingRow>
 
       {!isPromptMode && (
-        <SettingRow label={t.cluePasses} sub="Spor-runder pr. runde">
+        <SettingRow label={t.cluePasses} sub={t.cluePassesSub}>
           <Stepper
             value={settings.cluePasses}
             min={1}
@@ -191,15 +191,31 @@ export function SettingsPanel({
         </SettingRow>
       )}
 
+      {/* Spy-mode-only rules. Both are honoured by the engine and snapshotted
+          per round; `imposterSeesCategory` had no control at all for a while,
+          leaving every room stuck on the default. */}
       {settings.gameMode === "spy" && (
-        <SettingRow label={t.impostersKnowEachOther}>
-          <Toggle
+        <>
+          <SettingRow label={t.imposterSeesCategory} sub={t.imposterSeesCategorySub}>
+            <Toggle
+              label={t.imposterSeesCategory}
+              value={settings.imposterSeesCategory}
+              disabled={!editable}
+              onChange={(v) => set("imposterSeesCategory", v)}
+            />
+          </SettingRow>
+          <SettingRow
             label={t.impostersKnowEachOther}
-            value={settings.impostersKnowEachOther}
-            disabled={!editable}
-            onChange={(v) => set("impostersKnowEachOther", v)}
-          />
-        </SettingRow>
+            sub={t.impostersKnowEachOtherSub}
+          >
+            <Toggle
+              label={t.impostersKnowEachOther}
+              value={settings.impostersKnowEachOther}
+              disabled={!editable}
+              onChange={(v) => set("impostersKnowEachOther", v)}
+            />
+          </SettingRow>
+        </>
       )}
 
       {/* Categories are not used by the prompt-based modes. */}
@@ -217,7 +233,7 @@ export function SettingsPanel({
             disabled={!editable}
             onClick={() => setPackOpen(true)}
           >
-            Skift →
+            {t.changePack}
           </button>
         </SettingRow>
       )}

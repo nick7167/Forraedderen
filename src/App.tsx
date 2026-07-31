@@ -1,13 +1,10 @@
 import { Routes, Route } from "react-router-dom";
-import { useStoreUser } from "@/hooks/useStoreUser";
 import { HomeScreen } from "@/components/game/HomeScreen";
 import { GameRoom } from "@/components/game/GameRoom";
+import { JoinRoute } from "@/components/game/JoinRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 export default function App() {
-  // Mirror Clerk identity into Convex when signed in (no-op for guests).
-  useStoreUser();
-
   return (
     <div
       className="mx-auto flex w-full max-w-md flex-col"
@@ -26,6 +23,9 @@ export default function App() {
       <div className="flex min-h-0 flex-1 flex-col">
         <Routes>
           <Route path="/" element={<HomeScreen />} />
+          {/* Invite link — see JoinRoute. Short path because it gets pasted
+              into group chats and read aloud. */}
+          <Route path="/j/:code" element={<JoinRoute />} />
           <Route path="/room/:roomId" element={<GameRoom />} />
           <Route path="*" element={<HomeScreen />} />
         </Routes>

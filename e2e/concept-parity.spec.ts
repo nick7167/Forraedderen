@@ -171,7 +171,33 @@ test("app tour", async ({ page }) => {
   }
   if (await page.locator(".result-headline").isVisible().catch(() => false)) {
     await shot(page, OUT_APP, "11-round-result");
+
+    // Phase 7: the result screen must show per-round point changes, not just
+    // vote counts — that's the only place scoring is ever surfaced in play.
+    const deltas = await page.locator(".score-delta").allTextContents();
+    expect(deltas.length, "score deltas must render").toBeGreaterThan(0);
+    expect(
+      deltas.every((d) => /^\+\d+$/.test(d.trim())),
+      `deltas should read like "+2": ${JSON.stringify(deltas)}`,
+    ).toBe(true);
+
+    // Phase 9: with a resolved round behind us, history becomes reachable.
+    await page.getByRole("button", { name: "Næste runde" }).click();
+    await expect(page.locator(".card-scene")).toBeVisible({ timeout: 30_000 });
+    await page.locator(".card-scene").click();
+    await page.waitForTimeout(1100);
+    await page.getByRole("button", { name: /Klar/ }).click();
+    await expect(page.locator(".clue-feed")).toBeVisible({ timeout: 30_000 });
+
+    await page.getByRole("button", { name: "Tidligere runder" }).click();
+    await expect(page.getByText("Tidligere runder")).toBeVisible();
+    // Round 1's clues are readable from round 2.
+    await expect(page.locator(".clue-text").first()).toBeVisible();
+    await shot(page, OUT_APP, "13-round-history");
+    await page.keyboard.press("Escape");
   }
 
-  console.log("page errors:", errors);
+  // Assert, don't just log: a console error that nobody fails on is a console
+  // error that ships. This caught `convex/lib` leaking into the client bundle.
+  expect(errors, `console/page errors during the tour:\n${errors.join("\n")}`).toEqual([]);
 });

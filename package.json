@@ -11,12 +11,11 @@
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "generate-pwa-assets": "pwa-assets-generator",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.49.0",
-    "@types/canvas-confetti": "^1.9.0",
-    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.27.0",
@@ -43,7 +42,8 @@
     "tw-animate-css": "^1.3.0",
     "typescript": "^5.8.0",
     "vite": "^7.0.0",
-    "vite-plugin-pwa": "^1.0.0"
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^4.1.10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

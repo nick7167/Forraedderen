@@ -13,6 +13,7 @@ import {
 import { NeonBackdrop } from "./NeonBackdrop";
 import { Av } from "./Av";
 import { RoomCode } from "./RoomCode";
+import { usePresence } from "@/hooks/usePresence";
 import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
 import { SettingsCoach } from "./SettingsCoach";
@@ -52,6 +53,7 @@ export function LobbyView({
   const addBot = useMutation(api.games.addBot);
   const [starting, setStarting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const isOnline = usePresence();
   // The coach spotlight measures this button so the two stay aligned.
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -113,7 +115,7 @@ export function LobbyView({
     }
   }
 
-  const startLabel = room.players.length < 3 ? "Mindst 3 spillere" : t.startGame;
+  const startLabel = room.players.length < 3 ? t.needMorePlayers : t.startGame;
 
   return (
     <div className="cscreen s-lobby">
@@ -187,9 +189,9 @@ export function LobbyView({
         {room.players.map((p) => (
           <div
             key={p._id}
-            className={cn("player-card", p.isHost && "host", !p.isOnline && "opacity-50")}
+            className={cn("player-card", p.isHost && "host", !isOnline(p) && "opacity-50")}
           >
-            <Av emoji={p.avatarEmoji} color={p.avatarColor} size="sm" dimmed={!p.isOnline} />
+            <Av emoji={p.avatarEmoji} color={p.avatarColor} size="sm" dimmed={!isOnline(p)} />
             <div className="player-name">
               {p.name}
               {p._id === room.myPlayerId && (
@@ -200,8 +202,8 @@ export function LobbyView({
             {p.isBot && <div className="bot-badge">Bot</div>}
             {room.isHost && p._id !== room.myPlayerId && (
               <button
-                className="rcp-copy shrink-0 px-1 text-lg leading-none"
-                aria-label={t.kick}
+                className="kick-btn"
+                aria-label={`${t.kick} ${p.name}`}
                 onClick={() => kickPlayer({ ...authArgs, targetPlayerId: p._id })}
               >
                 ×
@@ -215,7 +217,7 @@ export function LobbyView({
             <div className="pdot" />
             <div className="pdot" />
             <div className="pdot" />
-            <div className="waiting-text">Venter på spillere…</div>
+            <div className="waiting-text">{t.waitingForPlayers}</div>
           </div>
         )}
 

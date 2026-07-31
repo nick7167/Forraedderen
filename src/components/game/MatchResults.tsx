@@ -62,6 +62,34 @@ export function MatchResults({
   const ranked = [...room.players].sort((a, b) => b.score - a.score);
   const champion = ranked[0];
 
+  // Only the highlights that actually have a winner this match.
+  const highlights = (
+    analytics
+      ? [
+          {
+            label: t.bestDetective,
+            highlight: analytics.bestDetective,
+            detail: (v: number) => `${v}% ${t.accuracy}`,
+          },
+          {
+            label: t.mostCorrectVotes,
+            highlight: analytics.mostCorrectVotes,
+            detail: (v: number) => `${v} ${t.correctVotes}`,
+          },
+          {
+            label: t.mostSuspected,
+            highlight: analytics.mostSuspected,
+            detail: (v: number) => `${v} ${t.receivedVotes}`,
+          },
+          {
+            label: t.bestBluff,
+            highlight: analytics.bestBluff,
+            detail: (v: number) => `${v} ${t.imposterWins}`,
+          },
+        ]
+      : []
+  ).filter((h) => h.highlight !== null && h.highlight.players.length > 0);
+
   return (
     <div className="cscreen s-results">
       <Confetti count={56} />
@@ -104,33 +132,26 @@ export function MatchResults({
           ))}
         </div>
 
-        {analytics && (
+        {/* Every highlight can legitimately be null — `bestBluff` is null in a
+            match the crew swept, and `bestDetective` is null if nobody ever
+            voted correctly. Rendering the heading regardless left it stranded
+            over two empty rows, so the section only appears if a chip will. */}
+        {highlights.length > 0 && (
           <div className="w-full">
             <div className="scores-lbl">{t.matchHighlights}</div>
-            <div className="stat-chips mb-2.5">
-              <StatChip
-                label={t.bestDetective}
-                highlight={analytics.bestDetective}
-                detail={(v) => `${v}% ${t.accuracy}`}
-              />
-              <StatChip
-                label={t.mostCorrectVotes}
-                highlight={analytics.mostCorrectVotes}
-                detail={(v) => `${v} ${t.correctVotes}`}
-              />
-            </div>
-            <div className="stat-chips">
-              <StatChip
-                label={t.mostSuspected}
-                highlight={analytics.mostSuspected}
-                detail={(v) => `${v} ${t.receivedVotes}`}
-              />
-              <StatChip
-                label={t.bestBluff}
-                highlight={analytics.bestBluff}
-                detail={(v) => `${v} ${t.imposterWins}`}
-              />
-            </div>
+            {/* Paired into rows of two, matching the concept's `.stat-chips`. */}
+            {Array.from({ length: Math.ceil(highlights.length / 2) }, (_, row) => (
+              <div key={row} className="stat-chips mb-2.5">
+                {highlights.slice(row * 2, row * 2 + 2).map((h) => (
+                  <StatChip
+                    key={h.label}
+                    label={h.label}
+                    highlight={h.highlight}
+                    detail={h.detail}
+                  />
+                ))}
+              </div>
+            ))}
           </div>
         )}
       </div>

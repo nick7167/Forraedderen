@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Share2 } from "lucide-react";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -21,17 +21,39 @@ export function RoomCode({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Resolved once: `navigator.share` is absent on most desktop browsers, and
+  // showing a share button that throws is worse than not showing one.
+  const [canShare] = useState(
+    () => typeof navigator !== "undefined" && typeof navigator.share === "function",
+  );
+
+  /** The invite link — see JoinRoute. */
+  const inviteUrl = `${window.location.origin}/j/${code}`;
+
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
+  async function share() {
+    try {
+      await navigator.share({
+        title: t.shareTitle,
+        text: t.shareText.replace("{code}", code),
+        url: inviteUrl,
+      });
+      feedback.tap();
+    } catch {
+      // The user dismissed the sheet, or the platform refused — not an error.
+    }
+  }
+
   async function copy() {
     let ok = false;
     try {
-      await navigator.clipboard.writeText(code);
+      await navigator.clipboard.writeText(inviteUrl);
       ok = true;
     } catch {
-      ok = legacyCopy(code);
+      ok = legacyCopy(inviteUrl);
     }
     if (!ok) return;
 
@@ -49,16 +71,39 @@ export function RoomCode({ code }: { code: string }) {
     >
       <div className="rc-top">
         <span className="rc-label">{t.roomCode}</span>
-        <span className={cn("rc-action", copied && "copied")}>
-          {copied ? (
-            <>
-              <Check className="size-3.5" /> {t.copied}
-            </>
-          ) : (
-            <>
-              <Copy className="size-3.5" /> {t.copyCode}
-            </>
+        <span className="flex items-center gap-1.5">
+          {canShare && (
+            // `span` not `button`: this sits inside the card's button, and
+            // nesting interactive elements is invalid HTML.
+            <span
+              role="button"
+              tabIndex={0}
+              className="rc-action"
+              onClick={(e) => {
+                e.stopPropagation();
+                void share();
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                e.stopPropagation();
+                void share();
+              }}
+            >
+              <Share2 className="size-3.5" /> {t.shareInvite}
+            </span>
           )}
+          <span className={cn("rc-action", copied && "copied")}>
+            {copied ? (
+              <>
+                <Check className="size-3.5" /> {t.copied}
+              </>
+            ) : (
+              <>
+                <Copy className="size-3.5" /> {t.copyCode}
+              </>
+            )}
+          </span>
         </span>
       </div>
 

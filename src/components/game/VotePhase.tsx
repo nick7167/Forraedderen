@@ -6,6 +6,8 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
 import { Av } from "./Av";
+import { Announce } from "./Announce";
+import { RoundHistory } from "./RoundHistory";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -76,7 +78,19 @@ export function VotePhase({
   return (
     <div className="cscreen s-vote">
       <NeonBackdrop variant="danger" />
-      <PhaseChrome onLeave={onLeave} />
+      <PhaseChrome
+        onLeave={onLeave}
+        history={<RoundHistory authArgs={authArgs} players={round.players} />}
+      />
+      <Announce
+        message={
+          confirmed
+            ? t.a11yYouVoted
+            : t.a11yVotePhase
+                .replace("{done}", String(voted))
+                .replace("{total}", String(candidates.length))
+        }
+      />
 
       <div className="header">
         <div className="ph-label">
@@ -131,7 +145,7 @@ export function VotePhase({
               >
                 {/* Absolutely positioned in the concept — it overlays the card
                     top rather than pushing the avatar down. */}
-                {isSelected && <div className="accused-banner">Anklaget</div>}
+                {isSelected && <div className="accused-banner">{t.accused}</div>}
                 <Av
                   emoji={p.avatarEmoji}
                   color={p.avatarColor}
@@ -140,7 +154,7 @@ export function VotePhase({
                 />
                 <div className="vote-pname">{p.name}</div>
                 <div className="vote-psub">
-                  {isMe ? "Dig selv" : hasVoted ? "Har stemt ✓" : "Mistænkt?"}
+                  {isMe ? t.voteSelf : hasVoted ? t.voteHasVoted : t.voteSuspect}
                 </div>
               </button>
             );

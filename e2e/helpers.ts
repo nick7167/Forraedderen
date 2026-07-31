@@ -62,7 +62,9 @@ export async function createRoom(page: Page, name = "Tester") {
   await dismissAddToHome(page);
   await page.getByPlaceholder("Dit navn").fill(name);
   await page.getByRole("button", { name: "Opret spil" }).last().click();
-  await expect(page.getByText("Lobby")).toBeVisible({ timeout: 15_000 });
+  // The room-code card is the lobby's anchor since the concept redesign — the
+  // old "Lobby" TopBar title no longer exists.
+  await expect(page.locator(".room-code-card")).toBeVisible({ timeout: 30_000 });
   await dismissCoach(page);
 }
 
@@ -77,7 +79,7 @@ export async function addBots(page: Page, n: number) {
 /** Open host settings drawer and wait for it to render. */
 export async function openSettings(page: Page) {
   await page.locator('button[aria-label="Indstillinger"]').click();
-  await expect(page.getByRole("heading", { name: "Indstillinger" })).toBeVisible();
+  await expect(page.locator(".settings-drawer")).toBeVisible();
   await page.waitForTimeout(400);
 }
 
@@ -85,7 +87,7 @@ export async function openSettings(page: Page) {
 export async function closeDrawer(page: Page) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(500);
-  if (await page.getByRole("heading", { name: "Indstillinger" }).isVisible().catch(() => false)) {
+  if (await page.locator(".settings-drawer").isVisible().catch(() => false)) {
     await page.mouse.click(196, 40);
     await page.waitForTimeout(400);
   }
@@ -93,13 +95,11 @@ export async function closeDrawer(page: Page) {
 
 /** Set "Antal runder" to 1 round (so a single round ends the match). */
 export async function setOneRound(page: Page) {
-  const roundRow = page
-    .getByText("Antal runder", { exact: true })
-    .locator('xpath=ancestor::div[contains(@class,"justify-between")][1]');
-  for (let i = 0; i < 10; i++) {
-    const val = await roundRow.locator("span").first().innerText().catch(() => "");
+  const roundRow = page.locator(".setting-row", { hasText: "Antal runder" });
+  for (let i = 0; i < 25; i++) {
+    const val = (await roundRow.locator(".step-val").innerText().catch(() => "")).trim();
     if (val === "1") break;
-    await roundRow.locator("button").first().click();
+    await roundRow.locator(".step-btn").first().click();
     await page.waitForTimeout(120);
   }
 }
@@ -109,12 +109,14 @@ export async function setOneRound(page: Page) {
  * Bots auto-fill the rest via the Convex scheduler.
  */
 export async function submitClueIfMyTurn(page: Page) {
-  const input = page.getByPlaceholder("Skriv ét ord eller kort spor");
+  const input = page.locator(".clue-input");
+  const send = page.locator(".clue-send");
   if ((await input.count()) && (await input.isEnabled().catch(() => false))) {
     await input.fill("hmm");
-    const send = page.locator("button:has(svg.lucide-send-horizontal), button:has(svg.lucide-send)");
-    if (await send.isVisible().catch(() => false)) await send.click();
-    await page.waitForTimeout(400);
+    if (await send.isEnabled().catch(() => false)) {
+      await send.click();
+      await page.waitForTimeout(400);
+    }
   }
 }
 
@@ -123,8 +125,8 @@ export async function submitClueIfMyTurn(page: Page) {
  * Handles any number of clue passes.
  */
 export async function waitForDiscussion(page: Page) {
-  const discuss = page.getByRole("heading", { name: "DISKUTÉR" });
-  for (let i = 0; i < 20; i++) {
+  const discuss = page.locator(".phase-badge", { hasText: "Diskutér" });
+  for (let i = 0; i < 25; i++) {
     if (await discuss.isVisible().catch(() => false)) return;
     await submitClueIfMyTurn(page);
     await page.waitForTimeout(1400);
@@ -132,46 +134,65 @@ export async function waitForDiscussion(page: Page) {
   await expect(discuss).toBeVisible({ timeout: 20_000 });
 }
 
+/**
+ * Move from the discussion screen to voting. With more than one clue pass the
+ * host advances through "Næste spor" first, so this loops until the grid shows.
+ */
+export async function advanceToVote(page: Page) {
+  for (let i = 0; i < 6; i++) {
+    if (await page.locator(".vote-grid").isVisible().catch(() => false)) return;
+    const advance = page.getByRole("button", { name: /Gå til afstemning|Næste spor/ });
+    if (await advance.first().isVisible().catch(() => false)) await advance.first().click();
+    await page.waitForTimeout(1800);
+  }
+  await expect(page.locator(".vote-grid")).toBeVisible({ timeout: 30_000 });
+}
+
 /** Vote for the first bot in the vote phase. */
 export async function voteForFirstBot(page: Page) {
-  const botBtn = page.getByRole("button", { name: /Bot Bo/ }).first();
-  if (await botBtn.isVisible().catch(() => false)) {
-    await botBtn.click();
-  } else {
-    // Fallback: click the first non-self player button in the vote list.
-    await page.locator("button").filter({ hasText: "Bot" }).first().click();
-  }
+  // Vote cards are the only interactive targets in the grid; `.self` is ours.
+  await page.locator(".vote-card:not(.self)").first().click();
+  // Since the concept redesign, picking only *selects* — confirm to cast.
+  const confirm = page.locator(".confirm-wrap.visible button");
+  await expect(confirm).toBeVisible({ timeout: 5_000 });
+  await confirm.click();
 }
 
 /** Run a complete round from role reveal through the round-resolve screen. */
 export async function completeRound(page: Page, opts: { mode?: string } = {}) {
   // Reveal
-  await expect(page.getByText("Tryk for at se din rolle")).toBeVisible({ timeout: 15_000 });
-  await page.getByText("Tryk for at se din rolle").click();
-  await page.waitForTimeout(600);
+  await expect(page.locator(".card-scene")).toBeVisible({ timeout: 30_000 });
+  await page.locator(".card-scene").click();
+  await page.waitForTimeout(1100); // the 0.8s flip
 
   if (opts.mode === "scale") {
-    await expect(page.getByText("Vælg et tal fra 1 til 5")).toBeVisible({ timeout: 8_000 });
-    await page.getByRole("button", { name: "3", exact: true }).click();
+    await expect(page.locator(".scale-row")).toBeVisible({ timeout: 10_000 });
+    await page.locator(".scale-cell").nth(2).click();
   } else if (opts.mode === "questions") {
     await page.getByPlaceholder("Skriv dit svar (ét ord)").fill("Blå").catch(() => {});
   }
 
-  await page.getByRole("button", { name: "Klar" }).first().click();
+  await page.getByRole("button", { name: /Klar/ }).first().click();
 
   if (opts.mode !== "questions" && opts.mode !== "scale") {
-    // Clue phase
-    await expect(page.getByRole("heading", { name: "SPOR" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".clue-feed")).toBeVisible({ timeout: 30_000 });
     await waitForDiscussion(page);
   } else {
-    await expect(page.getByRole("heading", { name: "DISKUTÉR" })).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator(".phase-badge", { hasText: "Diskutér" })).toBeVisible({
+      timeout: 30_000,
+    });
   }
 
-  // Discussion → vote
-  await page.getByRole("button", { name: "Gå til afstemning" }).click();
-  await expect(page.getByRole("heading", { name: "STEM" })).toBeVisible({ timeout: 15_000 });
+  // Discussion → vote. With >1 clue pass the host may need several hops.
+  for (let i = 0; i < 6; i++) {
+    if (await page.locator(".vote-grid").isVisible().catch(() => false)) break;
+    const advance = page.getByRole("button", { name: /Gå til afstemning|Næste spor/ });
+    if (await advance.first().isVisible().catch(() => false)) await advance.first().click();
+    await page.waitForTimeout(1800);
+  }
+  await expect(page.locator(".vote-grid")).toBeVisible({ timeout: 30_000 });
   await voteForFirstBot(page);
 
   // Resolve
-  await expect(page.getByText(/Kamæleonen var|Kamæleonerne var/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(".result-headline")).toBeVisible({ timeout: 40_000 });
 }

@@ -14,7 +14,11 @@ export default defineConfig({
   outputDir: "test-results",
   reporter: [["list"]],
   use: {
-    baseURL: "https://ea284c1e1.abacusai.cloud",
+    // Defaults to the deployed app; set BASE to test a local dev server:
+    //   BASE=http://127.0.0.1:5173 pnpm test:e2e
+    // Without this every spec silently tested production, which also meant a
+    // spec could pass against a *stale* deploy while the working tree was broken.
+    baseURL: process.env.BASE ?? "https://ea284c1e1.abacusai.cloud",
     viewport: { width: 393, height: 852 },
     deviceScaleFactor: 2,
     isMobile: true,

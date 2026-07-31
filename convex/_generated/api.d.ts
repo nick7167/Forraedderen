@@ -8,6 +8,10 @@
  * @module
  */
 
+import type * as avatars from "../avatars.js";
+import type * as cleanup from "../cleanup.js";
+import type * as crons from "../crons.js";
+import type * as engine from "../engine.js";
 import type * as games from "../games.js";
 import type * as lib from "../lib.js";
 import type * as packData from "../packData.js";
@@ -25,6 +29,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  avatars: typeof avatars;
+  cleanup: typeof cleanup;
+  crons: typeof crons;
+  engine: typeof engine;
   games: typeof games;
   lib: typeof lib;
   packData: typeof packData;

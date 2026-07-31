@@ -6,16 +6,44 @@ import { QUESTION_PAIRS } from "./questionData";
 import { SCALE_PAIRS } from "./scaleData";
 import {
   shuffle,
+  requireHost,
   requirePlayer,
   resolvePlayer,
   activePlayers,
   toPublicPlayer,
 } from "./lib";
+import {
+  decideBallot,
+  effectiveImposterCount,
+  eligibleVoters,
+  isPromptMode,
+  nextClueTurn,
+  scoreDeltas,
+} from "./engine";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
 // How long the scheduler waits before a bot acts (feels alive, not instant).
 const BOT_ACT_MS = 1300;
+
+/**
+ * Stall recovery. The game deliberately has NO turn clock — being timed while
+ * you think of a clue makes for a worse party game. What it can't tolerate is
+ * someone closing the tab mid-turn: the clue phase is strictly sequential and a
+ * ballot waits for every eligible voter, so one vanished player froze the whole
+ * round with only the host able to unstick it (and nothing at all could save a
+ * round whose *host* had vanished).
+ *
+ * So recovery keys off presence, not time: a player who has stopped sending
+ * heartbeats is skipped; a player who is present is never rushed.
+ *
+ * OFFLINE_SKIP_MS sits well above PRESENCE_TIMEOUT_MS (12s) so a brief network
+ * blip or a backgrounded tab doesn't lose anyone their turn.
+ */
+const OFFLINE_SKIP_MS = 25_000;
+
+/** How often a round re-checks for a vanished player while one is pending. */
+const STALL_POLL_MS = 6_000;
 
 // ---------------------------------------------------------------------------
 // Starting a match / round
@@ -123,7 +151,7 @@ export const submitClue = mutation({
       existing.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
     );
     // Enforce sequential turn order server-side (not just in the UI).
-    const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
+    const current = nextClueTurn(round.turnOrder, cluedThisPass);
     if (current !== me._id) {
       throw new Error("Det er ikke din tur endnu.");
     }
@@ -137,7 +165,7 @@ export const submitClue = mutation({
     });
 
     await maybeAdvanceCluePhase(ctx, room, round);
-    scheduleBotTick(ctx, room._id, round._id);
+    scheduleTick(ctx, room._id, round._id);
   },
 });
 
@@ -165,6 +193,9 @@ export const castVote = mutation({
     if (!eligible.some((id) => id === args.targetPlayerId)) {
       throw new Error("Ugyldig stemme.");
     }
+    if (args.targetPlayerId === me._id) {
+      throw new Error("Du kan ikke stemme på dig selv.");
+    }
 
     // Replace any prior vote on this ballot.
     const ballotVotes = await ctx.db
@@ -186,7 +217,7 @@ export const castVote = mutation({
     }
 
     await maybeResolveBallot(ctx, room, round);
-    scheduleBotTick(ctx, room._id, round._id);
+    scheduleTick(ctx, room._id, round._id);
   },
 });
 
@@ -214,7 +245,7 @@ export const skipPhase = mutation({
       const cluedThisPass = new Set(
         clues.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
       );
-      const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
+      const current = nextClueTurn(round.turnOrder, cluedThisPass);
       if (current) {
         await ctx.db.insert("clues", {
           roundId: round._id,
@@ -228,7 +259,7 @@ export const skipPhase = mutation({
     } else if (round.phase === "vote") {
       await resolveBallot(ctx, room, round);
     }
-    scheduleBotTick(ctx, room._id, round._id);
+    scheduleTick(ctx, room._id, round._id);
   },
 });
 
@@ -250,7 +281,6 @@ export const getRoundState = query({
     const room = await ctx.db.get(args.roomId);
     if (room === null) return null;
     const me = await resolvePlayer(ctx, args);
-    const now = Date.now();
 
     const allPlayers = await ctx.db
       .query("players")
@@ -292,7 +322,7 @@ export const getRoundState = query({
     // Prompt modes answer simultaneously (no turn order, no current turn).
     const currentTurnPlayerId =
       round.phase === "clues" && !isPromptMode(round.gameMode)
-        ? round.turnOrder.find((id) => !cluedThisPass.has(id)) ?? null
+        ? nextClueTurn(round.turnOrder, cluedThisPass) ?? null
         : null;
 
     // In prompt modes, answers are collected on the reveal screen. Hide
@@ -393,7 +423,7 @@ export const getRoundState = query({
       votedPlayerIds,
       players: allPlayers
         .sort((a, b) => a.joinedAt - b.joinedAt)
-        .map((p) => toPublicPlayer(p, room.hostPlayerId, now)),
+        .map((p) => toPublicPlayer(p, room.hostPlayerId)),
       me: me
         ? {
             playerId: me._id,
@@ -412,6 +442,7 @@ export const getRoundState = query({
             gameMode: round.gameMode,
             outcome: round.outcome ?? null,
             voteBreakdown,
+            scoreDeltas: round.scoreDeltas ?? [],
           }
         : null,
     };
@@ -579,29 +610,61 @@ export const getMatchAnalytics = query({
   },
 });
 
+/**
+ * Everything that happened in earlier rounds of this match.
+ *
+ * People argue about what someone said two rounds ago — and until now there was
+ * no way to check. Only *resolved* rounds are included, so this can never leak
+ * the current round's secret. Bounded by the 20-round match cap.
+ */
+export const getRoundHistory = query({
+  args: playerArgs(),
+  handler: async (ctx, args) => {
+    await requirePlayer(ctx, args);
+    const room = await ctx.db.get(args.roomId);
+    if (room === null) return [];
+
+    const rounds = (
+      await ctx.db
+        .query("rounds")
+        .withIndex("by_room", (q) => q.eq("roomId", room._id))
+        .take(20)
+    )
+      .filter((r) => r.phase === "resolve" && r.outcome !== undefined)
+      .sort((a, b) => b.roundNumber - a.roundNumber);
+
+    const out = [];
+    for (const round of rounds) {
+      const clues = (
+        await ctx.db
+          .query("clues")
+          .withIndex("by_round", (q) => q.eq("roundId", round._id))
+          .collect()
+      )
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .map((c) => ({
+          playerId: c.playerId,
+          passNumber: c.passNumber,
+          text: c.text,
+        }));
+
+      out.push({
+        roundNumber: round.roundNumber,
+        gameMode: round.gameMode,
+        category: round.category,
+        secretWord: round.secretWord,
+        decoyWord: round.decoyWord ?? null,
+        imposterPlayerIds: round.imposterPlayerIds,
+        outcome: round.outcome ?? null,
+        clues,
+      });
+    }
+    return out;
+  },
+});
+
 function validateForStart(playerCount: number) {
   if (playerCount < 3) throw new Error("Mindst 3 spillere skal være med.");
-}
-
-/** Modes that use a private prompt and simultaneous reveal-screen answer. */
-function isPromptMode(gameMode: Doc<"rounds">["gameMode"]): boolean {
-  return gameMode === "questions" || gameMode === "scale";
-}
-
-/** Clamp the configured imposter count to what the player count allows. */
-function effectiveImposterCount(playerCount: number, configured: number) {
-  return Math.max(1, Math.min(configured, playerCount - 2));
-}
-
-async function requireHost(
-  ctx: QueryCtx,
-  args: { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret?: string },
-): Promise<Doc<"rooms">> {
-  const room = await ctx.db.get(args.roomId);
-  if (room === null) throw new Error("Rummet findes ikke.");
-  const me = await requirePlayer(ctx, args);
-  if (room.hostPlayerId !== me._id) throw new Error("Kun værten kan gøre det.");
-  return room;
 }
 
 async function loadActiveRound(
@@ -674,7 +737,9 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
     currentRoundNumber: roundNumber,
   });
 
-  // reveal → clues is triggered by the host via beginClues (after cards seen).
+  // reveal → clues is triggered by markReady (or the host via beginClues). The
+  // tick arms the stall watchdog for the reveal screen itself.
+  scheduleTick(ctx, room._id, roundId);
   return roundId;
 }
 
@@ -763,7 +828,7 @@ async function startDiscussion(
 
   await ctx.db.patch(round._id, { phase: "discussion", phaseDeadline: undefined });
   await ctx.db.patch(room._id, { phase: "discussion" });
-  scheduleBotTick(ctx, room._id, round._id);
+  scheduleTick(ctx, room._id, round._id);
 }
 
 /**
@@ -777,13 +842,7 @@ export const beginClues = mutation({
     const round = await ctx.db.get(args.roundId);
     if (round === null || round.roomId !== room._id) throw new Error("Ugyldig runde.");
     if (round.phase !== "reveal") return;
-    if (isPromptMode(round.gameMode)) {
-      await startDiscussion(ctx, room, round);
-      return;
-    }
-    await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
-    await ctx.db.patch(room._id, { phase: "clues" });
-    scheduleBotTick(ctx, room._id, round._id);
+    await leaveReveal(ctx, room, round);
   },
 });
 
@@ -837,16 +896,29 @@ export const markReady = mutation({
 
     // Everyone ready → advance (mirrors beginClues).
     if (round.turnOrder.every((id) => ready.has(id))) {
-      if (isPromptMode(round.gameMode)) {
-        await startDiscussion(ctx, room, round);
-        return;
-      }
-      await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
-      await ctx.db.patch(room._id, { phase: "clues" });
-      scheduleBotTick(ctx, room._id, round._id);
+      await leaveReveal(ctx, room, round);
+    } else {
+      // Someone is still on their card. Re-arm the watchdog so a player who
+      // closes the tab here can't strand the round.
+      scheduleTick(ctx, room._id, round._id);
     }
   },
 });
+
+/** Leave the reveal screen: clue modes start cluing, prompt modes discuss. */
+async function leaveReveal(
+  ctx: MutationCtx,
+  room: Doc<"rooms">,
+  round: Doc<"rounds">,
+) {
+  if (isPromptMode(round.gameMode)) {
+    await startDiscussion(ctx, room, round);
+    return;
+  }
+  await ctx.db.patch(round._id, { phase: "clues", phaseDeadline: undefined });
+  await ctx.db.patch(room._id, { phase: "clues" });
+  scheduleTick(ctx, room._id, round._id);
+}
 
 
 /** If everyone has clued this pass, advance to next pass or to voting. */
@@ -889,7 +961,7 @@ async function advanceFromDiscussion(
     await ctx.db.patch(round._id, { phase: "vote", phaseDeadline: undefined });
     await ctx.db.patch(room._id, { phase: "vote" });
   }
-  scheduleBotTick(ctx, room._id, round._id);
+  scheduleTick(ctx, room._id, round._id);
 }
 
 /** Host advances from the discussion screen. */
@@ -906,9 +978,7 @@ export const advanceDiscussion = mutation({
 
 /** Players eligible to vote this ballot (active, not eliminated). */
 function voters(round: Doc<"rounds">): Id<"players">[] {
-  return round.turnOrder.filter(
-    (id) => !round.eliminatedPlayerIds.some((e) => e === id),
-  );
+  return eligibleVoters(round.turnOrder, round.eliminatedPlayerIds);
 }
 
 /** If all eligible voters have voted, resolve the ballot. */
@@ -948,58 +1018,26 @@ async function resolveBallot(
     )
     .collect();
 
-  const tally = new Map<Id<"players">, number>();
-  for (const vt of ballotVotes) {
-    tally.set(vt.targetPlayerId, (tally.get(vt.targetPlayerId) ?? 0) + 1);
-  }
-  let top: Id<"players"> | null = null;
-  let topCount = 0;
-  let tie = false;
-  for (const [id, count] of tally) {
-    if (count > topCount) {
-      top = id;
-      topCount = count;
-      tie = false;
-    } else if (count === topCount) {
-      tie = true;
-    }
-  }
-
-  const totalImposters = round.imposterPlayerIds.length;
-
-  // No clear target (tie or no votes) ⇒ imposters survive ⇒ imposters win.
-  if (top === null || tie) {
-    await finishRound(ctx, room, round, "imposters");
-    return;
-  }
-
-  const eliminatedIsImposter = round.imposterPlayerIds.some((id) => id === top);
-
-  if (totalImposters === 1) {
-    await finishRound(ctx, room, round, eliminatedIsImposter ? "crew" : "imposters");
-    return;
-  }
-
-  // Iterative elimination for 2+ imposters.
-  if (!eliminatedIsImposter) {
-    await finishRound(ctx, room, round, "imposters");
-    return;
-  }
-  const newlyEliminated = [...round.eliminatedPlayerIds, top];
-  const caughtImposters = round.imposterPlayerIds.filter((id) =>
-    newlyEliminated.some((e) => e === id),
-  ).length;
-  if (caughtImposters >= totalImposters) {
-    await ctx.db.patch(round._id, { eliminatedPlayerIds: newlyEliminated });
-    await finishRound(ctx, { ...room }, { ...round, eliminatedPlayerIds: newlyEliminated }, "crew");
-    return;
-  }
-  // Open the next ballot.
-  await ctx.db.patch(round._id, {
-    eliminatedPlayerIds: newlyEliminated,
-    currentBallot: round.currentBallot + 1,
-    phaseDeadline: undefined,
+  // Outcome rules live in `engine.ts` and are unit-tested there.
+  const decision = decideBallot({
+    votes: ballotVotes,
+    imposterPlayerIds: round.imposterPlayerIds,
+    eliminatedPlayerIds: round.eliminatedPlayerIds,
   });
+
+  if (decision.kind === "nextBallot") {
+    await ctx.db.patch(round._id, {
+      eliminatedPlayerIds: decision.eliminated,
+      currentBallot: round.currentBallot + 1,
+      phaseDeadline: undefined,
+    });
+    return;
+  }
+
+  if (decision.eliminated.length !== round.eliminatedPlayerIds.length) {
+    await ctx.db.patch(round._id, { eliminatedPlayerIds: decision.eliminated });
+  }
+  await finishRound(ctx, room, round, decision.outcome, decision.eliminated);
 }
 
 /** Score the round, mark it resolved, and move the room to the scoreboard. */
@@ -1008,43 +1046,30 @@ async function finishRound(
   room: Doc<"rooms">,
   round: Doc<"rounds">,
   outcome: "crew" | "imposters",
+  eliminatedPlayerIds: readonly Id<"players">[] = round.eliminatedPlayerIds,
 ) {
-  // Scoring: each crew member who voted for an imposter +1; surviving imposters +2.
   const allVotes = await ctx.db
     .query("votes")
     .withIndex("by_round", (q) => q.eq("roundId", round._id))
     .collect();
-  const imposterSet = new Set(round.imposterPlayerIds);
 
-  // Award +1 per correct imposter-vote (across all ballots), to non-imposters.
-  const creditedVoters = new Set<Id<"players">>();
-  for (const vt of allVotes) {
-    if (!imposterSet.has(vt.voterPlayerId) && imposterSet.has(vt.targetPlayerId)) {
-      // one credit per voter max
-      if (!creditedVoters.has(vt.voterPlayerId)) {
-        creditedVoters.add(vt.voterPlayerId);
-      }
-    }
-  }
-  for (const voterId of creditedVoters) {
-    const p = await ctx.db.get(voterId);
-    if (p) await ctx.db.patch(p._id, { score: p.score + 1 });
-  }
-
-  // Surviving imposters (not eliminated) +2.
-  if (outcome === "imposters") {
-    for (const impId of round.imposterPlayerIds) {
-      if (!round.eliminatedPlayerIds.some((e) => e === impId)) {
-        const p = await ctx.db.get(impId);
-        if (p) await ctx.db.patch(p._id, { score: p.score + 2 });
-      }
-    }
+  // Scoring rules live in `engine.ts` and are unit-tested there.
+  const deltas = scoreDeltas({
+    votes: allVotes,
+    imposterPlayerIds: round.imposterPlayerIds,
+    eliminatedPlayerIds,
+    outcome,
+  });
+  for (const [playerId, delta] of deltas) {
+    const player = await ctx.db.get(playerId);
+    if (player) await ctx.db.patch(player._id, { score: player.score + delta });
   }
 
   await ctx.db.patch(round._id, {
     phase: "resolve",
     outcome,
     phaseDeadline: undefined,
+    scoreDeltas: [...deltas].map(([playerId, delta]) => ({ playerId, delta })),
   });
   await ctx.db.patch(room._id, { phase: "scoreboard" });
 }
@@ -1053,13 +1078,14 @@ async function finishRound(
 // Bots — CPU players that auto-play via the Convex scheduler
 // ---------------------------------------------------------------------------
 
-/** Schedule a bot tick if the round could currently need a bot to act. */
-function scheduleBotTick(
+/** Schedule an engine tick (bots acting, and stall recovery). */
+function scheduleTick(
   ctx: MutationCtx,
   roomId: Id<"rooms">,
   roundId: Id<"rounds">,
+  delayMs: number = BOT_ACT_MS,
 ) {
-  void ctx.scheduler.runAfter(BOT_ACT_MS, internal.round.botTick, {
+  void ctx.scheduler.runAfter(delayMs, internal.round.botTick, {
     roomId,
     roundId,
   });
@@ -1105,8 +1131,18 @@ async function botClueText(
 }
 
 /**
- * One bot "tick": make the current bot act (clue or vote), advance the engine,
- * and re-schedule if another bot still needs to act. Drives a paced cadence.
+ * One engine tick. Two jobs, in order:
+ *
+ *   1. Let the bot whose turn it is act (clue or vote), paced so it feels alive.
+ *   2. Stall recovery — skip a *participant who has gone offline* so a closed
+ *      tab can't freeze the round. See OFFLINE_SKIP_MS. Players who are present
+ *      are never skipped, however long they take.
+ *
+ * While a human is still pending, the tick re-arms itself at STALL_POLL_MS so
+ * someone who disappears mid-turn is noticed even if nobody else acts again.
+ * `phaseDeadline` gates that loop to a single chain: concurrent actions each
+ * schedule a tick, and all but the one that owns the current deadline stop.
+ *
  * Internal — only callable by the scheduler, never by clients.
  */
 export const botTick = internalMutation({
@@ -1120,16 +1156,35 @@ export const botTick = internalMutation({
       .query("players")
       .withIndex("by_room", (q) => q.eq("roomId", roomId))
       .collect();
-    const isBot = (id: Id<"players">) =>
-      players.find((p) => p._id === id)?.isBot === true;
+    const byId = new Map(players.map((p) => [p._id, p]));
+    const isBot = (id: Id<"players">) => byId.get(id)?.isBot === true;
+    const now = Date.now();
+    /** Gone quiet long enough that we stop waiting for them. */
+    const hasVanished = (id: Id<"players">) => {
+      const p = byId.get(id);
+      return p !== undefined && p.isBot !== true && now - p.lastSeen > OFFLINE_SKIP_MS;
+    };
 
-    // If a bot inherited host (the human host left), auto-advance the
-    // discussion screen so the game can't stall. With a human host, the button
-    // drives it and bots do nothing here.
+    /**
+     * Keep polling while someone is still pending, so a player who vanishes
+     * mid-turn is picked up even if nobody else touches the game. Only the
+     * chain owning the current deadline continues; duplicates stop here.
+     */
+    const keepWatching = async () => {
+      if (round.phaseDeadline !== undefined && now < round.phaseDeadline) return;
+      await ctx.db.patch(round._id, { phaseDeadline: now + STALL_POLL_MS });
+      scheduleTick(ctx, roomId, roundId, STALL_POLL_MS);
+    };
+
     if (round.phase === "discussion") {
-      if (room.hostPlayerId && isBot(room.hostPlayerId)) {
+      // Only the host can advance the discussion, so a host who is a bot — or
+      // who has left the building — would otherwise strand everyone here.
+      const hostId = room.hostPlayerId;
+      if (hostId && (isBot(hostId) || hasVanished(hostId))) {
         await advanceFromDiscussion(ctx, room, round);
+        return;
       }
+      await keepWatching();
       return;
     }
 
@@ -1142,24 +1197,31 @@ export const botTick = internalMutation({
         cluesNow.filter((c) => c.passNumber === round.currentPass).map((c) => c.playerId),
       );
 
-      // Whose turn is it? (first in order without a clue this pass)
-      const current = round.turnOrder.find((id) => !cluedThisPass.has(id));
-      if (current === undefined || !isBot(current)) return; // human's turn → wait
+      const current = nextClueTurn(round.turnOrder, cluedThisPass);
+      if (current === undefined) return; // pass complete
 
-      await ctx.db.insert("clues", {
-        roundId: round._id,
-        playerId: current,
-        passNumber: round.currentPass,
-        text: await botClueText(ctx, room, round),
-        createdAt: Date.now(),
-      });
-      await maybeAdvanceCluePhase(ctx, room, round);
-      scheduleBotTick(ctx, roomId, roundId); // next bot (clue or vote)
+      // A bot's turn, or a vanished player's turn: fill it and move on. The
+      // placeholder matches what a host skip inserts.
+      if (isBot(current) || hasVanished(current)) {
+        await ctx.db.insert("clues", {
+          roundId: round._id,
+          playerId: current,
+          passNumber: round.currentPass,
+          text: isBot(current) ? await botClueText(ctx, room, round) : "—",
+          createdAt: Date.now(),
+        });
+        await maybeAdvanceCluePhase(ctx, room, round);
+        scheduleTick(ctx, roomId, roundId);
+        return;
+      }
+
+      // A present human's turn — wait for them, however long they take.
+      await keepWatching();
       return;
     }
 
     if (round.phase === "vote") {
-      const eligible = voters(round);
+      const eligible = eligibleVoters(round.turnOrder, round.eliminatedPlayerIds);
       const voted = new Set(
         (
           await ctx.db
@@ -1170,21 +1232,49 @@ export const botTick = internalMutation({
             .collect()
         ).map((vt) => vt.voterPlayerId),
       );
-      const pendingBot = eligible.find((id) => isBot(id) && !voted.has(id));
-      if (pendingBot === undefined) return; // only humans left to vote
 
-      const targets = eligible.filter((id) => id !== pendingBot);
-      const target = targets[Math.floor(Math.random() * targets.length)];
-      await ctx.db.insert("votes", {
-        roundId: round._id,
-        ballotNumber: round.currentBallot,
-        voterPlayerId: pendingBot,
-        targetPlayerId: target,
-      });
-      await maybeResolveBallot(ctx, room, round);
-      scheduleBotTick(ctx, roomId, roundId); // next pending bot / next ballot
+      const pendingBot = eligible.find((id) => isBot(id) && !voted.has(id));
+      if (pendingBot !== undefined) {
+        const targets = eligible.filter((id) => id !== pendingBot);
+        const target = targets[Math.floor(Math.random() * targets.length)];
+        await ctx.db.insert("votes", {
+          roundId: round._id,
+          ballotNumber: round.currentBallot,
+          voterPlayerId: pendingBot,
+          targetPlayerId: target,
+        });
+        await maybeResolveBallot(ctx, room, round);
+        scheduleTick(ctx, roomId, roundId);
+        return;
+      }
+
+      const pending = eligible.filter((id) => !voted.has(id));
+      if (pending.length === 0) return;
+
+      // Everyone still present has voted and the rest have vanished — resolve
+      // on the votes actually cast rather than waiting forever. Deliberately we
+      // do NOT vote on an absent player's behalf; that would fabricate a result.
+      if (pending.every(hasVanished)) {
+        await resolveBallot(ctx, room, round);
+        return;
+      }
+
+      await keepWatching();
       return;
     }
-    // reveal / resolve / scoreboard → nothing; host advances.
+    if (round.phase === "reveal") {
+      const ready = new Set(round.readyPlayerIds ?? []);
+      const pending = round.turnOrder.filter((id) => !ready.has(id));
+      if (pending.length === 0) return;
+      // Everyone still present has readied up and the rest have vanished — start
+      // without them rather than stranding the room on the card screen.
+      if (pending.every(hasVanished)) {
+        await leaveReveal(ctx, room, round);
+        return;
+      }
+      await keepWatching();
+      return;
+    }
+    // resolve / scoreboard → nothing; the host advances.
   },
 });

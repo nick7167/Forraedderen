@@ -74,13 +74,17 @@ export function GameRoom() {
   }
 
   if (room === null) {
+    // The room is gone (ended, or swept as abandoned). Drop the local pointer
+    // so "Fortsæt spil" stops offering it on the home screen.
+    if (roomId) forgetRoomPlayer(roomId);
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-muted-foreground">{t.roomNotFound}</p>
-        <button className="text-primary underline" onClick={leave}>
-          {t.back}
-        </button>
-      </div>
+      <InfoScreen
+        emoji="🕳️"
+        title={t.roomNotFound}
+        actionLabel={t.goHome}
+        onAction={() => navigate("/")}
+        topInset
+      />
     );
   }
 

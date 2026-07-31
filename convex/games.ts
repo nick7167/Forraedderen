@@ -6,10 +6,16 @@ import { clearRounds } from "./round";
 import { settingsValidator } from "./schema";
 import {
   generateCode,
+  requireHost,
   requirePlayer,
   resolvePlayer,
   toPublicPlayer,
 } from "./lib";
+import {
+  AVATAR_COLORS,
+  safeAvatarColor,
+  safeAvatarEmoji,
+} from "./shared";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
@@ -22,9 +28,6 @@ const DEFAULT_SETTINGS = {
   roundCount: 5,
   packId: undefined as Id<"packs"> | undefined,
 };
-
-const AVATAR_EMOJIS = ["🦊", "🐼", "🐯", "🐸", "🦉", "🐙", "🦁", "🐧"];
-const AVATAR_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#6366f1", "#d946ef", "#ec4899"];
 
 const joinArgs = {
   name: v.string(),
@@ -43,9 +46,14 @@ export const createRoom = mutation({
   handler: async (ctx, args) => {
     await ensureBuiltInPacks(ctx); // self-seed built-in packs on a fresh deployment
     const user = await getCurrentUser(ctx);
+    // Keep trying until the code is genuinely free. The previous version gave
+    // up after 5 tries and inserted anyway — and since `roomByCode` throws on
+    // duplicates, that would have locked both rooms out of joining forever.
+    // After 8 four-character misses, widen to five so this always terminates.
     let code = generateCode();
-    for (let i = 0; i < 5 && (await roomByCode(ctx, code)) !== null; i++) {
-      code = generateCode();
+    for (let attempt = 0; (await roomByCode(ctx, code)) !== null; attempt++) {
+      if (attempt >= 20) throw new Error("Kunne ikke oprette et rum. Prøv igen.");
+      code = generateCode(attempt >= 8 ? 5 : 4);
     }
     const now = Date.now();
     const roomId = await ctx.db.insert("rooms", {
@@ -232,7 +240,6 @@ export const getRoomState = query({
     const room = await ctx.db.get(args.roomId);
     if (room === null) return null;
     const me = await resolvePlayer(ctx, args);
-    const now = Date.now();
     const players = (
       await ctx.db
         .query("players")
@@ -240,7 +247,7 @@ export const getRoomState = query({
         .collect()
     )
       .sort((a, b) => a.joinedAt - b.joinedAt)
-      .map((p) => toPublicPlayer(p, room.hostPlayerId, now));
+      .map((p) => toPublicPlayer(p, room.hostPlayerId));
 
     let pack: { name: string; emoji: string } | null = null;
     if (room.settings.packId) {
@@ -304,24 +311,13 @@ async function insertPlayer(
     userId: user?._id,
     guestSecret: user === null ? args.guestSecret : undefined,
     name,
-    avatarEmoji: args.avatarEmoji || AVATAR_EMOJIS[0],
-    avatarColor: args.avatarColor || AVATAR_COLORS[0],
+    avatarEmoji: safeAvatarEmoji(args.avatarEmoji),
+    avatarColor: safeAvatarColor(args.avatarColor),
     score: 0,
     activeFromRound,
     joinedAt: now,
     lastSeen: now,
   });
-}
-
-async function requireHost(
-  ctx: QueryCtx,
-  args: { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret?: string },
-): Promise<Doc<"rooms">> {
-  const room = await ctx.db.get(args.roomId);
-  if (room === null) throw new Error("Rummet findes ikke.");
-  const me = await requirePlayer(ctx, args);
-  if (room.hostPlayerId !== me._id) throw new Error("Kun værten kan gøre det.");
-  return room;
 }
 
 async function reassignHostIfNeeded(
@@ -353,5 +349,3 @@ async function reassignHostIfNeeded(
     await ctx.db.patch(roomId, { hostPlayerId: next._id });
   }
 }
-
-export { AVATAR_EMOJIS, AVATAR_COLORS };

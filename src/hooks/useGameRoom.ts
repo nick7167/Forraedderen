@@ -8,7 +8,11 @@ import {
   rememberRoomPlayer,
 } from "@/lib/guest";
 
-const HEARTBEAT_MS = 4000;
+// Paced against PRESENCE_TIMEOUT_MS (25s) so a player is marked away within
+// roughly one missed beat. The old 4s interval meant a full 12-player room
+// wrote to `players` three times a second — into the very table every client
+// subscribes to for room state.
+const HEARTBEAT_MS = 10_000;
 
 /**
  * Subscribes to a room (and its active round) as the current device's player,

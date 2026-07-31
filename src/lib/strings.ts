@@ -10,6 +10,8 @@ export const t = {
   yourName: "Dit navn",
   namePlaceholder: "Skriv et navn",
   chooseAvatar: "Vælg avatar",
+  soundOn: "Slå lyd til",
+  soundOff: "Slå lyd fra",
   createGame: "Opret spil",
   joinGame: "Deltag i spil",
   roomCode: "Rum-kode",
@@ -26,6 +28,11 @@ export const t = {
   shareCode: "Del koden med dine venner",
   copyCode: "Kopiér kode",
   copied: "Kopieret!",
+  shareInvite: "Del",
+  shareTitle: "Kom og spil Kamæleon",
+  shareText: "Jeg har startet et spil Kamæleon. Kode: {code}",
+  joiningRoom: "Du er på vej ind i spillet…",
+  joinPrompt: "Vælg dit navn, så er du med",
   leave: "Forlad",
   leaveConfirmTitle: "Forlad spillet?",
   leaveConfirmBody: "Du forlader spillet og går tilbage til forsiden.",
@@ -36,14 +43,22 @@ export const t = {
   you: "dig",
   bot: "BOT",
   addBot: "Tilføj bot",
+  needMorePlayers: "Mindst 3 spillere",
+  waitingForPlayers: "Venter på spillere…",
   waitingNextRound: "Du er med fra næste runde",
 
   // Settings
   imposters: "Kamæleoner",
   cluePasses: "Spor-runder",
   roundCount: "Antal runder",
+  roundCountSub: "Pr. kamp",
+  impostersSub: "Antal per runde",
+  cluePassesSub: "Spor-runder pr. runde",
+  changePack: "Skift →",
   imposterSeesCategory: "Kamæleon ser kategorien",
+  imposterSeesCategorySub: "Giver kamæleonen et fingerpeg",
   impostersKnowEachOther: "Kamæleoner kender hinanden",
+  impostersKnowEachOtherSub: "Kun ved flere kamæleoner",
   timers: "Tidsbegrænsning",
   pack: "Kategori",
   choosePack: "Vælg kategori",
@@ -53,6 +68,10 @@ export const t = {
   // Game mode
   mode: "Spiltype",
   modeSpy: "Klassisk",
+  modeSpyTag: "Kamæleonen ved intet",
+  modeUndercoverTag: "Lignende ord til spionen",
+  modeQuestionsTag: "Ét ords svar på spørgsmål",
+  modeScaleTag: "Tal fra 1 til 5",
   modeUndercover: "Undercover",
   modeQuestions: "Spørgsmål",
   modeScale: "Måleren",
@@ -70,6 +89,13 @@ export const t = {
   youAreImposter: "Du er KAMÆLEONEN",
   youAreCrew: "Du er i besætningen",
   theWord: "Ordet",
+  theWordIs: "Ordet er",
+  roleCrew: "Besætningsmedlem",
+  roleImposter: "Kamæleonen",
+  imposterNoWord: "Du kender ikke ordet",
+  keepItSecret: "Behold det hemmeligt!",
+  blendIn: "Smelt ind — vind!  🎭",
+  accused: "Anklaget",
   category: "Kategori",
   imposterHint: "Bluf dig igennem — du kender ikke ordet!",
   yourTeammates: "Dine medkamæleoner",
@@ -81,6 +107,7 @@ export const t = {
 
   // Clues
   cluePhase: "Spor",
+  cluePhaseTitle: "Giv et spor 💬",
   yourTurn: "Det er din tur",
   waitingFor: "Venter på",
   yourClue: "Dit spor",
@@ -128,6 +155,9 @@ export const t = {
 
   // Vote
   votePhase: "Stem",
+  voteSelf: "Dig selv",
+  voteSuspect: "Mistænkt?",
+  voteHasVoted: "Har stemt ✓",
   voteInstruction: "Hvem er kamæleonen?",
   voteFor: "Stem på",
   youVoted: "Du har stemt",
@@ -157,6 +187,8 @@ export const t = {
   playAgain: "Spil igen",
   backToLobby: "Til lobby",
   points: "point",
+  pointsShort: "pt",
+  scoreUpdate: "Pointopdatering",
 
   // Host controls
   skip: "Spring over",
@@ -180,6 +212,7 @@ export const t = {
   clueHintUndercover: "Giv et bredt spor til dit ord.",
 
   // How to play
+  historyTitle: "Tidligere runder",
   howToTitle: "Sådan spilles",
   howTo: {
     goal: {
@@ -192,7 +225,15 @@ export const t = {
     },
     vote: {
       title: "Afstemning",
-      body: "Bagefter stemmer alle i hemmelighed på, hvem de tror er kamæleonen. Flest stemmer ryger ud. Står det lige, slipper kamæleonen fri.",
+      body: "Bagefter stemmer alle i hemmelighed på, hvem de tror er kamæleonen. Flest stemmer ryger ud. Du kan skifte stemme, indtil alle har stemt.",
+    },
+    tie: {
+      title: "Uafgjort",
+      body: "Står stemmerne lige — eller stemmer ingen — sker der ingen udstemning, og kamæleonen slipper fri og vinder runden. Det kan altså betale sig at blive enige.",
+    },
+    points: {
+      title: "Point",
+      body: "Du får 1 point, hver runde du stemmer på en kamæleon — også selvom kamæleonen alligevel slipper væk. En kamæleon, der overlever runden, får 2 point. Efter hver runde kan du se din pointændring på resultatskærmen.",
     },
     klassisk: {
       title: "Klassisk",
@@ -222,6 +263,22 @@ export const t = {
   correctVotes: "rigtige stemmer",
   receivedVotes: "modtagne stemmer",
   imposterWins: "sejre som Kamæleon",
+
+  // Screen-reader announcements (live region)
+  a11yYourTurn: "Det er din tur til at give et spor.",
+  a11yWaitingTurn: "{name} giver et spor.",
+  a11yClueCount: "{done} af {total} spor givet.",
+  a11yVotePhase: "Afstemning i gang. {done} af {total} har stemt.",
+  a11yYouVoted: "Din stemme er afgivet.",
+  a11yRevealPhase: "Se din rolle. {ready} af {total} er klar.",
+  a11yDiscussPhase: "Diskussion. Alle spor er givet.",
+  a11yResultCrew: "Kamæleonen blev fanget.",
+  a11yResultImposters: "Kamæleonen slap væk.",
+
+  // Crash / error boundary
+  crashTitle: "Noget gik galt",
+  crashBody: "Appen løb ind i en fejl. Prøv at genindlæse — dit spil kører videre.",
+  crashReload: "Genindlæs",
 
   // Errors / misc
   loading: "Indlæser…",

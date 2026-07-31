@@ -6,6 +6,8 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
 import { Av } from "./Av";
+import { Announce } from "./Announce";
+import { RoundHistory } from "./RoundHistory";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
@@ -66,7 +68,11 @@ export function DiscussionPhase({
   return (
     <div className="cscreen s-clue">
       <NeonBackdrop variant="clue" />
-      <PhaseChrome onLeave={onLeave} />
+      <PhaseChrome
+        onLeave={onLeave}
+        history={<RoundHistory authArgs={authArgs} players={round.players} />}
+      />
+      <Announce message={t.a11yDiscussPhase} />
 
       <div className="clue-header">
         <div className="phase-row">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { t } from "@/lib/strings";
 import { toast } from "sonner";
 import { UserX } from "lucide-react";
+import { usePresence } from "@/hooks/usePresence";
 
 type Room = NonNullable<FunctionReturnType<typeof api.games.getRoomState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -13,8 +14,9 @@ type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: st
 /** Shown to non-hosts when the host appears offline — lets anyone take over. */
 export function HostGoneBanner({ room, authArgs }: { room: Room; authArgs: AuthArgs }) {
   const claimHost = useMutation(api.games.claimHost);
+  const isOnline = usePresence();
   const host = room.players.find((p) => p.isHost);
-  const show = host && !host.isOnline && room.myPlayerId !== host._id;
+  const show = host && !isOnline(host) && room.myPlayerId !== host._id;
   if (!show) return null;
 
   return (

@@ -1,10 +1,6 @@
-// Keep in sync with the defaults in convex/games.ts.
-export const AVATAR_EMOJIS = ["🦊", "🐼", "🐯", "🐸", "🦉", "🐙", "🦁", "🐧", "🐨", "🐵", "🦄", "🐢"];
-
-export const AVATAR_COLORS = [
-  "#ef4444", "#f97316", "#eab308", "#22c55e",
-  "#06b6d4", "#6366f1", "#d946ef", "#ec4899",
-];
+// Re-exported from the server so client and server can never drift — see
+// convex/shared.ts for why.
+export { AVATAR_EMOJIS, AVATAR_COLORS } from "../../convex/shared";
 
 export function randomFrom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];

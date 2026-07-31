@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
 import { Av } from "./Av";
+import { Announce } from "./Announce";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
@@ -115,11 +116,11 @@ export function RoleReveal({
           <div className="card-role-icon" aria-hidden>
             🦎
           </div>
-          <div className="card-role-title imp">Kamæleonen</div>
-          <div className="card-word-lbl">Du kender ikke ordet</div>
+          <div className="card-role-title imp">{t.roleImposter}</div>
+          <div className="card-word-lbl">{t.imposterNoWord}</div>
           <div className="card-word unknown">— ? —</div>
           <div className="card-pill imp">
-            {round.category ? `${t.category}: ${round.category}` : "Smelt ind — vind!  🎭"}
+            {round.category ? `${t.category}: ${round.category}` : t.blendIn}
           </div>
         </div>
       );
@@ -131,11 +132,11 @@ export function RoleReveal({
         <div className="card-role-icon" aria-hidden>
           👥
         </div>
-        <div className="card-role-title crew">Besætningsmedlem</div>
-        <div className="card-word-lbl">Ordet er</div>
+        <div className="card-role-title crew">{t.roleCrew}</div>
+        <div className="card-word-lbl">{t.theWordIs}</div>
         <div className="card-word">{me?.secretWord}</div>
         <div className="card-pill crew">
-          {round.category ?? "Behold det hemmeligt!"}
+          {round.category ?? t.keepItSecret}
         </div>
       </div>
     );
@@ -145,6 +146,11 @@ export function RoleReveal({
     <div className="cscreen s-reveal">
       <NeonBackdrop variant="reveal" />
       <PhaseChrome onLeave={onLeave} />
+      <Announce
+        message={t.a11yRevealPhase
+          .replace("{ready}", String(readyCount))
+          .replace("{total}", String(participants.length))}
+      />
 
       <div className="content">
         <div className="round-info">
@@ -213,6 +219,12 @@ export function RoleReveal({
                       dimmed={!isReady}
                     />
                     {isReady && <div className="ready-ring-g" />}
+                    {/* Not ring-colour alone — see .ready-check. */}
+                    {isReady && (
+                      <div className="ready-check" aria-hidden>
+                        ✓
+                      </div>
+                    )}
                   </div>
                 );
               })}

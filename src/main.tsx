@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ConvexReactClient, ConvexProvider } from "convex/react";
 import App from "./App.tsx";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
 // Ported verbatim from ui-concepts/kamaeleon-polish-concepts.html — the app's
@@ -39,11 +40,13 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ConvexProvider client={convex}>
-      <BrowserRouter>
-        <App />
-        <Toaster richColors position="top-center" />
-      </BrowserRouter>
-    </ConvexProvider>
+    <ErrorBoundary>
+      <ConvexProvider client={convex}>
+        <BrowserRouter>
+          <App />
+          <Toaster richColors position="top-center" />
+        </BrowserRouter>
+      </ConvexProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
