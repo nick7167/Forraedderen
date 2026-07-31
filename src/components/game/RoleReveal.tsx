@@ -10,7 +10,7 @@ import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Check, Eye } from "lucide-react";
+import { Check } from "lucide-react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -97,13 +97,10 @@ export function RoleReveal({
           {/* Front — holographic shimmer, prompts a tap */}
           <div className="p-card-face p-card-front text-white">
             <div className="p-card-shimmer" />
-            <Eye className="p-card-front-icon size-12 text-violet-200" />
-            <span className="px-6 text-center text-lg font-semibold text-white/90">
-              {t.tapToReveal}
-            </span>
-            <span className="p-tap-hint">
+            <span className="p-card-front-icon" style={{ fontSize: 60, position: "relative", zIndex: 1 }}>🦎</span>
+            <span className="p-tap-hint" style={{ position: "relative", zIndex: 1 }}>
               <span className="p-tap-dot" />
-              {t.yourRole}
+              {t.tapToReveal}
             </span>
           </div>
 
@@ -114,42 +111,42 @@ export function RoleReveal({
               isImposter ? "p-card-back-imp" : "p-card-back-crew",
             )}
           >
-            <div className="flex flex-col items-center gap-2 px-2 text-center">
-              {isPromptMode ? (
-                <>
-                  <span className="text-xs font-medium uppercase opacity-80">
-                    {t.yourQuestion}
+            {isPromptMode ? (
+              <div className="flex flex-col items-center gap-2 px-4 text-center" style={{ position: "relative", zIndex: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(245,243,255,0.38)" }}>
+                  {t.yourQuestion}
+                </span>
+                <span style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.25 }}>{me?.secretWord}</span>
+                <span style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
+                  {isScale ? t.scaleAnswerHint : t.questionAnswerHint}
+                </span>
+              </div>
+            ) : isImposter ? (
+              <div className="flex flex-col items-center gap-3 px-4 text-center" style={{ position: "relative", zIndex: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(252,165,165,0.55)" }}>ROLLE</span>
+                <span style={{ fontSize: 52 }}>🦎</span>
+                <span style={{ fontSize: 24, fontWeight: 800, color: "#fca5a5", letterSpacing: "-0.025em" }}>KAMÆLEON</span>
+                {round.category && (
+                  <span style={{ padding: "7px 18px", borderRadius: 50, background: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.3)", fontSize: 12, fontWeight: 600, color: "#fca5a5" }}>
+                    {t.category}: {round.category}
                   </span>
-                  <span className="text-xl font-extrabold leading-snug">
-                    {me?.secretWord}
+                )}
+                <span style={{ fontSize: 12, opacity: 0.7, marginTop: 2 }}>{t.imposterHint}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 px-4 text-center" style={{ position: "relative", zIndex: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(125,211,252,0.55)" }}>ROLLE</span>
+                <span style={{ fontSize: 52 }}>👤</span>
+                <span style={{ fontSize: 24, fontWeight: 800, color: "#7dd3fc", letterSpacing: "-0.025em" }}>MEDSPILLER</span>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,255,0.32)", marginTop: 6 }}>{t.theWord}</span>
+                <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em" }}>{me?.secretWord}</span>
+                {round.category && (
+                  <span style={{ padding: "7px 18px", borderRadius: 50, background: "rgba(6,182,212,0.14)", border: "1px solid rgba(6,182,212,0.3)", fontSize: 12, fontWeight: 600, color: "#7dd3fc" }}>
+                    {round.category}
                   </span>
-                  <span className="mt-1 text-xs opacity-80">
-                    {isScale ? t.scaleAnswerHint : t.questionAnswerHint}
-                  </span>
-                </>
-              ) : isImposter ? (
-                <>
-                  <span className="text-5xl">🦎</span>
-                  <span className="text-2xl font-black">{t.youAreImposter}</span>
-                  {round.category && (
-                    <span className="mt-1 text-sm opacity-90">
-                      {t.category}: <b>{round.category}</b>
-                    </span>
-                  )}
-                  <span className="mt-1 text-xs opacity-80">{t.imposterHint}</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-xs font-medium uppercase opacity-80">
-                    {t.theWord}
-                  </span>
-                  <span className="text-3xl font-black">{me?.secretWord}</span>
-                  {round.category && (
-                    <span className="mt-1 text-sm opacity-90">{round.category}</span>
-                  )}
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </button>

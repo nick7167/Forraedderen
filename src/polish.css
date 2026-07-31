@@ -1,5 +1,23 @@
 /* ============================================================================
- * Kamæleon — UI Polish layer
+ * Kamæleon — UI Polish layer — FULL REWRITE matching the interactive mockup */
+
+/* ── Aurora blob keyframes (used by NeonBackdrop inline styles) ── */
+@keyframes ab1drift {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(22px,-18px) scale(1.07); }
+  66%     { transform: translate(-16px,22px) scale(.94); }
+}
+@keyframes ab2drift {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50%     { transform: translate(-26px,14px) scale(1.13); }
+}
+@keyframes ab3drift {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50%     { transform: translate(14px,-18px) scale(1.06); }
+}
+
+/* ============================================================================
+ * ORIGINAL Kamæleon — UI Polish layer
  * ----------------------------------------------------------------------------
  * Purely presentational upgrades on top of the existing "Neon Glow" system in
  * index.css. Adds the animated aurora background, refined glassmorphism, entrance

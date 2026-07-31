@@ -9,7 +9,7 @@ import { Screen } from "./Screen";
 import { PhaseHero } from "./PhaseHero";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
-import { cn } from "@/lib/utils";
+
 import { toast } from "sonner";
 import { Check, SkipForward, Vote } from "lucide-react";
 
@@ -134,24 +134,60 @@ export function VotePhase({
               key={id}
               disabled={disabled}
               onClick={() => vote(id)}
-              className={cn(
-                "glass relative flex flex-col items-center gap-2.5 overflow-hidden rounded-2xl p-4 transition-all",
-                isMyPick && "p-vote-selected",
-                disabled ? "opacity-50" : "active:scale-95",
-              )}
+              style={{
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 10,
+                padding: "16px 12px 14px",
+                borderRadius: 20,
+                overflow: "hidden",
+                border: isMyPick
+                  ? "2px solid rgba(239,68,68,0.5)"
+                  : "2px solid rgba(255,255,255,0.08)",
+                background: isMyPick
+                  ? "rgba(239,68,68,0.11)"
+                  : "rgba(255,255,255,0.04)",
+                boxShadow: isMyPick ? "0 0 24px rgba(239,68,68,0.18)" : "none",
+                transform: isMyPick ? "scale(1.03)" : undefined,
+                opacity: disabled && !isMe ? 0.4 : isMe ? 0.5 : 1,
+                cursor: disabled ? "default" : "pointer",
+                transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+              }}
             >
-              {/* ANKLAGET-style banner on your current pick. */}
-              {isMyPick && <span className="p-accused-banner">{t.youVoted}</span>}
-              {/* Secret-vote indicator: this player has cast a vote (not whom for). */}
-              {hasVoted && (
-                <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-crew text-white">
-                  <Check className="size-3.5" strokeWidth={3} />
+              {/* ANKLAGET banner */}
+              {isMyPick && (
+                <span style={{
+                  position: "absolute", top: 0, left: 0, right: 0,
+                  background: "rgba(239,68,68,0.88)",
+                  fontSize: 10, fontWeight: 800, letterSpacing: "0.1em",
+                  textTransform: "uppercase", padding: 5, color: "#fff",
+                  textAlign: "center",
+                }}>
+                  {t.youVoted}
                 </span>
               )}
-              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={56} ring={isMyPick} />
-              <span className="text-sm font-semibold">
+              {/* has-voted check */}
+              {hasVoted && (
+                <span style={{
+                  position: "absolute", right: 8, top: isMyPick ? 26 : 8,
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: "#22c55e", border: "2px solid rgba(0,0,0,0.3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Check style={{ width: 12, height: 12, color: "#fff", strokeWidth: 3 }} />
+                </span>
+              )}
+              <span style={{ marginTop: isMyPick ? 16 : 0 }}>
+                <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={56} ring={isMyPick} />
+              </span>
+              <span style={{
+                fontSize: 14, fontWeight: 700,
+                color: isMyPick ? "#fca5a5" : "rgba(245,243,255,0.9)",
+              }}>
                 {p.name}
-                {isMe && <span className="opacity-70"> ({t.you})</span>}
+                {isMe && <span style={{ opacity: 0.6 }}> ({t.you})</span>}
               </span>
             </button>
           );

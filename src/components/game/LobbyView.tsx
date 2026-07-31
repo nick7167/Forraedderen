@@ -173,16 +173,44 @@ export function LobbyView({
           <div className="flex flex-col gap-5">
             <HostGoneBanner room={room} authArgs={authArgs} />
 
-            {/* Room code hero */}
+            {/* Room code hero — transparent pill with glowing monospace code */}
             <button
               onClick={copyCode}
-              className="w-full rounded-3xl gradient-primary p-5 text-center text-white glow-primary active:scale-[0.99]"
+              className="w-full active:scale-[0.99]"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                padding: "12px 20px",
+                borderRadius: 20,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                boxShadow: "0 1px 0 rgba(255,255,255,0.1) inset, 0 8px 32px rgba(0,0,0,0.28)",
+                cursor: "pointer",
+              }}
             >
-              <p className="text-xs font-medium opacity-80">{t.shareCode}</p>
-              <p className="mt-1 inline-flex items-center gap-2 text-4xl font-extrabold">
-                <span className="p-roomcode">{room.code}</span>
-                <Copy className="size-5 opacity-80" />
-              </p>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(245,243,255,0.38)" }}>
+                {t.shareCode}
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                <span
+                  className="p-roomcode"
+                  style={{
+                    fontSize: 28,
+                    fontWeight: 800,
+                    letterSpacing: "0.14em",
+                    color: "#c4b5fd",
+                    fontFamily: "'SF Mono','Fira Code','Courier New',monospace",
+                    textShadow: "0 0 22px rgba(196,181,253,0.6)",
+                  }}
+                >
+                  {room.code}
+                </span>
+                <Copy style={{ width: 18, height: 18, color: "rgba(245,243,255,0.4)" }} />
+              </span>
             </button>
           </div>
         }

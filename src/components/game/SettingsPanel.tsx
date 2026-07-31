@@ -93,10 +93,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 const MODES = [
-  { id: "spy", emoji: "🦎", label: t.modeSpy },
-  { id: "undercover", emoji: "🎭", label: t.modeUndercover },
-  { id: "questions", emoji: "❓", label: t.modeQuestions },
-  { id: "scale", emoji: "📊", label: t.modeScale },
+  { id: "spy", emoji: "🦎", label: t.modeSpy, tagline: "Spot løgneren" },
+  { id: "undercover", emoji: "🎭", label: t.modeUndercover, tagline: "Falsk identitet" },
+  { id: "questions", emoji: "❓", label: t.modeQuestions, tagline: "Find det skæve svar" },
+  { id: "scale", emoji: "📊", label: t.modeScale, tagline: "Hvem passer ikke ind?" },
 ] as const;
 
 export function SettingsPanel({
@@ -134,7 +134,7 @@ export function SettingsPanel({
       {/* Game mode */}
       <section className="space-y-2">
         <SectionLabel>{t.mode}</SectionLabel>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           {MODES.map((m) => {
             const active = settings.gameMode === m.id;
             return (
@@ -142,18 +142,57 @@ export function SettingsPanel({
                 key={m.id}
                 disabled={!editable}
                 onClick={() => set("gameMode", m.id)}
-                className={cn(
-                  "p-mode-card glass flex flex-col items-center gap-1.5 rounded-2xl py-3.5 text-muted-foreground",
-                  active && "active",
-                )}
+                className={cn("p-mode-card rounded-2xl", active && "active")}
+                style={{
+                  textAlign: "left",
+                  padding: "15px 13px",
+                  border: active ? "2px solid rgba(167,139,250,0.5)" : "2px solid rgba(255,255,255,0.07)",
+                  background: active ? "rgba(124,58,237,0.14)" : "rgba(255,255,255,0.04)",
+                  boxShadow: active ? "0 0 22px rgba(124,58,237,0.14), 0 0 0 1px rgba(167,139,250,0.18) inset" : "none",
+                  transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+                  cursor: editable ? "pointer" : "default",
+                }}
               >
-                <span className="text-2xl">{m.emoji}</span>
-                <span className="p-mode-name text-xs font-semibold">{m.label}</span>
+                <span style={{ fontSize: 26, display: "block", marginBottom: 8 }}>{m.emoji}</span>
+                <span
+                  className="p-mode-name"
+                  style={{
+                    display: "block",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    marginBottom: 3,
+                    color: active ? "#c4b5fd" : "rgba(245,243,255,0.85)",
+                  }}
+                >
+                  {m.label}
+                </span>
+                <span
+                  className="p-mode-tagline"
+                  style={{
+                    display: "block",
+                    fontSize: 11,
+                    lineHeight: 1.4,
+                    color: active ? "rgba(196,181,253,0.65)" : "rgba(245,243,255,0.38)",
+                  }}
+                >
+                  {m.tagline}
+                </span>
               </button>
             );
           })}
         </div>
-        <p className="px-1 text-xs leading-snug text-muted-foreground">{modeDesc}</p>
+        {/* Mode description box */}
+        <div style={{
+          padding: "13px 15px",
+          borderRadius: 15,
+          background: "rgba(124,58,237,0.07)",
+          border: "1px solid rgba(167,139,250,0.13)",
+          fontSize: 13,
+          color: "rgba(245,243,255,0.6)",
+          lineHeight: 1.55,
+        }}>
+          {modeDesc}
+        </div>
       </section>
 
       {/* Categories are not used by the prompt-based modes. */}
