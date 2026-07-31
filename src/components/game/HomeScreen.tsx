@@ -111,16 +111,18 @@ export function HomeScreen() {
           </button>
         )}
 
-        {/* Hero — Kamæleon logo (mascot + wordmark) */}
+        {/* Hero — floating gecko emoji + gradient wordmark (mockup logo-area) */}
         <div className="p-in text-center">
-          <img
-            src="/kamaeleon-logo-512x512.webp"
-            alt={t.appName}
-            width={720}
-            height={720}
-            className="p-float mx-auto w-full max-w-[20rem] drop-shadow-[0_0_34px_rgba(124,58,237,0.45)] scale-75"
-          />
-          <p className="mx-auto mt-1 max-w-[18rem] text-lg font-medium text-gray-300">
+          <span
+            className="p-float block text-[70px] leading-none drop-shadow-[0_0_30px_rgba(124,58,237,0.65)]"
+            aria-hidden
+          >
+            🦎
+          </span>
+          <h1 className="mt-1 bg-gradient-to-br from-[#c4b5fd] via-[#a78bfa] to-[#7c3aed] bg-clip-text text-[30px] font-extrabold tracking-[-0.035em] text-transparent">
+            {t.appName}
+          </h1>
+          <p className="mx-auto mt-1.5 max-w-[18rem] text-[14.5px] font-medium text-[rgba(245,243,255,0.4)]">
             {t.tagline}
           </p>
         </div>

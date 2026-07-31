@@ -81,19 +81,20 @@
     @apply h-full;
   }
   html {
-    background-color: #0d091a;
+    background-color: #06030e;
   }
   /* The background lives on a FIXED, full-viewport layer (not `background-
      attachment: fixed`, which mis-paints the bottom safe-area in installed iOS
      PWAs and leaves a band). Fixed inset-0 always covers the whole screen,
-     incl. under the notch/home-indicator, so the screen never looks cut off. */
+     incl. under the notch/home-indicator, so the screen never looks cut off.
+     Near-black base — the animated aurora blobs (NeonBackdrop) provide all the
+     colour, matching the polished mockup. */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -20;
-    background-color: #0d091a;
-    background-image: radial-gradient(circle at top center, #1a1236 0%, #0d091a 100%);
+    background-color: #06030e;
   }
   body {
     @apply text-foreground overscroll-none antialiased;
@@ -148,47 +149,44 @@
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   }
 
-  /* ---- 3D "pressable" buttons (the signature element) ---- */
+  /* ---- Flat gradient buttons (from the polished mockup) ----
+     Clean, soft-radius gradient pills with a subtle inner highlight and a
+     springy tap. No 3D border-bottom — that "pressed brick" look was the main
+     thing making the app read as the old neon design. */
   .btn3d {
-    border-bottom-width: 4px;
-    border-bottom-style: solid;
-    transition: transform 0.06s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.15s ease, filter 0.15s ease;
+    letter-spacing: -0.015em;
   }
   .btn3d:active {
-    transform: translateY(2px);
-    border-bottom-width: 2px;
+    transform: scale(0.96);
   }
   .btn3d-purple {
-    background: linear-gradient(180deg, #b026ff 0%, #8b1ce6 100%);
-    border-bottom-color: #6b14b3;
-    box-shadow: 0 4px 15px rgba(176, 38, 255, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    background: linear-gradient(155deg, #9333ea 0%, #7c3aed 55%, #6d28d9 100%);
+    box-shadow: 0 4px 22px rgba(124, 58, 237, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
   .btn3d-blue {
-    background: linear-gradient(180deg, #2b3a7a 0%, #1a2552 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-bottom: 4px solid #101836;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    background: linear-gradient(155deg, #0ea5e9 0%, #06b6d4 55%, #0284c7 100%);
+    box-shadow: 0 4px 18px rgba(6, 182, 212, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
   .btn3d-danger {
-    background: linear-gradient(180deg, #ff3b5c 0%, #c81e3c 100%);
-    border-bottom-color: #8f1228;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    background: linear-gradient(155deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn3d-crew {
-    background: linear-gradient(180deg, #34d399 0%, #0f9b6c 100%);
-    border-bottom-color: #0a6e4c;
-    box-shadow: 0 4px 15px rgba(52, 211, 153, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    background: linear-gradient(155deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 4px 18px rgba(34, 197, 94, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
   /* Bigger glow for the main bottom CTA (kept after the color classes so it wins). */
   .bottom-btn-glow {
     box-shadow:
-      0 0 30px rgba(176, 38, 255, 0.6),
-      0 4px 15px rgba(176, 38, 255, 0.4),
-      inset 0 2px 4px rgba(255, 255, 255, 0.2);
+      0 0 30px rgba(124, 58, 237, 0.55),
+      0 4px 22px rgba(124, 58, 237, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
 
   /* Legacy aliases (pass-1 utilities still referenced by heroes/cards). */
-  .gradient-primary { background-image: linear-gradient(135deg, #b026ff, #ff2d9b); }
+  .gradient-primary { background-image: linear-gradient(155deg, #9333ea, #7c3aed 55%, #6d28d9); }
   .gradient-secondary { background-image: linear-gradient(180deg, #2b3a7a, #1a2552); }
   /* Softened (refined restraint): a gentle halo on secondary surfaces, not a
      blaze. The 3D buttons + bottom CTA keep their full vibrancy below. */
