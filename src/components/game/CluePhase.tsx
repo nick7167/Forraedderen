@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
@@ -12,7 +12,7 @@ import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Lightbulb, Send, SkipForward } from "lucide-react";
+import { Check, Lightbulb, Send, SkipForward } from "lucide-react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
@@ -126,42 +126,71 @@ export function CluePhase({
       }
       footer={footer}
     >
-      {/* Turn order with clue status */}
-      <div className="flex flex-col gap-2">
-        {round.turnOrder.map((id) => {
+      {/* Player sequence bar — who has clued (✓), who's up (ring), who's pending */}
+      <div className="p-seq justify-center py-1">
+        {round.turnOrder.map((id, i) => {
           const p = playerById(id);
           if (!p) return null;
-          const clue = cluesThisPass.find((c) => c.playerId === id);
+          const clued = cluesThisPass.some((c) => c.playerId === id);
           const isCurrent = round.currentTurnPlayerId === id;
           return (
-            <div
-              key={id}
-              className={cn(
-                "glass flex items-center gap-3 rounded-2xl p-2.5 transition-all",
-                isCurrent && "glow-ring",
-              )}
-            >
-              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={36} />
-              <span className="text-sm font-semibold">
-                {p.name}
-                {id === myId && (
-                  <span className="text-muted-foreground"> ({t.you})</span>
-                )}
-              </span>
-              <div className="ml-auto">
-                {clue ? (
-                  <span className="rounded-lg bg-secondary px-3 py-1 text-sm font-medium">
-                    {clue.text}
+            <Fragment key={id}>
+              <div className={cn("p-seq-item", !clued && !isCurrent && "p-seq-pending")}>
+                {isCurrent && !clued && <span className="p-seq-ring" />}
+                <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={36} />
+                {clued && (
+                  <span className="p-seq-check">
+                    <Check className="size-2.5" />
                   </span>
-                ) : isCurrent ? (
-                  <span className="text-xs text-primary">{t.thinking}</span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">…</span>
                 )}
+              </div>
+              {i < round.turnOrder.length - 1 && <span className="p-seq-arrow">›</span>}
+            </Fragment>
+          );
+        })}
+      </div>
+
+      {/* Chat-bubble clue feed for this pass */}
+      <div className="flex flex-col gap-3">
+        {cluesThisPass.map((clue) => {
+          const p = playerById(clue.playerId as Id<"players">);
+          if (!p) return null;
+          const mine = clue.playerId === myId;
+          return (
+            <div key={clue._id} className={cn("p-clue-bubble", mine && "me")}>
+              <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={34} />
+              <div className={cn(mine && "flex flex-col items-end")}>
+                <div className="p-clue-text">{clue.text}</div>
+                <p className="p-clue-meta">
+                  {mine ? t.you : p.name}
+                </p>
               </div>
             </div>
           );
         })}
+
+        {/* Typing indicator for the player currently on the clock */}
+        {round.currentTurnPlayerId &&
+          !cluesThisPass.some((c) => c.playerId === round.currentTurnPlayerId) &&
+          (() => {
+            const p = playerById(round.currentTurnPlayerId as Id<"players">);
+            if (!p) return null;
+            return (
+              <div className="p-clue-bubble">
+                <Avatar emoji={p.avatarEmoji} color={p.avatarColor} size={34} />
+                <div>
+                  <span className="p-typing">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <p className="p-clue-meta">
+                    {p.name} {t.thinking}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
       </div>
     </Screen>
   );

@@ -4,10 +4,27 @@
  * from the home-screen reference. Purely decorative: fixed, behind content, and
  * non-interactive. `density="subtle"` thins it out for busy gameplay screens.
  */
-export function NeonBackdrop({ density = "full" }: { density?: "full" | "subtle" }) {
+export function NeonBackdrop({
+  density = "full",
+  variant,
+}: {
+  density?: "full" | "subtle";
+  variant?: "danger" | "success";
+}) {
   const shapes = density === "full" ? FULL : SUBTLE;
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
+      {/* Animated aurora blobs — the ambient colour wash behind everything. */}
+      <div
+        className={
+          "aurora-bg" +
+          (variant === "danger" ? " aurora-danger" : variant === "success" ? " aurora-success" : "")
+        }
+      >
+        <div className="ab ab1" />
+        <div className="ab ab2" />
+        <div className="ab ab3" />
+      </div>
       {/* Extra bottom-center glow layered over the base html gradient. */}
       <div
         className="absolute inset-x-0 bottom-0 h-2/3"

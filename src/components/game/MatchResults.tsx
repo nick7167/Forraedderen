@@ -88,8 +88,8 @@ export function MatchResults({
 
   const header = (
     <div className="flex flex-col gap-5">
-      <div className="pt-2 text-center">
-        <p className="text-4xl">🏆</p>
+      <div className="p-in pt-2 text-center">
+        <p className="p-float text-4xl">🏆</p>
         <h1 className="mt-1 text-2xl font-extrabold">{t.finalResults}</h1>
       </div>
 
@@ -129,7 +129,7 @@ export function MatchResults({
 
   return (
     <>
-    <NeonBackdrop density="full" />
+    <NeonBackdrop density="full" variant="success" />
     <Screen
       header={header}
       topInset

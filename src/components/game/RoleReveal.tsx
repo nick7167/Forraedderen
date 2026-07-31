@@ -85,67 +85,73 @@ export function RoleReveal({
 
       <button
         onClick={() => {
+          if (flipped) return;
           setFlipped(true);
           feedback.reveal();
         }}
         disabled={flipped}
-        className={cn(
-          "relative flex aspect-[3/4] w-64 max-w-full items-center justify-center rounded-3xl shadow-xl transition-all duration-500",
-          !flipped &&
-            "cursor-pointer bg-gradient-to-br from-slate-800 to-slate-950 text-white ring-1 ring-white/10 hover:scale-[1.02] active:scale-95",
-          flipped &&
-            (isImposter
-              ? "bg-gradient-to-br from-red-500 to-rose-700 text-white glow-danger"
-              : "bg-gradient-to-br from-emerald-400 to-teal-600 text-white glow-crew"),
-        )}
+        className="p-card-scene relative aspect-[3/4] w-64 max-w-full"
+        aria-label={t.tapToReveal}
       >
-        {!flipped ? (
-          <div className="flex flex-col items-center gap-3">
-            <Eye className="size-10 opacity-90" />
-            <span className="px-6 text-center text-lg font-semibold">
+        <div className={cn("p-card-3d", flipped && "flipped")}>
+          {/* Front — holographic shimmer, prompts a tap */}
+          <div className="p-card-face p-card-front text-white">
+            <div className="p-card-shimmer" />
+            <Eye className="p-card-front-icon size-12 text-violet-200" />
+            <span className="px-6 text-center text-lg font-semibold text-white/90">
               {t.tapToReveal}
             </span>
+            <span className="p-tap-hint">
+              <span className="p-tap-dot" />
+              {t.yourRole}
+            </span>
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2 px-6 text-center duration-300 animate-in fade-in zoom-in">
-            {isPromptMode ? (
-              <>
-                <span className="text-xs font-medium uppercase opacity-80">
-                  {t.yourQuestion}
-                </span>
-                <span className="text-xl font-extrabold leading-snug">
-                  {me?.secretWord}
-                </span>
-                <span className="mt-1 text-xs opacity-80">
-                  {isScale ? t.scaleAnswerHint : t.questionAnswerHint}
-                </span>
-              </>
-            ) : isImposter ? (
-              <>
-                <span className="text-5xl">🦎</span>
-                <span className="text-2xl font-black">{t.youAreImposter}</span>
-                {round.category && (
-                  <span className="mt-1 text-sm opacity-90">
-                    {t.category}: <b>{round.category}</b>
-                  </span>
-                )}
-                <span className="mt-1 text-xs opacity-80">{t.imposterHint}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-xs font-medium uppercase opacity-80">
-                  {t.theWord}
-                </span>
-                <span className="text-3xl font-black">{me?.secretWord}</span>
-                {round.category && (
-                  <span className="mt-1 text-sm opacity-90">
-                    {round.category}
-                  </span>
-                )}
-              </>
+
+          {/* Back — role-coloured (crew = blue, kamæleon = red) */}
+          <div
+            className={cn(
+              "p-card-face p-card-back text-white",
+              isImposter ? "p-card-back-imp" : "p-card-back-crew",
             )}
+          >
+            <div className="flex flex-col items-center gap-2 px-2 text-center">
+              {isPromptMode ? (
+                <>
+                  <span className="text-xs font-medium uppercase opacity-80">
+                    {t.yourQuestion}
+                  </span>
+                  <span className="text-xl font-extrabold leading-snug">
+                    {me?.secretWord}
+                  </span>
+                  <span className="mt-1 text-xs opacity-80">
+                    {isScale ? t.scaleAnswerHint : t.questionAnswerHint}
+                  </span>
+                </>
+              ) : isImposter ? (
+                <>
+                  <span className="text-5xl">🦎</span>
+                  <span className="text-2xl font-black">{t.youAreImposter}</span>
+                  {round.category && (
+                    <span className="mt-1 text-sm opacity-90">
+                      {t.category}: <b>{round.category}</b>
+                    </span>
+                  )}
+                  <span className="mt-1 text-xs opacity-80">{t.imposterHint}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs font-medium uppercase opacity-80">
+                    {t.theWord}
+                  </span>
+                  <span className="text-3xl font-black">{me?.secretWord}</span>
+                  {round.category && (
+                    <span className="mt-1 text-sm opacity-90">{round.category}</span>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </button>
 
       {flipped && teammates.length > 0 && (
@@ -170,6 +176,7 @@ export function RoleReveal({
               const isReady = readySet.has(p._id);
               return (
                 <div key={p._id} className="relative">
+                  {isReady && <span className="p-ready-ring" />}
                   <Avatar
                     emoji={p.avatarEmoji}
                     color={p.avatarColor}

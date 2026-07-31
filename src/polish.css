@@ -1,0 +1,277 @@
+/* ============================================================================
+ * Kamæleon — UI Polish layer
+ * ----------------------------------------------------------------------------
+ * Purely presentational upgrades on top of the existing "Neon Glow" system in
+ * index.css. Adds the animated aurora background, refined glassmorphism, entrance
+ * animations, the 3D role-card flip, chat-bubble clue feed, avatar-grid voting,
+ * mode-card grid and results styling from the interactive mockup.
+ *
+ * NO game logic lives here. Imported AFTER index.css so these rules win.
+ * Every rule respects `prefers-reduced-motion`.
+ * ==========================================================================*/
+
+/* ───────────────────────── ANIMATED AURORA ─────────────────────────
+ * Slowly drifting colour blobs rendered behind every screen (mounted inside
+ * NeonBackdrop). Fixed + non-interactive; sits under all content. */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -15;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora-bg .ab {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+}
+.aurora-bg .ab1 {
+  width: 62vh; height: 62vh; max-width: 520px; max-height: 520px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.42) 0%, transparent 70%);
+  top: -16vh; left: -14vh;
+  animation: aurora1 9s ease-in-out infinite;
+}
+.aurora-bg .ab2 {
+  width: 46vh; height: 46vh; max-width: 380px; max-height: 380px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.24) 0%, transparent 70%);
+  bottom: -12vh; right: -10vh;
+  animation: aurora2 12s ease-in-out infinite;
+}
+.aurora-bg .ab3 {
+  width: 30vh; height: 30vh; max-width: 260px; max-height: 260px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+  top: 42%; left: 40%;
+  animation: aurora3 7s ease-in-out infinite;
+}
+/* Voting screen tints the aurora red for the tense mood. */
+.aurora-bg.aurora-danger .ab2 {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.24) 0%, transparent 70%);
+}
+.aurora-bg.aurora-danger .ab3 {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.16) 0%, transparent 70%);
+}
+/* Results screen tints green for the celebration. */
+.aurora-bg.aurora-success .ab2 {
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.24) 0%, transparent 70%);
+}
+
+@keyframes aurora1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(22px,-18px) scale(1.07)} 66%{transform:translate(-16px,22px) scale(.94)} }
+@keyframes aurora2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-26px,14px) scale(1.13)} }
+@keyframes aurora3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(14px,-18px) scale(1.06)} }
+
+/* ───────────────────────── REFINED GLASS ─────────────────────────
+ * Deeper, dressier frosted glass matching the mockup (blur 20px). */
+.glass {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.09) inset,
+    0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+.glass-input {
+  background-color: rgba(40, 32, 75, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* ───────────────────────── ENTRANCE ANIMATIONS ───────────────────── */
+@keyframes polish-slide-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes polish-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+
+.p-in       { animation: polish-slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.p-in-1     { animation: polish-slide-up 0.5s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.p-in-2     { animation: polish-slide-up 0.5s 0.16s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.p-in-3     { animation: polish-slide-up 0.5s 0.24s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.p-fade     { animation: polish-fade-in 0.5s ease both; }
+
+/* ───────────────────────── FLOATING LOGO ─────────────────────────── */
+@keyframes polish-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.p-float { animation: polish-float 4s ease-in-out infinite; }
+
+/* ───────────────────────── GLOW-PULSE CTA ─────────────────────────
+ * Applied to the primary bottom action to draw the eye to the next step. */
+@keyframes polish-glow-pulse {
+  0%,100% { box-shadow: 0 0 30px rgba(176, 38, 255, 0.55), 0 4px 15px rgba(176, 38, 255, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2); }
+  50%     { box-shadow: 0 0 48px rgba(176, 38, 255, 0.9), 0 0 70px rgba(176, 38, 255, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2); }
+}
+.p-glow-pulse { animation: polish-glow-pulse 2.4s ease-in-out infinite; }
+
+/* ───────────────────────── PULSING WAIT DOTS ─────────────────────── */
+.p-wait-dots { display: inline-flex; align-items: center; gap: 8px; }
+.p-wait-dots i {
+  width: 7px; height: 7px; border-radius: 50%; background: #a78bfa;
+  animation: polish-pdot 1.6s ease-in-out infinite;
+}
+.p-wait-dots i:nth-child(2) { animation-delay: 0.16s; }
+.p-wait-dots i:nth-child(3) { animation-delay: 0.32s; }
+@keyframes polish-pdot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.6);opacity:.35} }
+
+/* ───────────────────────── ROOM CODE GLOW ─────────────────────────
+ * Big spaced monospace room code with a purple glow. */
+.p-roomcode {
+  font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.55), 0 0 40px rgba(176, 38, 255, 0.4);
+}
+
+/* ═══════════════════════ 3D ROLE-CARD FLIP ═══════════════════════ */
+.p-card-scene { perspective: 1200px; }
+.p-card-3d {
+  position: relative;
+  width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.4, 0.2, 0.2, 1.08);
+}
+.p-card-3d.flipped { transform: rotateY(180deg); }
+.p-card-face {
+  position: absolute; inset: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+/* Front — holographic shimmer */
+.p-card-front {
+  background: linear-gradient(148deg, #1c0d44, #100628 55%, #1a0a3c);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  gap: 22px;
+}
+.p-card-front::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055) 0%, transparent 55%),
+    repeating-linear-gradient(45deg, transparent, transparent 32px, rgba(255, 255, 255, 0.012) 32px, rgba(255, 255, 255, 0.012) 33px);
+}
+.p-card-shimmer {
+  position: absolute; top: -60%; left: -60%;
+  width: 220%; height: 220%;
+  background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.08) 50%, transparent 62%);
+  animation: polish-shimmer 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes polish-shimmer { 0% { transform: translateX(-20%); } 100% { transform: translateX(20%); } }
+/* Back — role-coloured */
+.p-card-back { transform: rotateY(180deg); gap: 12px; padding: 30px 26px; }
+.p-card-back-crew {
+  background: linear-gradient(148deg, #0a1a50, #08103a 55%, #0c2860);
+  border: 1.5px solid rgba(6, 182, 212, 0.28);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 44px rgba(6, 182, 212, 0.1);
+}
+.p-card-back-crew::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, transparent 58%); }
+.p-card-back-imp {
+  background: linear-gradient(148deg, #3a0a10, #28060c 55%, #500a14);
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 44px rgba(239, 68, 68, 0.12);
+}
+.p-card-back-imp::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, transparent 58%); }
+.p-card-back > * { position: relative; z-index: 1; }
+.p-card-front > * { position: relative; z-index: 1; }
+.p-card-front-icon { filter: drop-shadow(0 0 22px rgba(196, 181, 253, 0.45)); animation: polish-float 3.5s ease-in-out infinite; }
+
+/* tap hint pill with pulsing dot */
+.p-tap-hint {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 50px;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13.5px; font-weight: 600; color: rgba(245, 243, 255, 0.6);
+}
+.p-tap-dot { width: 8px; height: 8px; border-radius: 50%; background: #a78bfa; animation: polish-tap-hint 2s ease-out infinite; }
+@keyframes polish-tap-hint { 0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,.5)} 50%{box-shadow:0 0 0 7px rgba(167,139,250,0)} }
+
+/* ready pulsing ring */
+.p-ready-ring { position: absolute; inset: -4px; border-radius: 50%; border: 2px solid rgba(34, 197, 94, 0.6); animation: polish-pulse-green 1.6s ease-out infinite; pointer-events: none; }
+@keyframes polish-pulse-green { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)} 70%{box-shadow:0 0 0 8px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+@keyframes polish-pulse-purple { 0%{box-shadow:0 0 0 0 rgba(167,139,250,.7)} 70%{box-shadow:0 0 0 8px rgba(167,139,250,0)} 100%{box-shadow:0 0 0 0 rgba(167,139,250,0)} }
+
+/* ═══════════════════════ CLUE PHASE ═══════════════════════ */
+/* Player sequence bar */
+.p-seq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.p-seq-item { position: relative; display: flex; }
+.p-seq-check {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #22c55e; border: 2px solid #0d091a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: #fff; font-weight: 700;
+}
+.p-seq-ring { position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(167, 139, 250, 0.7); animation: polish-pulse-purple 1.4s ease-out infinite; pointer-events: none; }
+.p-seq-pending { opacity: 0.4; }
+.p-seq-arrow { font-size: 12px; color: rgba(245, 243, 255, 0.25); }
+
+/* Chat-bubble feed */
+.p-clue-bubble { display: flex; align-items: flex-start; gap: 9px; }
+.p-clue-bubble.me { flex-direction: row-reverse; }
+.p-clue-text {
+  padding: 10px 14px; border-radius: 16px 16px 16px 4px;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px; font-weight: 600; color: rgba(245, 243, 255, 0.92);
+  max-width: 100%; word-break: break-word;
+}
+.p-clue-bubble.me .p-clue-text {
+  border-radius: 16px 16px 4px 16px;
+  background: rgba(124, 58, 237, 0.22); border-color: rgba(196, 181, 253, 0.28);
+  color: #d6c9ff;
+}
+.p-clue-meta { font-size: 11px; color: rgba(245, 243, 255, 0.32); margin-top: 3px; font-weight: 500; }
+
+/* typing indicator */
+.p-typing { display: inline-flex; align-items: center; gap: 5px; padding: 12px 14px; border-radius: 16px 16px 16px 4px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); }
+.p-typing i { width: 6px; height: 6px; border-radius: 50%; background: rgba(245, 243, 255, 0.45); animation: polish-typing 1.2s ease-in-out infinite; }
+.p-typing i:nth-child(2) { animation-delay: 0.2s; }
+.p-typing i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes polish-typing { 0%,80%,100%{opacity:.25;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* ═══════════════════════ VOTING ═══════════════════════ */
+.p-accused-banner {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+  background: rgba(239, 68, 68, 0.92);
+  font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px; color: #fff; text-align: center;
+  animation: polish-fade-in 0.2s ease both;
+}
+.p-vote-selected {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.55) !important;
+  box-shadow: 0 0 26px rgba(239, 68, 68, 0.22) !important;
+}
+/* spring-in confirm wrapper */
+.p-spring { transform: translateY(64px); opacity: 0; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease; }
+.p-spring.visible { transform: translateY(0); opacity: 1; }
+
+/* ═══════════════════════ MODE CARDS (settings) ═══════════════════════ */
+.p-mode-card {
+  text-align: left;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.22s, border-color 0.22s, box-shadow 0.22s, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.p-mode-card:active { transform: scale(0.97); }
+.p-mode-card.active {
+  background: rgba(124, 58, 237, 0.14);
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 0 22px rgba(124, 58, 237, 0.16), inset 0 0 0 1px rgba(167, 139, 250, 0.18);
+}
+.p-mode-tagline { font-size: 11px; line-height: 1.4; color: rgba(245, 243, 255, 0.4); }
+.p-mode-card.active .p-mode-tagline { color: rgba(196, 181, 253, 0.7); }
+.p-mode-card.active .p-mode-name { color: #c4b5fd; }
+
+/* ═══════════════════════ RESULTS ═══════════════════════ */
+.p-result-headline.caught { color: #4ade80; text-shadow: 0 0 24px rgba(74, 222, 128, 0.4); }
+.p-result-headline.escaped { color: #fb923c; text-shadow: 0 0 24px rgba(251, 146, 60, 0.4); }
+
+/* ───────────────────────── REDUCED MOTION ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg .ab,
+  .p-float, .p-glow-pulse, .p-card-front-icon,
+  .p-wait-dots i, .p-tap-dot, .p-ready-ring, .p-seq-ring,
+  .p-typing i, .p-card-shimmer {
+    animation: none !important;
+  }
+  .p-in, .p-in-1, .p-in-2, .p-in-3, .p-fade { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .p-card-3d { transition: none; }
+}

@@ -98,7 +98,7 @@ export function DiscussionPhase({
       {/* Evidence list — one row per player with their clue(s). */}
       <div className="flex flex-col gap-2">
         {cluesByPlayer.map(({ player, clues }) => (
-          <div key={player._id} className="glass flex items-center gap-3 rounded-2xl p-3">
+          <div key={player._id} className="glass p-in flex items-center gap-3 rounded-2xl p-3">
             <Avatar emoji={player.avatarEmoji} color={player.avatarColor} size={40} />
             <span className="font-semibold">{player.name}</span>
             <div className="ml-auto flex flex-wrap justify-end gap-1.5">

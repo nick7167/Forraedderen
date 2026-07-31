@@ -177,7 +177,16 @@ export function GameRoom() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <NeonBackdrop density="subtle" />
+      <NeonBackdrop
+        density="subtle"
+        variant={
+          round.phase === "vote"
+            ? "danger"
+            : round.phase === "resolve"
+              ? "success"
+              : undefined
+        }
+      />
       {banner && (
         <PhaseBanner
           emoji={banner.emoji}

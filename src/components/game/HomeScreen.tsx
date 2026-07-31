@@ -28,8 +28,8 @@ import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Loader2, Pencil, LogIn } from "lucide-react";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Loader2, Pencil } from "lucide-react";
+// Clerk auth UI removed — Clerk is not active; re-add when authentication is wired up.
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -79,19 +79,7 @@ export function HomeScreen() {
       <AddToHomeScreen />
 
 
-      {/* Optional account (unlocks saving custom packs). */}
-      <div className="absolute right-4 z-10 top-[calc(env(safe-area-inset-top)+0.5rem)]">
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button className="glass-pill flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-foreground/90 active:scale-95">
-              Log ind <LogIn className="size-4" />
-            </button>
-          </SignInButton>
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-      </div>
+      {/* Account button placeholder — Clerk auth disabled; re-enable when authentication is wired up. */}
 
       <Screen
         center
@@ -100,7 +88,7 @@ export function HomeScreen() {
           <Button
             size="hero"
             variant="default"
-            className="bottom-btn-glow"
+            className={cn("bottom-btn-glow", !busy && "p-glow-pulse")}
             onClick={go}
             disabled={busy}
           >
@@ -124,13 +112,13 @@ export function HomeScreen() {
         )}
 
         {/* Hero — Kamæleon logo (mascot + wordmark) */}
-        <div className="text-center">
+        <div className="p-in text-center">
           <img
             src="/kamaeleon-logo-512x512.webp"
             alt={t.appName}
             width={720}
             height={720}
-            className="mx-auto w-full max-w-[20rem] drop-shadow-[0_0_34px_rgba(124,58,237,0.45)] scale-75"
+            className="p-float mx-auto w-full max-w-[20rem] drop-shadow-[0_0_34px_rgba(124,58,237,0.45)] scale-75"
           />
           <p className="mx-auto mt-1 max-w-[18rem] text-lg font-medium text-gray-300">
             {t.tagline}
@@ -138,7 +126,7 @@ export function HomeScreen() {
         </div>
 
         {/* Identity + mode panel */}
-        <div className="glass space-y-5 rounded-3xl p-5">
+        <div className="glass p-in-2 space-y-5 rounded-3xl p-5">
           {/* Identity: large avatar (tap to edit) + name */}
           <div className="glass-input flex items-center gap-3 rounded-2xl p-3">
             <Drawer>

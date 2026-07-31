@@ -135,13 +135,13 @@ export function VotePhase({
               disabled={disabled}
               onClick={() => vote(id)}
               className={cn(
-                "relative flex flex-col items-center gap-2.5 rounded-2xl p-4 transition-all",
-                isMyPick
-                  ? "gradient-primary glow-ring text-white"
-                  : "glass",
+                "glass relative flex flex-col items-center gap-2.5 overflow-hidden rounded-2xl p-4 transition-all",
+                isMyPick && "p-vote-selected",
                 disabled ? "opacity-50" : "active:scale-95",
               )}
             >
+              {/* ANKLAGET-style banner on your current pick. */}
+              {isMyPick && <span className="p-accused-banner">{t.youVoted}</span>}
               {/* Secret-vote indicator: this player has cast a vote (not whom for). */}
               {hasVoted && (
                 <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-crew text-white">

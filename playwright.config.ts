@@ -1,20 +1,20 @@
 import { defineConfig } from "@playwright/test";
 
-// E2E "tour" of Kamæleon. Runs against the PRODUCTION build via `vite preview`
-// (not the dev server) so behavior matches the deployed app — notably React
-// StrictMode's dev double-mount would otherwise hide the once-per-session
-// add-to-home pop-up. Mobile viewport to match the mobile-first design.
+// E2E "tour" of Kamæleon. Runs against the live deployed URL so that
+// Clerk (pk_live_) and Convex are fully wired — localhost is not an
+// allowed Clerk origin for the production key.
+// Mobile viewport to match the mobile-first design.
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: false,
   workers: 1,
   retries: 0,
   timeout: 240_000,
-  expect: { timeout: 12_000 },
+  expect: { timeout: 15_000 },
   outputDir: "test-results",
   reporter: [["list"]],
   use: {
-    baseURL: "http://localhost:4321",
+    baseURL: "https://ea284c1e1.abacusai.cloud",
     viewport: { width: 393, height: 852 },
     deviceScaleFactor: 2,
     isMobile: true,
@@ -23,10 +23,4 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { browserName: "chromium" } }],
-  webServer: {
-    command: "pnpm exec vite build && pnpm exec vite preview --port 4321 --strictPort",
-    url: "http://localhost:4321",
-    reuseExistingServer: true,
-    timeout: 180_000,
-  },
 });

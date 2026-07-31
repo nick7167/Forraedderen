@@ -143,14 +143,12 @@ export function SettingsPanel({
                 disabled={!editable}
                 onClick={() => set("gameMode", m.id)}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-all active:scale-95",
-                  active
-                    ? "gradient-primary glow-primary text-white"
-                    : "glass text-muted-foreground",
+                  "p-mode-card glass flex flex-col items-center gap-1.5 rounded-2xl py-3.5 text-muted-foreground",
+                  active && "active",
                 )}
               >
                 <span className="text-2xl">{m.emoji}</span>
-                <span className="text-xs font-semibold">{m.label}</span>
+                <span className="p-mode-name text-xs font-semibold">{m.label}</span>
               </button>
             );
           })}

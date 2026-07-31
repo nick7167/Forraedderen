@@ -179,8 +179,8 @@ export function LobbyView({
               className="w-full rounded-3xl gradient-primary p-5 text-center text-white glow-primary active:scale-[0.99]"
             >
               <p className="text-xs font-medium opacity-80">{t.shareCode}</p>
-              <p className="mt-1 inline-flex items-center gap-2 text-4xl font-extrabold tracking-[0.15em]">
-                {room.code}
+              <p className="mt-1 inline-flex items-center gap-2 text-4xl font-extrabold">
+                <span className="p-roomcode">{room.code}</span>
                 <Copy className="size-5 opacity-80" />
               </p>
             </button>
@@ -188,11 +188,21 @@ export function LobbyView({
         }
         footer={
           room.isHost ? (
-            <Button size="hero" disabled={!canStart || starting} onClick={handleStart}>
+            <Button
+              size="hero"
+              className={cn(canStart && !starting && "p-glow-pulse")}
+              disabled={!canStart || starting}
+              onClick={handleStart}
+            >
               {starting ? <Loader2 className="animate-spin" /> : startLabel}
             </Button>
           ) : (
-            <p className="py-3 text-center text-sm text-muted-foreground">
+            <p className="flex items-center justify-center gap-2 py-3 text-center text-sm text-muted-foreground">
+              <span className="p-wait-dots">
+                <i />
+                <i />
+                <i />
+              </span>
               {t.waitingForHost}
             </p>
           )
@@ -208,7 +218,7 @@ export function LobbyView({
               <div
                 key={p._id}
                 className={cn(
-                  "glass flex items-center gap-3 rounded-2xl p-2.5",
+                  "glass p-in flex items-center gap-3 rounded-2xl p-2.5",
                   !p.isOnline && "opacity-50",
                 )}
               >
