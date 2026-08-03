@@ -1,47 +1,80 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The concept's `.av` avatar (ui-concepts/kamaeleon-polish-concepts.html).
+ * A player's avatar.
  *
- * Every avatar in the concept is a tinted translucent disc with a matching
- * 1.5px border — never a solid fill:
+ * The previous version was a translucent tinted disc with a soft border — the glass
+ * language. In Pressing an avatar is a solid ink tile with the player's colour as a
+ * hairline ring: opaque, blur-free, and the ring is the only place identity colour appears
+ * at this size.
  *
- *   background: rgba(124,58,237,.22); border: 1.5px solid rgba(196,181,253,.3)
- *
- * Players carry a solid hex `color`, so the tint and border are derived from it
- * at the concept's alphas. Sizes are the concept's `.av-xs/sm/md/lg/xl`.
+ * `rounded-md` rather than a circle, so avatars sit on the same 12px radius as every other
+ * surface. `you` swaps to the chamfered plate — the same shape Card `you` uses — because
+ * "which one is me" has exactly one answer in this design and it is the struck corner.
  */
 export type AvSize = "xs" | "sm" | "md" | "lg" | "xl";
 
-/** Concept tint alpha (.22) and border alpha (.30) as hex suffixes. */
-const TINT = "38";
-const EDGE = "4d";
+const SIZES: Record<AvSize, string> = {
+  xs: "size-6 text-[13px]",
+  sm: "size-8 text-[17px]",
+  md: "size-10 text-[21px]",
+  lg: "size-14 text-[30px]",
+  xl: "size-20 text-[44px]",
+};
 
 export function Av({
   emoji,
   color,
   size = "sm",
   dimmed = false,
+  you = false,
   className,
   style,
 }: {
   emoji: string;
   color: string;
   size?: AvSize;
-  /** Pending/inactive treatment — the concept uses opacity .4. */
+  /** Absent or not-yet-ready. Dimmed rather than hidden — the seat still exists. */
   dimmed?: boolean;
+  /** Draws the chamfered plate instead of the rounded tile. */
+  you?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }) {
+  if (you) {
+    return (
+      <div
+        className={cn(
+          "relative isolate flex shrink-0 items-center justify-center leading-none select-none",
+          SIZES[size],
+          dimmed && "opacity-40",
+          className,
+        )}
+        style={style}
+        aria-hidden
+      >
+        <span
+          className="plate absolute inset-0 -z-10"
+          style={{ backgroundColor: color, "--plate-cut": "6px" } as React.CSSProperties}
+        />
+        <span
+          className="plate bg-ink-600 absolute inset-[1.5px] -z-10"
+          style={{ "--plate-cut": "5px" } as React.CSSProperties}
+        />
+        {emoji}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cn("av", `av-${size}`, className)}
-      style={{
-        background: `${color}${TINT}`,
-        border: `1.5px solid ${color}${EDGE}`,
-        ...(dimmed ? { opacity: 0.4 } : null),
-        ...style,
-      }}
+      className={cn(
+        "bg-ink-600 flex shrink-0 items-center justify-center rounded-md leading-none select-none",
+        SIZES[size],
+        dimmed && "opacity-40",
+        className,
+      )}
+      style={{ border: `1.5px solid ${color}`, ...style }}
       aria-hidden
     >
       {emoji}

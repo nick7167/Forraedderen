@@ -16,8 +16,10 @@ export default defineConfig({
           name: "Kamæleon",
           short_name: "Kamæleon",
           description: "Find kamæleonen — et socialt gættespil til festen.",
-          theme_color: "#06030e",
-          background_color: "#06030e",
+          // ink-900, matching the icon's field and index.html's theme-color, so mobile
+          // browser chrome blends into the app instead of framing it.
+          theme_color: "#0e1017",
+          background_color: "#0e1017",
           display: "standalone",
           orientation: "portrait",
           start_url: "/",
@@ -43,11 +45,6 @@ export default defineConfig({
               sizes: "512x512",
               type: "image/png",
               purpose: "maskable",
-            },
-            {
-              src: "kamaeleon-logo-512x512.webp",
-              sizes: "512x512",
-              type: "image/webp",
             },
           ],
         },

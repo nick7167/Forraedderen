@@ -1,20 +1,16 @@
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog } from "@/ui/Dialog";
+import { Button } from "@/ui/Button";
+import { Glyph } from "@/ui/Glyph";
 import { t } from "@/lib/strings";
-import { LogOut } from "lucide-react";
 
 /**
- * Consistent "leave to home" control. When `confirm` is true (a game is in
- * progress) it asks first; otherwise it leaves immediately. `onLeave` should
- * remove the player and navigate home.
+ * Consistent "leave to home" control. When `confirm` is true (a game is in progress) it
+ * asks first; otherwise it leaves immediately. `onLeave` should remove the player and
+ * navigate home.
+ *
+ * The trigger is a bare icon button rather than a `Button variant="ghost"`: it sits in the
+ * phase bar next to mute, and the two have to be the same shape.
  */
 export function LeaveButton({
   onLeave,
@@ -28,15 +24,18 @@ export function LeaveButton({
   const [open, setOpen] = useState(false);
 
   const trigger = (
-    <Button
-      variant="ghost"
-      size="icon"
-      className={className ?? "size-9 rounded-full text-muted-foreground"}
+    <button
+      type="button"
+      className={
+        className ??
+        "text-secondary hover:text-paper hover:bg-ink-700 flex size-9 shrink-0 items-center justify-center rounded-sm text-lg transition-colors"
+      }
       aria-label={t.leave}
+      data-testid="leave-button"
       onClick={() => (confirm ? setOpen(true) : onLeave())}
     >
-      <LogOut className="size-5" />
-    </Button>
+      <Glyph name="leave" />
+    </button>
   );
 
   if (!confirm) return trigger;
@@ -44,28 +43,30 @@ export function LeaveButton({
   return (
     <>
       {trigger}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xs rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>{t.leaveConfirmTitle}</DialogTitle>
-            <DialogDescription>{t.leaveConfirmBody}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:flex-col">
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={() => {
-                setOpen(false);
-                onLeave();
-              }}
-            >
-              {t.leave}
-            </Button>
-            <Button variant="ghost" className="w-full" onClick={() => setOpen(false)}>
-              {t.cancel}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t.leaveConfirmTitle}
+        description={t.leaveConfirmBody}
+        testId="leave-confirm"
+      >
+        <div className="mt-5 flex flex-col gap-2">
+          <Button
+            variant="destructive"
+            block
+            data-testid="leave-confirm-yes"
+            onClick={() => {
+              setOpen(false);
+              onLeave();
+            }}
+          >
+            <Glyph name="leave" />
+            {t.leave}
+          </Button>
+          <Button variant="ghost" block onClick={() => setOpen(false)}>
+            {t.cancel}
+          </Button>
+        </div>
       </Dialog>
     </>
   );

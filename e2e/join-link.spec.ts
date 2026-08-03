@@ -8,11 +8,9 @@ import { test, expect, type Page, type BrowserContext } from "@playwright/test";
  * is exactly who receives an invite link.
  */
 
-const BASE = process.env.BASE ?? "http://127.0.0.1:5173";
 
 test.setTimeout(300_000);
 test.use({
-  baseURL: BASE,
   viewport: { width: 375, height: 812 },
   isMobile: true,
   hasTouch: true,
@@ -32,14 +30,14 @@ async function hostCreatesRoom(page: Page): Promise<string> {
   await dismissAddToHome(page);
   await page.getByPlaceholder("Dit navn").fill("Vært");
   await page.getByRole("button", { name: "Opret spil" }).last().click();
-  await expect(page.locator(".room-code-card")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
 
   const coach = page.locator("text=Tilpas spillet");
   if (await coach.isVisible().catch(() => false)) {
     await page.mouse.click(188, 760);
     await page.waitForTimeout(300);
   }
-  return (await page.locator(".rc-cell").allTextContents()).join("");
+  return (await page.getByTestId("room-code-cell").allTextContents()).join("");
 }
 
 test("a first-timer joins straight from an invite link", async ({ browser }) => {
@@ -67,15 +65,15 @@ test("a first-timer joins straight from an invite link", async ({ browser }) => 
     await dismissAddToHome(guest);
 
     // The code is already applied — nothing to transcribe.
-    await expect(guest.locator(".rc-cell").first()).toBeVisible({ timeout: 20_000 });
-    expect((await guest.locator(".rc-cell").allTextContents()).join("")).toBe(code);
+    await expect(guest.getByTestId("room-code-cell").first()).toBeVisible({ timeout: 20_000 });
+    expect((await guest.getByTestId("room-code-cell").allTextContents()).join("")).toBe(code);
 
     await guest.getByPlaceholder("Dit navn").fill("Gæst");
     await guest.getByRole("button", { name: "Deltag i spil" }).click();
 
     // Lands in the lobby, and the host sees them arrive.
-    await expect(guest.locator(".room-code-card")).toBeVisible({ timeout: 30_000 });
-    await expect(host.locator(".player-card", { hasText: "Gæst" })).toBeVisible({
+    await expect(guest.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
+    await expect(host.getByTestId("player-card").filter({ hasText: "Gæst" })).toBeVisible({
       timeout: 30_000,
     });
 
@@ -100,7 +98,7 @@ test("a returning player is dropped straight in", async ({ browser }) => {
 
     // Straight to a room, never asked for a name.
     await returning.waitForURL(/\/room\//, { timeout: 30_000 });
-    await expect(returning.locator(".room-code-card")).toBeVisible({ timeout: 30_000 });
+    await expect(returning.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
   } finally {
     await ctx.close();
   }

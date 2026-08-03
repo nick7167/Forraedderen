@@ -75,8 +75,14 @@ export const createCustomPack = mutation({
     words: v.array(wordValidator),
   },
   handler: async (ctx, args) => {
+    // Capped like the pack name below. The reveal card wraps and shrinks to fit,
+    // but an unbounded "word" still blows its height budget — the longest
+    // built-in is 19 chars (`overstregningstusch`), so 24 is generous.
     const cleanWords = args.words
-      .map((w) => ({ word: w.word.trim(), hint: w.hint?.trim() || undefined }))
+      .map((w) => ({
+        word: w.word.trim().slice(0, 24),
+        hint: w.hint?.trim().slice(0, 60) || undefined,
+      }))
       .filter((w) => w.word.length > 0);
     if (cleanWords.length < 3) {
       throw new Error("En pakke skal have mindst 3 ord.");

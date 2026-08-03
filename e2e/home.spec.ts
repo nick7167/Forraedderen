@@ -20,8 +20,8 @@ test("home screen — branding, install prompt, avatar picker, join mode", async
   }
 
   // Logo + tagline + both mode buttons visible
-  await expect(page.locator(".logo-emoji")).toBeVisible();
-  await expect(page.locator(".logo-text")).toHaveText("Kamæleon");
+  await expect(page.getByTestId("wordmark")).toBeVisible();
+  await expect(page.getByTestId("wordmark-text")).toHaveText("Kamæleon");
   await expect(page.getByText("Find kamæleonen", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "Opret spil" }).last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Deltag i spil" })).toBeVisible();
@@ -29,7 +29,7 @@ test("home screen — branding, install prompt, avatar picker, join mode", async
   await shot(page, "01-home");
 
   // Avatar picker — open, screenshot, close
-  await page.locator(".avatar-edit-btn").first().click();
+  await page.getByTestId("avatar-edit").first().click();
   await expect(page.getByText("Vælg avatar")).toBeVisible({ timeout: 5_000 });
   await shot(page, "03-avatar-picker");
   await page.keyboard.press("Escape");

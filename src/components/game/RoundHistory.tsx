@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
-import { History } from "lucide-react";
+import { Glyph } from "@/ui/Glyph";
+import { Chip } from "@/ui/Surface";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/drawer";
 import { Av } from "./Av";
 import { t } from "@/lib/strings";
-import { cn } from "@/lib/utils";
 
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
 type Player = { _id: Id<"players">; name: string; avatarEmoji: string; avatarColor: string };
@@ -41,8 +41,13 @@ export function RoundHistory({
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <button className="icon-btn" aria-label={t.historyTitle}>
-          <History className="size-5" />
+        <button
+          type="button"
+          className="text-secondary hover:text-paper hover:bg-ink-700 flex size-9 items-center justify-center rounded-sm text-lg transition-colors"
+          aria-label={t.historyTitle}
+          data-testid="round-history"
+        >
+          <Glyph name="history" />
         </button>
       </DrawerTrigger>
       <DrawerContent>
@@ -54,24 +59,17 @@ export function RoundHistory({
             const isPrompt =
               round.gameMode === "questions" || round.gameMode === "scale";
             return (
-              <div key={round.roundNumber} className="c-glass rounded-2xl p-4">
+              <div key={round.roundNumber} className="bg-ink-700 border-line rounded-md border p-4">
                 <div className="mb-2.5 flex items-center justify-between gap-2">
-                  <span className="sec-label">
+                  <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
                     {t.pass} {round.roundNumber}
                   </span>
-                  <span
-                    className={cn(
-                      "count-badge",
-                      round.outcome === "crew"
-                        ? "!border-[rgba(74,222,128,.3)] !bg-[rgba(34,197,94,.14)] !text-[#4ade80]"
-                        : "!border-[rgba(252,165,165,.3)] !bg-[rgba(239,68,68,.14)] !text-[#fca5a5]",
-                    )}
-                  >
+                  <Chip tone={round.outcome === "crew" ? "teal" : "signal"} size="sm">
                     {round.outcome === "crew" ? t.caught : t.escaped}
-                  </span>
+                  </Chip>
                 </div>
 
-                <div className="imp-word mb-3">
+                <div className="text-body-sm text-muted mb-3">
                   {isPrompt ? t.theCrewQuestion : t.theWord}:{" "}
                   <span>{round.secretWord}</span>
                   {round.decoyWord && (
@@ -93,11 +91,11 @@ export function RoundHistory({
                     return (
                       <div key={i} className="flex items-center gap-2.5">
                         <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
-                        <span className="vote-psub shrink-0">
+                        <span className="text-label text-muted shrink-0">
                           {p.name}
                           {wasImposter && " 🦎"}
                         </span>
-                        <span className="clue-text !max-w-none !py-1.5 text-[13px]">
+                        <span className="bg-ink-600 text-body-sm text-paper rounded-sm px-2 py-1">
                           {clue.text}
                         </span>
                       </div>

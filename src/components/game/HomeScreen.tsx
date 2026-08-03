@@ -9,10 +9,15 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { NeonBackdrop } from "./NeonBackdrop";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { AvatarPicker } from "./AvatarPicker";
 import { Av } from "./Av";
+import { Wordmark } from "./Wordmark";
+import { Stage } from "@/ui/Stage";
+import { Button } from "@/ui/Button";
+import { Card } from "@/ui/Surface";
+import { Input } from "@/ui/Input";
+import { Glyph } from "@/ui/Glyph";
 import { AVATAR_COLORS, AVATAR_EMOJIS, randomFrom } from "@/lib/avatars";
 import {
   getGuestSecret,
@@ -24,16 +29,14 @@ import {
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
-// Clerk auth UI removed — Clerk is not active; re-add when authentication is wired up.
 
 /**
- * Home — concept screen 1 (`.s-home`).
+ * Home.
  *
- * Structure is the concept's verbatim: aurora → .content (logo-area +
- * .identity-card holding the avatar row, divider and the create/join pair) →
- * .footer with the glow-pulsing hero CTA.
+ * One hero Card carries the whole setup — avatar, name, create-or-join, code — and the
+ * single gold CTA sits below it. The create/join pair is a segmented control on the inset
+ * surface rather than two buttons: it sets a mode, it does not perform an action, and
+ * giving it button weight was making the screen read as having three primary actions.
  */
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -64,12 +67,21 @@ export function HomeScreen() {
     try {
       const res =
         mode === "create"
-          ? await createRoom({ name: name.trim(), avatarEmoji: emoji, avatarColor: color, guestSecret })
-          : await joinRoom({ code: code.trim(), name: name.trim(), avatarEmoji: emoji, avatarColor: color, guestSecret });
+          ? await createRoom({
+              name: name.trim(),
+              avatarEmoji: emoji,
+              avatarColor: color,
+              guestSecret,
+            })
+          : await joinRoom({
+              code: code.trim(),
+              name: name.trim(),
+              avatarEmoji: emoji,
+              avatarColor: color,
+              guestSecret,
+            });
       rememberRoomPlayer(res.roomId, res.playerId);
-      navigate(`/room/${res.roomId}`, {
-        state: { justCreated: mode === "create" },
-      });
+      navigate(`/room/${res.roomId}`, { state: { justCreated: mode === "create" } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fejl");
     } finally {
@@ -78,116 +90,120 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="cscreen s-home">
-      <NeonBackdrop />
-
+    <Stage keyName="home" width="max-w-2xl" className="justify-center sm:min-h-[90dvh]">
       <AddToHomeScreen />
 
-      <div className="content">
-        {rememberedRoom && (
-          <button
-            onClick={() => navigate(`/room/${rememberedRoom}`)}
-            className="btn-ghost mx-auto mb-3 shrink-0 font-semibold active:scale-95"
-          >
-            ↩ {t.continueGame}
-          </button>
-        )}
-
-        <div className="logo-area">
-          <span className="logo-emoji" aria-hidden>
-            🦎
-          </span>
-          <h1 className="logo-text">{t.appName}</h1>
-          <p className="logo-tagline">{t.tagline}</p>
-        </div>
-
-        <div className="c-glass identity-card">
-          <div className="avatar-row">
-            <Drawer>
-              <DrawerTrigger asChild>
-                <button className="avatar-edit-btn" aria-label={t.chooseAvatar}>
-                  <Av emoji={emoji} color={color} size="md" />
-                  <span className="avatar-edit-badge" aria-hidden>
-                    ✏️
-                  </span>
-                </button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>{t.chooseAvatar}</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-8">
-                  <AvatarPicker
-                    emoji={emoji}
-                    color={color}
-                    onEmoji={setEmoji}
-                    onColor={setColor}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
-            <input
-              className="name-input"
-              value={name}
-              maxLength={20}
-              placeholder={t.yourName}
-              aria-label={t.yourName}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="divider" />
-
-          <div className="mode-buttons">
-            <button
-              className={cn("mode-btn create", mode !== "create" && "opacity-[.78]")}
-              onClick={() => {
-                feedback.tap();
-                setMode("create");
-              }}
-            >
-              {t.createGame}
-            </button>
-            <button
-              className={cn("mode-btn join", mode !== "join" && "opacity-[.78]")}
-              onClick={() => {
-                feedback.tap();
-                setMode("join");
-              }}
-            >
-              {t.joinGame}
-            </button>
-          </div>
-
-          {mode === "join" && (
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder={t.codePlaceholder}
-              aria-label={t.roomCode}
-              maxLength={6}
-              onKeyDown={(e) => e.key === "Enter" && go()}
-              className="clue-input mt-2.5 w-full text-center text-2xl font-extrabold tracking-[0.4em] uppercase"
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="footer">
-        <button
-          className={cn("btn btn-primary hero-btn", !busy && "glow-pulse")}
-          onClick={go}
-          disabled={busy}
+      {rememberedRoom && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-center"
+          data-testid="continue-game"
+          onClick={() => navigate(`/room/${rememberedRoom}`)}
         >
-          {busy ? (
-            <Loader2 className="animate-spin" />
-          ) : mode === "create" ? (
-            t.createGame
-          ) : (
-            t.joinGame
-          )}
-        </button>
+          <Glyph name="chevron" className="rotate-90" />
+          {t.continueGame}
+        </Button>
+      )}
+
+      <div className="flex flex-col items-center gap-2 text-center">
+        <Wordmark size="hero" />
+        <p className="text-body text-muted max-w-sm">{t.tagline}</p>
       </div>
-    </div>
+
+      <Card variant="hero" className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <button
+                type="button"
+                className="relative shrink-0 rounded-md"
+                aria-label={t.chooseAvatar}
+                data-testid="avatar-edit"
+              >
+                <Av emoji={emoji} color={color} size="lg" />
+                <span
+                  className="bg-ink-600 border-line-strong text-secondary absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border text-[10px]"
+                  aria-hidden
+                >
+                  <Glyph name="settings" />
+                </span>
+              </button>
+            </DrawerTrigger>
+            <DrawerContent data-testid="avatar-picker">
+              <DrawerHeader>
+                <DrawerTitle>{t.chooseAvatar}</DrawerTitle>
+              </DrawerHeader>
+              <div className="pb-safe px-4 pb-6">
+                <AvatarPicker emoji={emoji} color={color} onEmoji={setEmoji} onColor={setColor} />
+              </div>
+            </DrawerContent>
+          </Drawer>
+
+          <Input
+            size="lg"
+            wrapperClassName="flex-1"
+            value={name}
+            maxLength={20}
+            placeholder={t.yourName}
+            aria-label={t.yourName}
+            data-testid="name-input"
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
+        <div className="bg-line h-px" aria-hidden />
+
+        {/*
+          Segmented control. Sets a mode; it is not one of the screen's actions — the gold
+          CTA below is. Plain toggle buttons with `aria-pressed` rather than a tablist:
+          these select which thing the CTA will do, they do not swap a panel, and a `tab`
+          with no `tabpanel` promises a screen reader something that never arrives.
+        */}
+        <div
+          className="bg-ink-inset border-line grid grid-cols-2 gap-1 rounded-md border p-1"
+          role="group"
+          aria-label={t.createGame + " / " + t.joinGame}
+        >
+          {(["create", "join"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={mode === m}
+              data-testid={`mode-${m}`}
+              className={`text-body min-h-10 rounded-sm font-semibold transition-colors ${
+                mode === m
+                  ? "bg-ink-600 text-paper"
+                  : "text-muted hover:text-secondary hover:bg-ink-700"
+              }`}
+              onClick={() => {
+                feedback.tap();
+                setMode(m);
+              }}
+            >
+              {m === "create" ? t.createGame : t.joinGame}
+            </button>
+          ))}
+        </div>
+
+        {mode === "join" && (
+          <Input
+            size="lg"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder={t.codePlaceholder}
+            aria-label={t.roomCode}
+            maxLength={6}
+            data-testid="code-input"
+            onKeyDown={(e) => e.key === "Enter" && go()}
+            className="font-display text-center text-2xl font-extrabold tracking-[0.4em] uppercase"
+          />
+        )}
+      </Card>
+
+      <Button size="lg" block loading={busy} onClick={go} data-testid="home-cta">
+        {mode === "create" ? t.createGame : t.joinGame}
+      </Button>
+    </Stage>
   );
 }

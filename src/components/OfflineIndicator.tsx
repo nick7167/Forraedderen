@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { WifiOff } from "lucide-react";
+import { Glyph } from "@/ui/Glyph";
 import { t } from "@/lib/strings";
 
 /**
- * Shows a banner when the browser goes offline. Real-time multiplayer needs a
- * live connection, so this is the user-facing signal that play is paused.
+ * Shows a banner when the browser goes offline. Real-time multiplayer needs a live
+ * connection, so this is the user-facing signal that play is paused.
  */
 export function OfflineIndicator() {
   const [online, setOnline] = useState(
@@ -26,10 +26,12 @@ export function OfflineIndicator() {
 
   return (
     <div
+      role="status"
+      data-testid="offline-indicator"
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
-      className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-destructive px-4 pb-2 text-sm font-medium text-white"
+      className="bg-signal text-paper text-body-sm fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 px-4 pb-2 font-semibold"
     >
-      <WifiOff className="size-4" />
+      <Glyph name="warn" />
       {t.offline}
     </div>
   );

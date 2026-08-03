@@ -2,19 +2,14 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Dialog } from "@/ui/Dialog";
+import { Button, Spinner } from "@/ui/Button";
+import { Input, Textarea, Field } from "@/ui/Input";
+import { Empty } from "@/ui/Surface";
+import { Glyph } from "@/ui/Glyph";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/strings";
 import { toast } from "sonner";
-import { Check, Plus, Loader2, Search } from "lucide-react";
 
 export function PackPicker({
   open,
@@ -47,6 +42,11 @@ export function PackPicker({
       .map((w) => ({ word: w.trim() }))
       .filter((w) => w.word.length > 0);
     if (words.length < 3) return toast.error("Mindst 3 ord.");
+    // Mirrors the server-side cap in convex/packs.ts — tell the player rather
+    // than silently truncating their word.
+    if (words.some((w) => w.word.length > 24)) {
+      return toast.error("Ord må højst være 24 tegn.");
+    }
     setBusy(true);
     try {
       const id = await createPack({ name: packName, words });
@@ -69,66 +69,73 @@ export function PackPicker({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85dvh] flex-col gap-0 p-0">
-        <DialogHeader className="px-5 pt-5">
-          <DialogTitle>{creating ? "Ny pakke" : t.choosePack}</DialogTitle>
-        </DialogHeader>
-
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      title={creating ? "Ny pakke" : t.choosePack}
+      className="max-w-lg"
+      testId="pack-picker"
+    >
+      <div className="mt-4">
         {creating ? (
-          <div className="space-y-3 px-5 pb-5 pt-3">
-            <div>
-              <Label className="mb-1.5 block">Navn</Label>
+          <div className="flex flex-col gap-4">
+            <Field label="Navn" htmlFor="pack-name">
               <Input
+                id="pack-name"
                 value={packName}
                 maxLength={40}
                 placeholder="Vores pakke"
+                data-testid="pack-name"
                 onChange={(e) => setPackName(e.target.value)}
-                className="glass-input border-0"
               />
-            </div>
-            <div>
-              <Label className="mb-1.5 block">Ord (ét pr. linje)</Label>
-              <textarea
+            </Field>
+            <Field label="Ord (ét pr. linje)" htmlFor="pack-words">
+              <Textarea
+                id="pack-words"
                 value={wordsText}
                 onChange={(e) => setWordsText(e.target.value)}
                 rows={7}
+                data-testid="pack-words"
                 placeholder={"Æble\nBanan\nKiwi"}
-                className="glass-input no-scrollbar w-full resize-none rounded-xl p-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               />
-            </div>
-            <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => setCreating(false)}>
+            </Field>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setCreating(false)}
+                data-testid="pack-back"
+              >
                 {t.back}
               </Button>
-              <Button className="flex-1" onClick={handleCreate} disabled={busy}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : t.create}
+              <Button
+                className="flex-1"
+                onClick={handleCreate}
+                loading={busy}
+                data-testid="pack-create"
+              >
+                {t.create}
               </Button>
             </div>
           </div>
         ) : (
-          <>
-            {/* Search */}
-            <div className="px-5 pt-3">
-              <div className="glass-input flex items-center gap-2 rounded-xl px-3">
-                <Search className="size-4 shrink-0 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Søg kategori…"
-                  className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-            </div>
+          <div className="flex flex-col gap-3">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Søg kategori…"
+              aria-label="Søg kategori"
+              data-testid="pack-search"
+              prefix={<Glyph name="search" />}
+            />
 
-            {/* Scrollable grid */}
-            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-3">
+            <div className="no-scrollbar max-h-[45dvh] min-h-0 overflow-y-auto">
               {packs === undefined ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                <div className="text-muted flex justify-center py-8">
+                  <Spinner className="size-5" />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {showRandom && (
                     <PackCard
                       emoji="🎲"
@@ -149,23 +156,25 @@ export function PackPicker({
                     />
                   ))}
                   {filtered.length === 0 && !showRandom && (
-                    <p className="col-span-2 py-6 text-center text-sm text-muted-foreground">
-                      Ingen kategorier matcher "{query}".
-                    </p>
+                    <div className="sm:col-span-2">
+                      <Empty title={`Ingen kategorier matcher "${query}".`} />
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-5 pb-5 pt-1">
-              <Button variant="outline" className="w-full" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> Lav egen pakke
-              </Button>
-            </div>
-          </>
+            <Button
+              variant="secondary"
+              block
+              onClick={() => setCreating(true)}
+              data-testid="pack-create-open"
+            >
+              <Glyph name="plus" /> Lav egen pakke
+            </Button>
+          </div>
         )}
-      </DialogContent>
+      </div>
     </Dialog>
   );
 }
@@ -185,22 +194,25 @@ function PackCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-pressed={selected}
+      data-testid="pack-card"
       className={cn(
-        "glass relative flex items-center gap-2.5 rounded-2xl p-3 text-left transition-all active:scale-95",
-        selected && "glow-ring ring-2 ring-primary",
+        "relative flex items-center gap-2.5 rounded-md border p-3 text-left transition-colors",
+        selected ? "border-gold bg-ink-600" : "border-line bg-ink-700 hover:bg-ink-600",
       )}
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xl">
+      <span className="bg-ink-inset flex size-10 shrink-0 items-center justify-center rounded-sm text-xl">
         {emoji}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{name}</p>
-        <p className="truncate text-xs text-muted-foreground">{sub}</p>
+        <p className="text-body text-paper truncate font-semibold">{name}</p>
+        <p className="text-label text-muted truncate">{sub}</p>
       </div>
       {selected && (
-        <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-white">
-          <Check className="size-3.5" strokeWidth={3} />
+        <span className="bg-gold text-ink-900 absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full text-[10px]">
+          <Glyph name="check" />
         </span>
       )}
     </button>

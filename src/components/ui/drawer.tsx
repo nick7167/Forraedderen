@@ -1,30 +1,39 @@
-import * as React from "react"
-import { Drawer as DrawerPrimitive } from "vaul"
+import * as React from "react";
+import { Drawer as DrawerPrimitive } from "vaul";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-function Drawer({
-  ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+/**
+ * Bottom sheet, in Pressing.
+ *
+ * Kept (rather than replaced by `src/ui/Dialog`) because a sheet and a modal are different
+ * interactions, not different styles: settings, how-to-play, the avatar picker and round
+ * history are all thumb-reachable browsing, and a centred box is the wrong shape for that.
+ * SnapArena has no equivalent because it is a two-player duel with no roster to page
+ * through — this is one of the few places the two apps legitimately diverge.
+ *
+ * Restyled to the token set: solid ink-800 surface, hairline `line` border, `rounded-lg`
+ * (16px) rather than the old 28px pill, and no backdrop blur. The scrim is ink-900 at 80%,
+ * matching `src/ui/Dialog`.
+ *
+ * The enter/exit fade is a plain opacity transition on vaul's own `data-state`, since
+ * tw-animate-css is gone. vaul drives the sheet's translate itself.
+ */
+
+function Drawer({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+  return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
 }
 
-function DrawerTrigger({
-  ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
-  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
+function DrawerTrigger({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
+  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
 }
 
-function DrawerPortal({
-  ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
-  return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />
+function DrawerPortal({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
+  return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />;
 }
 
-function DrawerClose({
-  ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Close>) {
-  return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
+function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Close>) {
+  return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
 }
 
 function DrawerOverlay({
@@ -35,13 +44,13 @@ function DrawerOverlay({
     <DrawerPrimitive.Overlay
       data-slot="drawer-overlay"
       className={cn(
-        // bg-black/55 = the concept's `.s-settings { background: rgba(0,0,0,.55) }` scrim.
-        "fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
-        className
+        "bg-ink-900/80 fixed inset-0 z-50 transition-opacity duration-200",
+        "data-[state=closed]:opacity-0 data-[state=open]:opacity-100",
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function DrawerContent({
@@ -55,43 +64,44 @@ function DrawerContent({
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
-          "group/drawer-content fixed z-50 flex h-auto flex-col border-white/10 bg-popover/95 backdrop-blur-2xl",
-          "data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-[1.75rem] data-[vaul-drawer-direction=top]:border-b",
-          "data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[80vh] data-[vaul-drawer-direction=bottom]:rounded-t-[1.75rem] data-[vaul-drawer-direction=bottom]:border-t",
+          "group/drawer-content bg-ink-800 border-line fixed z-50 flex h-auto flex-col outline-none",
+          "data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[85dvh] data-[vaul-drawer-direction=top]:rounded-b-lg data-[vaul-drawer-direction=top]:border-b",
+          "data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[85dvh] data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-t",
           "data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-3/4 data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=right]:sm:max-w-sm",
           "data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:sm:max-w-sm",
-          className
+          // On a wide screen a full-bleed sheet is absurd; centre it at the reading column.
+          "data-[vaul-drawer-direction=bottom]:sm:mx-auto data-[vaul-drawer-direction=bottom]:sm:max-w-lg",
+          className,
         )}
         {...props}
       >
-        <div className="mx-auto mt-4 hidden h-1.5 w-[80px] shrink-0 rounded-full bg-white/20 group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+        {/* The grab handle. `bg-line-strong` rather than white/20 — a hairline that has to
+            read as a control clears the 3:1 non-text contrast bar. */}
+        <div className="bg-line-strong mx-auto mt-3 hidden h-1 w-10 shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
-  )
+  );
 }
 
 function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="drawer-header"
-      className={cn(
-        "flex flex-col gap-0.5 p-4 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-center group-data-[vaul-drawer-direction=top]/drawer-content:text-center md:gap-1.5 md:text-left",
-        className
-      )}
+      className={cn("flex shrink-0 flex-col gap-1 px-4 pt-4 pb-3", className)}
       {...props}
     />
-  )
+  );
 }
 
 function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="drawer-footer"
-      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+      className={cn("pb-safe mt-auto flex shrink-0 flex-col gap-2 px-4 pt-3", className)}
       {...props}
     />
-  )
+  );
 }
 
 function DrawerTitle({
@@ -101,10 +111,10 @@ function DrawerTitle({
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn("font-semibold text-foreground", className)}
+      className={cn("font-display text-display-2 text-paper font-extrabold", className)}
       {...props}
     />
-  )
+  );
 }
 
 function DrawerDescription({
@@ -114,10 +124,10 @@ function DrawerDescription({
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-body-sm text-muted", className)}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -131,4 +141,4 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
-}
+};

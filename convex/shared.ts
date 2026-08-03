@@ -32,9 +32,27 @@ export const AVATAR_EMOJIS = [
   "🦁", "🐧", "🐨", "🐵", "🦄", "🐢",
 ] as const;
 
+/**
+ * Identity colours.
+ *
+ * Retuned for the "Pressing" design system. The previous set was eight saturated neons
+ * (#ef4444, #f97316, #eab308, …) which fought the flat ink surfaces and — worse — put a
+ * pure red in the identity palette, where the design reserves red (`--color-signal`) to
+ * mean "imposter". A player whose avatar happened to be red read as accused.
+ *
+ * These are muted, evenly spread around the wheel, and deliberately avoid the three
+ * colours that carry meaning elsewhere: gold #f0b429 (primary action), signal #e03a2f
+ * (imposter) and teal #1f9e8c (crew / live). They are only ever drawn as a hairline ring
+ * or a small fill, so they are tuned to read against ink-700 rather than to pass body-text
+ * contrast.
+ *
+ * NOTE: changing this list means players whose stored `avatarColor` is an old value fall
+ * through `safeAvatarColor` to the first entry. Accepted — rooms in this game are
+ * short-lived, and the alternative is carrying the neon palette forever.
+ */
 export const AVATAR_COLORS = [
-  "#ef4444", "#f97316", "#eab308", "#22c55e",
-  "#06b6d4", "#6366f1", "#d946ef", "#ec4899",
+  "#c96f4a", "#b8894a", "#8a9a4b", "#5fc4b8",
+  "#8aacf5", "#9b7fd4", "#c77fa8", "#9fb0c4",
 ] as const;
 
 /**

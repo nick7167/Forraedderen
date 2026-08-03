@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "convex/react";
-import { Loader2 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import {
   Drawer,
@@ -10,9 +9,14 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { NeonBackdrop } from "./NeonBackdrop";
 import { AvatarPicker } from "./AvatarPicker";
 import { Av } from "./Av";
+import { Wordmark } from "./Wordmark";
+import { Stage } from "@/ui/Stage";
+import { Button, Spinner } from "@/ui/Button";
+import { Card } from "@/ui/Surface";
+import { Input } from "@/ui/Input";
+import { Glyph } from "@/ui/Glyph";
 import { AVATAR_COLORS, AVATAR_EMOJIS, randomFrom } from "@/lib/avatars";
 import {
   getGuestSecret,
@@ -94,95 +98,97 @@ export function JoinRoute() {
   // Returning player: nothing to ask, just show progress.
   if (saved?.name && saved.name.trim().length > 0) {
     return (
-      <div className="cscreen s-home">
-        <NeonBackdrop />
-        <div className="content items-center justify-center text-center">
-          <div className="logo-area">
-            <span className="logo-emoji" aria-hidden>
-              🦎
-            </span>
-            <div className="logo-text">{code}</div>
-            <p className="logo-tagline">{t.joiningRoom}</p>
-          </div>
-          <Loader2 className="mx-auto size-6 animate-spin text-[rgba(245,243,255,0.4)]" />
+      <Stage keyName="joining" width="max-w-md" className="min-h-[70dvh] justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <span className="text-5xl" aria-hidden>
+            🦎
+          </span>
+          <p className="font-display text-display-1 text-paper font-extrabold tracking-[0.2em]">
+            {code}
+          </p>
+          <p className="text-body text-muted">{t.joiningRoom}</p>
+          <span className="text-muted mt-2">
+            <Spinner className="size-6" />
+          </span>
         </div>
-      </div>
+      </Stage>
     );
   }
 
   // First-timer: name + avatar only. The code is already known.
   return (
-    <div className="cscreen s-home">
-      <NeonBackdrop />
+    <Stage keyName="join" width="max-w-md" className="justify-center sm:min-h-[90dvh]">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <Wordmark size="hero" />
+        <p className="text-body text-muted">{t.joinPrompt}</p>
+      </div>
 
-      <div className="content">
-        <div className="logo-area">
-          <span className="logo-emoji" aria-hidden>
-            🦎
+      <Card variant="hero" className="flex flex-col gap-4 p-4 sm:p-6">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
+            {t.roomCode}
           </span>
-          <h1 className="logo-text">{t.appName}</h1>
-          <p className="logo-tagline">{t.joinPrompt}</p>
-        </div>
-
-        <div className="c-glass identity-card">
-          <div className="rc-top">
-            <span className="rc-label">{t.roomCode}</span>
-          </div>
-          <div className="rc-cells mb-4">
+          <div className="flex gap-1.5" data-testid="join-code-cells">
             {code.split("").map((char, i) => (
-              <span key={i} className="rc-cell">
+              <span
+                key={i}
+                data-testid="room-code-cell"
+                className="bg-ink-inset border-line font-display text-paper flex flex-1 items-center justify-center rounded-sm border py-2.5 text-2xl font-extrabold"
+              >
                 {char}
               </span>
             ))}
           </div>
-
-          <div className="avatar-row">
-            <Drawer>
-              <DrawerTrigger asChild>
-                <button className="avatar-edit-btn" aria-label={t.chooseAvatar}>
-                  <Av emoji={emoji} color={color} size="md" />
-                  <span className="avatar-edit-badge" aria-hidden>
-                    ✏️
-                  </span>
-                </button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>{t.chooseAvatar}</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-8">
-                  <AvatarPicker
-                    emoji={emoji}
-                    color={color}
-                    onEmoji={setEmoji}
-                    onColor={setColor}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
-            <input
-              className="name-input"
-              value={name}
-              maxLength={20}
-              autoFocus
-              placeholder={t.yourName}
-              aria-label={t.yourName}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && join(name)}
-            />
-          </div>
         </div>
-      </div>
 
-      <div className="footer">
-        <button
-          className="btn btn-primary hero-btn glow-pulse"
-          onClick={() => join(name)}
-          disabled={busy}
-        >
-          {busy ? <Loader2 className="animate-spin" /> : t.joinGame}
-        </button>
-      </div>
-    </div>
+        <div className="bg-line h-px" aria-hidden />
+
+        <div className="flex items-center gap-3">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <button
+                type="button"
+                className="relative shrink-0 rounded-md"
+                aria-label={t.chooseAvatar}
+                data-testid="avatar-edit"
+              >
+                <Av emoji={emoji} color={color} size="lg" />
+                <span
+                  className="bg-ink-600 border-line-strong text-secondary absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border text-[10px]"
+                  aria-hidden
+                >
+                  <Glyph name="settings" />
+                </span>
+              </button>
+            </DrawerTrigger>
+            <DrawerContent data-testid="avatar-picker">
+              <DrawerHeader>
+                <DrawerTitle>{t.chooseAvatar}</DrawerTitle>
+              </DrawerHeader>
+              <div className="pb-safe px-4 pb-6">
+                <AvatarPicker emoji={emoji} color={color} onEmoji={setEmoji} onColor={setColor} />
+              </div>
+            </DrawerContent>
+          </Drawer>
+
+          <Input
+            size="lg"
+            wrapperClassName="flex-1"
+            value={name}
+            maxLength={20}
+            autoFocus
+            placeholder={t.yourName}
+            aria-label={t.yourName}
+            data-testid="name-input"
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && join(name)}
+          />
+        </div>
+      </Card>
+
+      <Button size="lg" block loading={busy} onClick={() => join(name)} data-testid="join-cta">
+        {t.joinGame}
+      </Button>
+    </Stage>
   );
 }

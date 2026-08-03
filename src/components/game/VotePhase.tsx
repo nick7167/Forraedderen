@@ -3,8 +3,10 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
+import { Stage, StageScroll, StageFooter } from "@/ui/Stage";
+import { Button } from "@/ui/Button";
+import { Card, Chip } from "@/ui/Surface";
 import { Av } from "./Av";
 import { Announce } from "./Announce";
 import { RoundHistory } from "./RoundHistory";
@@ -17,20 +19,11 @@ type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
 
 /**
- * Vote — concept screen 6 (`.s-vote`).
+ * Vote.
  *
- * Concept structure: red-tinted aurora → centered `.header` (ph-label /
- * ph-title / ph-sub) → `.vote-grid` of `.vote-card`s → `.footer` holding the
- * `.confirm-wrap`, which springs up from translateY(72px) once a card is
- * picked.
- *
- * The concept's two-step select-then-confirm is implemented as designed (its
- * note: "forhindrer utilsigtede stemmer fra en hurtig finger"). Picking a card
- * only selects it — `castVote` fires on confirm — and you can re-pick and
- * confirm again, preserving the app's change-your-vote behaviour.
- *
- * One addition the concept doesn't show: the clue recap strip. Voting without
- * the clues in view is unplayable, so it's kept, styled with concept tokens.
+ * Three-up from `sm`. The confirm bar is always in the layout and only becomes enabled
+ * once a candidate is picked — revealing it on selection shifted the grid under the
+ * player's thumb at exactly the moment they were aiming at it.
  */
 export function VotePhase({
   round,
@@ -72,12 +65,19 @@ export function VotePhase({
     }
   }
 
+  async function endVote() {
+    try {
+      await skipPhase({ ...authArgs, roundId: round.roundId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Fejl");
+    }
+  }
+
   const selectedName = selected ? (playerById(selected)?.name ?? "") : "";
   const isPromptMode = round.gameMode === "questions" || round.gameMode === "scale";
 
   return (
-    <div className="cscreen s-vote">
-      <NeonBackdrop variant="danger" />
+    <Stage keyName="vote" width="max-w-2xl" fit>
       <PhaseChrome
         onLeave={onLeave}
         history={<RoundHistory authArgs={authArgs} players={round.players} />}
@@ -92,40 +92,44 @@ export function VotePhase({
         }
       />
 
-      <div className="header">
-        <div className="ph-label">
+      <div className="flex shrink-0 flex-col gap-1">
+        <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
           {round.currentBallot > 1 ? `${t.ballotNumber} ${round.currentBallot}` : "Fase"}
-        </div>
-        <div className="ph-title">{t.votePhase} 🗳️</div>
-        <div className="ph-sub">
+        </span>
+        <p className="font-display text-display-2 text-paper font-extrabold">{t.votePhase}</p>
+        <p className="text-body-sm text-muted">
           {isPromptMode ? t.voteInstructionQuestions : t.voteInstruction}
-        </div>
+        </p>
       </div>
 
-      <div className="content">
+      <StageScroll className="flex flex-col gap-3 py-1">
         {/* Prompt modes: keep the real prompt in view while voting. */}
         {isPromptMode && round.sharedPrompt && (
-          <div className="mode-desc-box mb-3 text-center">
-            <span className="opacity-60">{t.theRealQuestion}: </span>
-            {round.sharedPrompt}
-          </div>
+          <Card variant="hero" className="flex flex-col gap-1 p-3 text-center">
+            <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
+              {t.theRealQuestion}
+            </span>
+            <span className="text-body-lg text-paper font-semibold">{round.sharedPrompt}</span>
+          </Card>
         )}
 
         {/* Clue recap — informs the vote (see note above). */}
         {round.clues.length > 0 && (
-          <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1">
             {round.clues.map((c) => {
               const p = playerById(c.playerId);
               return (
-                <span key={c._id} className="phase-badge shrink-0 !normal-case !tracking-normal">
+                <Chip key={c._id} tone="neutral" className="shrink-0">
                   {p?.avatarEmoji} {c.text}
-                </span>
+                </Chip>
               );
             })}
           </div>
         )}
 
-        <div className="vote-grid">
+        {/* Three-up once there is room. Twelve candidates two-up is a scroll on a laptop
+            for no reason. */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="vote-grid">
           {candidates.map((id) => {
             const p = playerById(id);
             if (!p) return null;
@@ -136,68 +140,69 @@ export function VotePhase({
             return (
               <button
                 key={id}
+                type="button"
                 disabled={disabled}
+                data-testid="vote-card"
+                data-self={isMe || undefined}
+                aria-pressed={isSelected}
                 onClick={() => {
                   setSelected(id);
                   feedback.tap();
                 }}
-                className={cn("vote-card", isSelected && "selected", isMe && "self")}
+                className={cn(
+                  "relative flex flex-col items-center gap-1.5 rounded-md border px-2 py-3 transition-colors",
+                  isSelected
+                    ? "border-signal bg-ink-600"
+                    : "border-line bg-ink-700 hover:bg-ink-600",
+                  disabled && "opacity-45",
+                )}
               >
-                {/* Absolutely positioned in the concept — it overlays the card
-                    top rather than pushing the avatar down. */}
-                {isSelected && <div className="accused-banner">{t.accused}</div>}
-                <Av
-                  emoji={p.avatarEmoji}
-                  color={p.avatarColor}
-                  size="md"
-                  style={{ margin: "0 auto" }}
-                />
-                <div className="vote-pname">{p.name}</div>
-                <div className="vote-psub">
+                {isSelected && (
+                  <Chip tone="signal" size="sm" className="absolute -top-2">
+                    {t.accused}
+                  </Chip>
+                )}
+                <Av emoji={p.avatarEmoji} color={p.avatarColor} size="md" />
+                <span className="text-body text-paper max-w-full truncate font-semibold">
+                  {p.name}
+                </span>
+                <span className="text-label text-muted">
                   {isMe ? t.voteSelf : hasVoted ? t.voteHasVoted : t.voteSuspect}
-                </div>
+                </span>
               </button>
             );
           })}
         </div>
 
-        <p className="turn-label mt-4">
+        <p className="text-body-sm text-muted text-center">
           {iAmEliminated ? t.eliminatedHint : t.voteChangeHint} ·{" "}
-          <span>
+          <span className="text-paper font-semibold tabular-nums">
             {voted}/{candidates.length}
           </span>
         </p>
 
         {isHost && (
-          <button
-            className="btn-ghost mt-2 w-full"
-            onClick={() => skipPhase({ ...authArgs, roundId: round.roundId })}
-          >
-            ⏭ {t.endVote}
-          </button>
+          <Button variant="ghost" block onClick={endVote} data-testid="end-vote">
+            {t.endVote}
+          </Button>
         )}
-      </div>
+      </StageScroll>
 
-      <div className="footer">
-        <div className={cn("confirm-wrap", selected && "visible")}>
-          <button
-            className="btn btn-danger w-full"
-            style={{
-              padding: 16,
-              borderRadius: 18,
-              fontSize: 16,
-              // Concept's locked state: `btn.style.opacity = '.55'`.
-              ...(confirmed === selected ? { opacity: 0.55 } : null),
-            }}
-            onClick={confirmVote}
-            disabled={!selected || confirmed === selected}
-          >
-            {confirmed && confirmed === selected
-              ? `✓ ${t.youVoted}`
-              : `${t.voteFor} ${selectedName} →`}
-          </button>
-        </div>
-      </div>
-    </div>
+      {/* The confirm bar is always in the layout and only becomes usable once a candidate
+          is picked — revealing it on selection shifted the grid under the player's thumb
+          at exactly the moment they were aiming at it. */}
+      <StageFooter testId="confirm-wrap">
+        <Button
+          variant="destructive"
+          size="lg"
+          block
+          onClick={confirmVote}
+          disabled={!selected || confirmed === selected}
+          data-testid="confirm-vote"
+        >
+          {confirmed && confirmed === selected ? `✓ ${t.youVoted}` : `${t.voteFor} ${selectedName}`}
+        </Button>
+      </StageFooter>
+    </Stage>
   );
 }

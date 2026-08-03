@@ -1,42 +1,53 @@
 import { useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
 import { feedback, isMuted, setMuted } from "@/lib/feedback";
 import { LeaveButton } from "./LeaveButton";
+import { Glyph } from "@/ui/Glyph";
 import { t } from "@/lib/strings";
 
 /**
- * Leave + mute controls for the in-round screens.
+ * The in-round top bar.
  *
- * The concept's phase screens (reveal, vote, results) have no top bar at all —
- * their headers are centered text with generous top padding. Rather than adding
- * a bar the concept doesn't have, these two app-only controls are absolutely
- * positioned into the corners of that existing top band, using the concept's
- * own `.icon-btn`. The designed layout underneath is untouched.
+ * Previously absolutely positioned into the top band of each screen, because the mockup's
+ * phase screens had no bar and the two app-only controls had to be smuggled in without
+ * disturbing the designed layout. That constraint is gone with the mockup, so this is now
+ * an ordinary flex row at the top of the Stage — which means it can never overlap content,
+ * and the reveal card no longer has to leave a hole for it.
+ *
+ * `pt-safe` so the controls clear the notch. Deliberately quiet: leaving and muting are
+ * both things you do rarely and by accident-avoidance, so neither gets a filled button.
  */
 export function PhaseChrome({
   onLeave,
+  title,
   history,
 }: {
   onLeave: () => void;
+  /** The phase name. A <p>, not a heading — the screen's real heading is its content. */
+  title?: string;
   /** Optional round-history trigger, rendered next to mute. */
   history?: React.ReactNode;
 }) {
   const [muted, setMutedState] = useState(isMuted());
 
   return (
-    <div
-      className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between"
-      style={{
-        padding: "max(16px, calc(env(safe-area-inset-top) + 8px)) 18px 0",
-      }}
-    >
-      <div className="pointer-events-auto">
-        <LeaveButton onLeave={onLeave} confirm className="icon-btn" />
-      </div>
-      <div className="pointer-events-auto flex items-center gap-1.5">
+    <div className="pt-safe flex shrink-0 items-center gap-2" data-testid="phase-chrome">
+      <LeaveButton onLeave={onLeave} confirm />
+
+      {title && (
+        <>
+          <div className="bg-line h-4 w-px shrink-0" aria-hidden />
+          <p className="text-body-sm text-secondary min-w-0 flex-1 truncate font-semibold">
+            {title}
+          </p>
+        </>
+      )}
+
+      <div className="ml-auto flex items-center gap-1">
         {history}
         <button
-          className="icon-btn"
+          type="button"
+          className="text-secondary hover:text-paper hover:bg-ink-700 flex size-9 items-center justify-center rounded-sm text-lg transition-colors"
+          data-testid="mute-toggle"
           onClick={() => {
             setMuted(!muted);
             setMutedState(!muted);
@@ -44,7 +55,7 @@ export function PhaseChrome({
           }}
           aria-label={muted ? t.soundOn : t.soundOff}
         >
-          {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+          <Glyph name={muted ? "mute" : "sound"} />
         </button>
       </div>
     </div>

@@ -3,8 +3,12 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
+import { Stage, StageScroll, StageFooter } from "@/ui/Stage";
+import { Button } from "@/ui/Button";
+import { Chip } from "@/ui/Surface";
+import { Input } from "@/ui/Input";
+import { Glyph } from "@/ui/Glyph";
 import { Av } from "./Av";
 import { Announce } from "./Announce";
 import { RoundHistory } from "./RoundHistory";
@@ -17,13 +21,11 @@ type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
 
 /**
- * Clue phase — concept screen 5 (`.s-clue`).
+ * Clue phase.
  *
- * Concept structure: aurora → `.clue-header` (phase-badge · round-pill, big
- * `.phase-title`, then the `.player-seq` turn-order strip: ✓ for done, pulsing
- * purple ring for active, opacity .4 for pending) → scrolling `.clue-feed` of
- * chat bubbles (own clues purple and right-aligned) with a typing bubble for
- * whoever is on the clock → `.clue-input-area` (turn label + input + send).
+ * A chat feed: your own clues are gold and right-aligned, everyone else's are ink cards on
+ * the left. The composer stays mounted and disables when it isn't your turn, so the layout
+ * never shifts under the player mid-round.
  */
 export function CluePhase({
   round,
@@ -90,11 +92,18 @@ export function CluePhase({
     }
   }
 
+  async function skipTurn() {
+    try {
+      await skipPhase({ ...authArgs, roundId: round.roundId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Fejl");
+    }
+  }
+
   const canCompose = iAmParticipant && !iCluedThisPass;
 
   return (
-    <div className="cscreen s-clue">
-      <NeonBackdrop variant="clue" />
+    <Stage keyName="clues" width="max-w-2xl" fit>
       <PhaseChrome
         onLeave={onLeave}
         history={<RoundHistory authArgs={authArgs} players={round.players} />}
@@ -109,55 +118,81 @@ export function CluePhase({
         }
       />
 
-      <div className="clue-header">
-        <div className="phase-row">
-          {/* The concept's badge is just "Spor"; the clue-pass counter is folded
-              into it when a round has more than one pass. */}
-          <div className="phase-badge">
+      <div className="flex shrink-0 flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <Chip tone="gold" size="sm" data-testid="phase-badge">
             {t.cluePhase}
             {round.cluePasses > 1 && ` ${round.currentPass}/${round.cluePasses}`}
-          </div>
-          <div className="round-pill">
+          </Chip>
+          <span className="text-label text-muted font-semibold tabular-nums">
             {t.pass} {round.roundNumber} / {totalRounds}
-          </div>
+          </span>
         </div>
-        <div className="phase-title">{t.cluePhaseTitle}</div>
+        <p className="font-display text-display-2 text-paper font-extrabold">
+          {t.cluePhaseTitle}
+        </p>
 
-        <div className="player-seq">
-          {round.turnOrder.map((id, i) => {
+        {/* Turn order. The arrow separators are gone — the row reads left-to-right
+            without being told to, and eleven chevrons is a lot of ink for that. */}
+        <div className="flex flex-wrap items-center gap-1.5" data-testid="player-seq">
+          {round.turnOrder.map((id) => {
             const p = playerById(id);
             if (!p) return null;
             const clued = cluesThisPass.some((c) => c.playerId === id);
             const isCurrent = round.currentTurnPlayerId === id;
             return (
               <Fragment key={id}>
-                <div className={cn("pseq-item", !clued && !isCurrent && "pseq-pending")}>
-                  <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
-                  {isCurrent && !clued && <div className="pseq-active-ring" />}
-                  {clued && <div className="pseq-check">✓</div>}
+                <div
+                  className={cn(
+                    "relative",
+                    isCurrent && !clued && "ring-teal rounded-md ring-2 ring-offset-0",
+                  )}
+                >
+                  <Av
+                    emoji={p.avatarEmoji}
+                    color={p.avatarColor}
+                    size="xs"
+                    dimmed={!clued && !isCurrent}
+                  />
+                  {clued && (
+                    <span
+                      aria-hidden
+                      className="bg-teal text-ink-900 absolute -right-1 -bottom-1 flex size-3.5 items-center justify-center rounded-full text-[8px]"
+                    >
+                      <Glyph name="check" />
+                    </span>
+                  )}
                 </div>
-                {i < round.turnOrder.length - 1 && <div className="pseq-arrow">›</div>}
               </Fragment>
             );
           })}
         </div>
       </div>
 
-      <div className="clue-feed" ref={feedRef}>
+      <StageScroll className="flex flex-col gap-2 py-1" testId="clue-feed" scrollRef={feedRef}>
         {cluesThisPass.map((clue) => {
           const p = playerById(clue.playerId as Id<"players">);
           if (!p) return null;
           const mine = clue.playerId === myId;
           return (
-            <div key={clue._id} className={cn("clue-bubble", mine && "me")}>
-              <div className="clue-col" style={mine ? { textAlign: "right" } : undefined}>
-                <div className="clue-text">{clue.text}</div>
-                <div className="clue-meta">
-                  {p.name} · {p.avatarEmoji}
-                </div>
-              </div>
-              <div className="clue-av">
-                <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
+            <div
+              key={clue._id}
+              className={cn("flex items-end gap-2", mine && "flex-row-reverse")}
+            >
+              <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
+              <div className={cn("flex min-w-0 flex-col gap-0.5", mine && "items-end")}>
+                <span
+                  data-testid="clue-text"
+                  className={cn(
+                    "text-body max-w-[70vw] rounded-md px-3 py-2 font-medium break-words sm:max-w-sm",
+                    mine
+                      ? "bg-gold text-ink-900"
+                      : "bg-ink-700 border-line text-paper border",
+                  )}
+                >
+                  {clue.text}
+                </span>
+                <span className="text-label text-muted">{p.name}</span>
               </div>
             </div>
           );
@@ -170,76 +205,75 @@ export function CluePhase({
             const p = playerById(round.currentTurnPlayerId as Id<"players">);
             if (!p) return null;
             return (
-              <div className="clue-bubble">
-                <div className="clue-av">
-                  <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
-                </div>
-                <div>
-                  <div className="typing-bubble">
-                    <div className="tdot" />
-                    <div className="tdot" />
-                    <div className="tdot" />
-                  </div>
-                  <div className="clue-meta">
+              <div className="flex items-end gap-2">
+                <Av emoji={p.avatarEmoji} color={p.avatarColor} size="xs" />
+                <div className="flex flex-col gap-0.5">
+                  <span className="bg-ink-700 border-line text-muted text-body inline-flex rounded-md border px-3 py-2">
+                    <span className="animate-pulse">···</span>
+                  </span>
+                  <span className="text-label text-muted">
                     {p.name} {t.thinking}
-                  </div>
+                  </span>
                 </div>
               </div>
             );
           })()}
-      </div>
+      </StageScroll>
 
-      {/* The concept always keeps the composer on screen, disabling it when it
-          isn't your turn, so the layout never shifts under the player. */}
-      <div className="clue-input-area">
-        <div className="turn-label">
+      {/* The composer stays on screen and disables when it isn't your turn, so the layout
+          never shifts under the player mid-round. */}
+      <StageFooter>
+        <p className="text-body-sm text-muted text-center">
           {!canCompose ? (
             <>
-              {t.waitingFor} <span>{currentName}</span>
+              {t.waitingFor}{" "}
+              <span className="text-paper font-semibold">{currentName}</span>
             </>
           ) : isMyTurn ? (
             clueHint
           ) : (
             <>
-              Det er <span>{currentName}s</span> tur — forbered dit svar
+              Det er{" "}
+              <span className="text-paper font-semibold">{currentName}s</span> tur —
+              forbered dit svar
             </>
           )}
-        </div>
-        <div className="clue-input-row">
-          <input
-            className="clue-input"
+        </p>
+        <div className="flex items-center gap-2">
+          <Input
+            size="lg"
+            wrapperClassName="flex-1"
             value={text}
             maxLength={60}
             placeholder={t.cluePlaceholder}
             aria-label={t.yourClue}
+            data-testid="clue-input"
             disabled={!canCompose}
-            style={canCompose ? undefined : { opacity: 0.4 }}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && isMyTurn && send()}
           />
-          <button
-            className="clue-send"
+          <Button
+            size="lg"
             onClick={send}
-            disabled={!canCompose || !isMyTurn || busy || !text.trim()}
+            loading={busy}
+            disabled={!canCompose || !isMyTurn || !text.trim()}
             aria-label={t.submitClue}
+            data-testid="clue-send"
+            className="px-5"
           >
-            ➤
-          </button>
+            <Glyph name="chevron" className="-rotate-90" />
+          </Button>
         </div>
 
         {isHost && round.currentTurnPlayerId && (
-          <button
-            className="btn-ghost mt-2.5 w-full"
-            onClick={() => skipPhase({ ...authArgs, roundId: round.roundId })}
-          >
-            ⏭{" "}
+          <Button variant="ghost" block onClick={skipTurn} data-testid="skip-turn">
             {t.skipTurn.replace(
               "{name}",
               playerById(round.currentTurnPlayerId)?.name ?? "spilleren",
             )}
-          </button>
+          </Button>
         )}
-      </div>
-    </div>
+      </StageFooter>
+    </Stage>
   );
 }

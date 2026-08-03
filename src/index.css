@@ -1,254 +1,499 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
-/*
- * Forræderen "Neon Glow" design system — values taken verbatim from the user's
- * Stitch home design: indigo base with a top-center glow, 3D "pressable" buttons,
- * indigo frosted glass, a cyan→pink→purple neon tile, and floating neon shapes.
+/**
+ * "Pressing" — design tokens.
+ *
+ * Ported from SnapArena (nick7167/snaparena, src/app/globals.css), which is the canonical
+ * definition of this system. The values are deliberately identical rather than "inspired
+ * by": both apps are meant to read as the same author's work at token level, and a palette
+ * that has drifted by a few percent is worse than no shared palette at all. If a value here
+ * disagrees with SnapArena, SnapArena is right.
+ *
+ * Deep ink surfaces, fully opaque colour, no gradients and no glow. Depth comes from one
+ * device only: a hard 4px bottom edge that collapses when a control is pressed.
+ *
+ * Values are hex rather than oklch (which is what Tailwind v4 ships its own palette in)
+ * because WCAG contrast is defined in sRGB and every ratio noted below was measured
+ * there. Ratios are against --ink-800, the page surface.
+ *
+ * Dark only. There is no light theme.
  */
-:root {
-  --radius: 1.25rem;
 
-  /* Surfaces — deep indigo base (#0d091a / #1a1236), translucent indigo glass. */
-  --background: oklch(0.10 0.035 295);
-  --foreground: oklch(0.98 0.01 290);
-  --card: oklch(0.26 0.06 292 / 60%);
-  --card-foreground: oklch(0.98 0.01 290);
-  --popover: oklch(0.17 0.045 293);
-  --popover-foreground: oklch(0.98 0.01 290);
+@theme {
+  /* Surfaces ------------------------------------------------------------- */
+  --color-ink-900: #0e1017;
+  --color-ink-800: #14171f;
+  --color-ink-700: #1d2230;
+  --color-ink-600: #272e3e;
+  --color-ink-500: #333c4f;
+  --color-ink-inset: #0a0c12;
 
-  /* Accent — vivid purple (#b026ff) primary + royal blue secondary. */
-  --primary: oklch(0.60 0.27 306);
-  --primary-foreground: oklch(0.99 0.005 290);
-  --accent-blue: oklch(0.62 0.18 264);
-  --accent-blue-foreground: oklch(0.99 0.005 290);
+  /* Text. Named so the generated utilities read well — `--color-text-secondary`
+     would produce `text-text-secondary`. --------------------------------- */
+  --color-paper: #f4f1ea; /* 15.9:1 */
+  --color-secondary: #a8b0c0; /* 8.2:1 */
+  --color-muted: #7a8398; /* 4.7:1 — the AA floor. Smallest legal body text. */
+  --color-faint: #4a5364; /* 2.1:1 — DECORATIVE ONLY. Never content. */
 
-  --secondary: oklch(0.30 0.05 293 / 65%);
-  --secondary-foreground: oklch(0.97 0.01 290);
-  --muted: oklch(0.30 0.045 293 / 60%);
-  --muted-foreground: oklch(0.76 0.035 290);
-  --accent: oklch(0.36 0.08 300 / 65%);
-  --accent-foreground: oklch(0.98 0.01 290);
+  /* Working colour ------------------------------------------------------- */
+  --color-signal: #e03a2f; /* 4.1:1 — large text, bars, >=24px only */
+  --color-signal-text: #ff6b5e; /* 6.4:1 — same meaning at body size */
+  --color-gold: #f0b429; /* 9.6:1 */
+  /* In SnapArena teal means LIVE — a queue filling, a match in flight. Kamæleon keeps that
+     meaning (a player who is present and ready, a room in session) and adds one: the crew.
+     The two never collide, because a crew member IS the "good, present" state — and the
+     imposter is the only thing in this app that wants a colour of its own. */
+  --color-teal: #1f9e8c; /* 5.4:1 */
 
-  /* Roles — imposter/crew moments only. */
-  --destructive: oklch(0.63 0.24 18);
-  --crew: oklch(0.74 0.16 162);
+  /* Borders. `border-line` / `border-line-strong` at the call site. -------- */
+  --color-line: #262b38; /* dividers only — decorative */
+  --color-line-strong: #667186; /* 3.6:1 — meaningful boundaries (inputs, controls) */
 
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.60 0.27 306);
+  /* Radii. Default is 12px. Nothing between 0 and 4. ---------------------- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Type ----------------------------------------------------------------- */
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --text-display-hero: 96px;
+  --text-display-hero--line-height: 0.9;
+  --text-display-1: 56px;
+  --text-display-1--line-height: 1;
+  --text-display-2: 32px;
+  --text-display-2--line-height: 1.1;
+  --text-numeral: 20px;
+  --text-numeral--line-height: 1;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.5;
+  --text-body: 15px;
+  --text-body--line-height: 1.5;
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 1.45;
+  --text-label: 11px;
+  --text-label--line-height: 1.2;
 }
 
-@theme inline {
-  --radius-sm: calc(var(--radius) - 8px);
-  --radius-md: calc(var(--radius) - 4px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 6px);
-  --radius-2xl: calc(var(--radius) + 12px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-accent-blue: var(--accent-blue);
-  --color-accent-blue-foreground: var(--accent-blue-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-crew: var(--crew);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+/**
+ * Motion vocabulary.
+ *
+ * Four named motions, no more. The spring values live in src/ui/motion.ts because
+ * motion/react takes them as objects; these are the CSS-side equivalents for transitions
+ * that never touch React.
+ */
+@theme {
+  --ease-ignite: cubic-bezier(0.2, 0, 0, 1);
+  --ease-drain: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/**
+ * The licensed exceptions to "no gradients and no glow".
+ *
+ * The law above is not softening. These are named, tokenised and enumerated precisely so
+ * they cannot spread: a design where every surface has an inner highlight is the
+ * corporate-SaaS default this build exists to avoid. If you are reaching for one of these
+ * on a surface not listed here, the answer is no.
+ *
+ *   --sheen-hero    ONE hero surface per screen. Card variant="hero" only.
+ *   --plate-cut     the chamfer, on identity surfaces only — Card `you`, the role card.
+ *   --reveal-sweep  Kamæleon's fourth exception. See below.
+ */
+@theme {
+  /**
+   * A 1px top inner highlight — the light catching the top edge of a raised object.
+   * Blur-free like everything else here: it is a hairline, not a glow.
+   */
+  --sheen-hero: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+
+  /**
+   * The corner cut, in absolute length rather than a percentage.
+   *
+   * A percentage is right for a square plate and catastrophic on a wide row — 22% of a
+   * 600px width is a 132px bite. A fixed length keeps the cut reading as the same struck
+   * corner at every aspect ratio.
+   */
+  --plate-cut: 14px;
+
+  /**
+   * THE FOURTH EXCEPTION — the role card's sweep. Kamæleon-only.
+   *
+   * The face-down card in RoleReveal is the one moment this game is actually about: you
+   * are holding a phone you are about to hand to someone else, and you do not yet know
+   * whether you are crew or the chameleon. A flat rectangle does not carry that. So the
+   * card front — and ONLY the card front — gets a moving specular sweep.
+   *
+   * It is licensed for `.reveal-card__sweep` and nothing else. Not the lobby, not the
+   * buttons, not a "premium" panel somewhere. The whole point of enumerating it here is
+   * that the next person who wants a shimmer has to add themselves to this list in
+   * writing, and will not.
+   */
+  --reveal-sweep: linear-gradient(
+    112deg,
+    transparent 0%,
+    transparent 46%,
+    rgb(255 255 255 / 0.04) 48%,
+    rgb(255 255 255 / 0.11) 50%,
+    rgb(255 255 255 / 0.04) 52%,
+    transparent 54%,
+    transparent 100%
+  );
+
+  /**
+   * The flip itself is NOT an exception — a 3D rotation is geometry, not light, and the
+   * design has no objection to it. Tokenised only so the two faces stay in step.
+   */
+  --reveal-flip-duration: 620ms;
+  --reveal-flip-ease: cubic-bezier(0.4, 0.2, 0.2, 1.04);
+}
+
+@layer utilities {
+  /**
+   * The chamfer. Sharp cuts at top-left and bottom-right — asymmetric, so it reads as
+   * struck rather than as a hexagon. This is the brand geometry: identity surfaces wear
+   * the shape, and nothing else does.
+   *
+   * Clips the border box, so a bordered element loses its border at the two cuts. Draw
+   * the outline as a stacked fill instead — see the `you` branch of Card.
+   */
+  .plate {
+    clip-path: polygon(
+      var(--plate-cut) 0,
+      100% 0,
+      100% calc(100% - var(--plate-cut)),
+      calc(100% - var(--plate-cut)) 100%,
+      0 100%,
+      0 var(--plate-cut)
+    );
+  }
+
+  .sheen {
+    box-shadow: var(--sheen-hero);
+  }
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  html {
+    background-color: var(--color-ink-900);
   }
+
   html,
   body,
   #root {
-    @apply h-full;
+    height: 100%;
   }
-  html {
-    background-color: #06030e;
-  }
-  /* The background lives on a FIXED, full-viewport layer (not `background-
-     attachment: fixed`, which mis-paints the bottom safe-area in installed iOS
-     PWAs and leaves a band). Fixed inset-0 always covers the whole screen,
-     incl. under the notch/home-indicator, so the screen never looks cut off.
-     Near-black base — the animated aurora blobs (NeonBackdrop) provide all the
-     colour, matching the polished mockup. */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -20;
-    background-color: #06030e;
-  }
+
   body {
-    @apply text-foreground overscroll-none antialiased;
+    background-color: var(--color-ink-800);
+    color: var(--color-paper);
     font-family: var(--font-sans);
+    /* `--app-h` is set from JS in main.tsx. iOS does not finalize the CSS dvh unit until a
+       scroll, which produced a "fixes itself when you scroll" bug in the installed PWA;
+       100dvh is only the pre-JS fallback. */
     min-height: var(--app-h, 100dvh);
-    background: transparent;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3 {
-    @apply tracking-tight;
-    font-weight: 700;
+
+  /* Display type is the numerals. Tabular figures are non-negotiable: a round counter that
+     reflows as digits change reads as jitter rather than as a score. */
+  .font-display {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /**
+   * Focus.
+   *
+   * Preflight ships no cross-browser focus style. This is the single ring used by every
+   * interactive element in the app.
+   */
+  :focus-visible {
+    outline: 2px solid var(--color-paper);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Pointer users don't get the ring; keyboard users always do. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-ink-900);
   }
 }
 
-@layer components {
-  /* Safe-area helpers: applied to top bars / footers so content clears the
-     notch + home-indicator while the app itself stays edge-to-edge. */
-  .pt-safe { padding-top: max(0.5rem, env(safe-area-inset-top)); }
-  .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+@layer utilities {
+  /**
+   * The press.
+   *
+   * A solid fill plus a hard, blur-free bottom edge. On press the control travels down by
+   * exactly the edge height and the edge collapses, so the object reads as having been
+   * pushed into the page rather than as having changed colour.
+   *
+   * box-shadow with zero blur — not a drop shadow. There is no blurred shadow anywhere in
+   * this design.
+   *
+   * `--press-edge` is set inline per variant; see src/ui/Button.tsx.
+   */
+  .press {
+    box-shadow: 0 4px 0 0 var(--press-edge, var(--color-ink-500));
+    transition:
+      transform 180ms var(--ease-ignite),
+      box-shadow 180ms var(--ease-ignite);
+  }
 
-  /* Seamless scroll — scrollable but with no visible scrollbar. */
+  .press:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 0 var(--press-edge, var(--color-ink-500));
+  }
+
+  .press-sm {
+    box-shadow: 0 2px 0 0 var(--press-edge, var(--color-ink-500));
+  }
+
+  .press-sm:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 0 var(--press-edge, var(--color-ink-500));
+  }
+
+  /**
+   * Safe-area helpers.
+   *
+   * Applied to top bars and footers so content clears the notch and home indicator while
+   * the app itself stays edge-to-edge. Not applied globally — a full-bleed screen that
+   * pads itself has a visible band at the bottom in an installed iOS PWA.
+   */
+  .pt-safe {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* Scrollable, but with no visible scrollbar. Used on the clue feed and the drawers. */
   .no-scrollbar {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* old Edge */
   }
-  .no-scrollbar::-webkit-scrollbar { display: none; } /* WebKit */
 
-  /* Frosted glass — the concept's `.glass` values verbatim, so the surfaces
-     that predate the concept port (AddToHomeScreen, PackPicker) read the same
-     as `.c-glass` in concept.css. */
-  .glass {
-    background-color: rgba(255, 255, 255, 0.07);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.1) inset,
-      0 8px 32px rgba(0, 0, 0, 0.28);
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* WebKit */
   }
-  /* Inset indigo input/field surface. */
-  .glass-input {
-    background-color: rgba(40, 32, 75, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.28);
-  }
-  /* Rounded glass chip ("Log ind", "Fortsæt spil"). */
-  .glass-pill {
-    background-color: rgba(30, 24, 60, 0.6);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 999px;
+}
+
+/**
+ * The role card.
+ *
+ * Lives here rather than in a component because 3D transforms, backface-visibility and the
+ * sweep keyframe cannot be expressed as utilities, and because keeping the two faces in one
+ * place is the only way they stay in step. Same reasoning as `.plate` above.
+ *
+ * The card is the fourth licensed exception (see --reveal-sweep). Everything about it other
+ * than the sweep obeys the ordinary law: flat ink faces, hairline borders, no glow behind
+ * the card, no coloured light.
+ */
+@layer components {
+  .reveal-card {
+    perspective: 1000px;
+    container-type: size;
+    container-name: revealcard;
   }
 
-  /* Glowing white text for headings. */
-  .text-glow {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  }
-
-  /* ---- Flat gradient buttons (from the polished mockup) ----
-     Clean, soft-radius gradient pills with a subtle inner highlight and a
-     springy tap. No 3D border-bottom — that "pressed brick" look was the main
-     thing making the app read as the old neon design. */
-  .btn3d {
-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
-      box-shadow 0.15s ease, filter 0.15s ease;
-    letter-spacing: -0.015em;
-  }
-  .btn3d:active {
-    transform: scale(0.96);
-  }
-  .btn3d-purple {
-    background: linear-gradient(155deg, #9333ea 0%, #7c3aed 55%, #6d28d9 100%);
-    box-shadow: 0 4px 22px rgba(124, 58, 237, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  }
-  .btn3d-blue {
-    background: linear-gradient(155deg, #0ea5e9 0%, #06b6d4 55%, #0284c7 100%);
-    box-shadow: 0 4px 18px rgba(6, 182, 212, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  }
-  .btn3d-danger {
-    background: linear-gradient(155deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
-  .btn3d-crew {
-    background: linear-gradient(155deg, #22c55e 0%, #16a34a 100%);
-    box-shadow: 0 4px 18px rgba(34, 197, 94, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
-  /* Bigger glow for the main bottom CTA (kept after the color classes so it wins). */
-  .bottom-btn-glow {
-    box-shadow:
-      0 0 30px rgba(124, 58, 237, 0.55),
-      0 4px 22px rgba(124, 58, 237, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  }
-
-  /* Legacy aliases (pass-1 utilities still referenced by heroes/cards). */
-  .gradient-primary { background-image: linear-gradient(155deg, #9333ea, #7c3aed 55%, #6d28d9); }
-  .gradient-secondary { background-image: linear-gradient(180deg, #2b3a7a, #1a2552); }
-  /* Softened (refined restraint): a gentle halo on secondary surfaces, not a
-     blaze. The 3D buttons + bottom CTA keep their full vibrancy below. */
-  .glow-primary {
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-      0 6px 18px -8px rgba(176, 38, 255, 0.42),
-      0 0 12px -4px rgba(176, 38, 255, 0.28);
-  }
-  .glow-secondary { box-shadow: 0 6px 18px -8px rgba(43, 58, 122, 0.55); }
-  .glow-danger { box-shadow: 0 6px 18px -8px rgba(239, 68, 68, 0.42), 0 0 12px -5px rgba(239, 68, 68, 0.3); }
-  .glow-crew { box-shadow: 0 6px 18px -8px rgba(52, 211, 153, 0.38), 0 0 12px -5px rgba(52, 211, 153, 0.28); }
-  .glow-ring { box-shadow: 0 0 0 1.5px rgba(176, 38, 255, 0.5), 0 0 14px -5px rgba(176, 38, 255, 0.4); }
-  .gloss {
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-      0 6px 18px -8px rgba(176, 38, 255, 0.42);
-  }
-
-  /* Neon hero tile: cyan→pink→purple 135° border (sharp ::after + blurred ::before). */
-  .neon-tile {
+  .reveal-card__inner {
     position: relative;
-    background: #1a1236;
-    border-radius: 24px;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform var(--reveal-flip-duration) var(--reveal-flip-ease);
   }
-  .neon-tile::before {
-    content: "";
+
+  .reveal-card__inner[data-flipped="true"] {
+    transform: rotateY(180deg);
+  }
+
+  .reveal-card__face {
     position: absolute;
-    inset: -3px;
-    border-radius: 27px;
-    background: linear-gradient(135deg, #00f0ff, #ff007f, #7000ff);
-    z-index: -1;
-    filter: blur(8px);
+    inset: 0;
+    /* Load-bearing: the two plate fills below sit at a negative z-index, and without a
+       stacking context here they fall behind the page instead of behind the content. */
+    isolation: isolate;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
-  .neon-tile::after {
-    content: "";
+
+  .reveal-card__face--back {
+    transform: rotateY(180deg);
+  }
+
+  /**
+   * The card is drawn as two stacked fills rather than a bordered box, because `clip-path`
+   * cuts the border away at the two chamfers and leaves the corners hanging open. Same
+   * construction as Card `you` in src/ui/Surface.tsx — and it has to be, or the role card
+   * and the "this row is you" plate would read as two different shapes.
+   *
+   * `--reveal-edge` is the hairline colour, set per role at the call site.
+   */
+  .reveal-card__edge {
     position: absolute;
-    inset: -2px;
-    border-radius: 26px;
-    background: linear-gradient(135deg, #00f0ff, #ff007f, #7000ff);
-    z-index: -1;
+    inset: 0;
+    z-index: -2;
+    background-color: var(--reveal-edge, var(--color-line-strong));
   }
-  .neon-tile > * {
-    border-radius: 22px;
-    background: #1a1236;
+
+  .reveal-card__fill {
+    position: absolute;
+    inset: 1.5px;
+    z-index: -1;
+    background-color: var(--color-ink-700);
+  }
+
+  .reveal-card__body {
+    position: absolute;
+    inset: 1.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /**
+   * The secret word.
+   *
+   * Sized in container-query units against the card, not the viewport, so the same word
+   * fills the same proportion of the card on a 320px phone and a 1440px laptop. The
+   * `len-l` / `len-xl` steps are driven from `wordLengthClass()` in RoleReveal.tsx — a
+   * class name used as an API, which `word-reveal-fit.spec.ts` mirrors.
+   *
+   * Bucketing by length is enough precisely because it is a single word: a 19-character
+   * word rendering smaller than a 4-character one reads as normal. The prompt modes are
+   * deliberately NOT bucketed — a question that changes size round to round looks broken.
+   */
+  .reveal-card__word {
+    font-size: clamp(22px, 14cqw, 46px);
+  }
+
+  .reveal-card__word.len-l {
+    font-size: clamp(18px, 10cqw, 34px);
+  }
+
+  .reveal-card__word.len-xl {
+    font-size: clamp(15px, 8cqw, 27px);
+  }
+
+  .reveal-card__word.unknown {
+    font-size: clamp(20px, 12cqw, 40px);
+  }
+
+  /* Prompt modes hold a sentence, so they size to the card's height instead. */
+  .reveal-card__prompt {
+    font-size: clamp(15px, 6.5cqw, 26px);
+    line-height: 1.25;
+  }
+
+  /**
+   * The role name.
+   *
+   * Also container-sized. "Besætningsmedlem" is seventeen characters and ran clean off
+   * both edges of a 286px card at the fixed display-2 step — Danish compounds are long,
+   * and any fixed size that fits this one is too small for "Kamæleon".
+   */
+  .reveal-card__role {
+    font-size: clamp(15px, 7.5cqw, 28px);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  /* The licensed sweep. Front face only, and clipped to the plate by its parent. */
+  .reveal-card__sweep {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: var(--reveal-sweep);
+    background-size: 300% 100%;
+    animation: reveal-sweep 4.2s var(--ease-drain) infinite;
+  }
+
+  @keyframes reveal-sweep {
+    0% {
+      background-position: 145% 0;
+    }
+    60%,
+    100% {
+      background-position: -145% 0;
+    }
+  }
+
+  /**
+   * Confetti. Plain CSS because it is 38 independently-timed particles and running that
+   * through motion/react is a lot of JS for something nobody looks at directly. The
+   * component returns null under reduced motion rather than relying on the global block,
+   * which would freeze them mid-fall as a static field of squares over the result.
+   */
+  .confetti-area {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    animation-name: confetti-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(870px) rotate(720deg);
+      opacity: 0;
+    }
   }
 }
 
-/* Floating neon shapes (decorative). */
-@keyframes float {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-.floating-shape { animation: float 6s ease-in-out infinite; }
-.shape-delay-1 { animation-delay: 1s; }
-.shape-delay-2 { animation-delay: 2.5s; }
-.shape-delay-3 { animation-delay: 4s; }
+/**
+ * Motion sensitivity.
+ *
+ * The React components each honour prefers-reduced-motion via usePrefersReducedMotion,
+ * but this catches everything CSS-driven — including the press travel and the card flip —
+ * without every call site having to remember.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .floating-shape { animation: none; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .press:active:not(:disabled),
+  .press-sm:active:not(:disabled) {
+    transform: none;
+  }
+
+  /* The flip still has to happen — it is the game mechanic, not decoration. It just
+     happens immediately, via the transition-duration override above. The sweep is pure
+     decoration and stops entirely. */
+  .reveal-card__sweep {
+    animation: none;
+    background-image: none;
+  }
 }

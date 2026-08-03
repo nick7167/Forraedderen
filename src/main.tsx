@@ -5,10 +5,9 @@ import { ConvexReactClient, ConvexProvider } from "convex/react";
 import App from "./App.tsx";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
+// The single stylesheet. Tokens, primitives-support utilities and the role card all live
+// there, mirroring SnapArena's globals.css. There is no second stylesheet to keep in sync.
 import "./index.css";
-// Ported verbatim from ui-concepts/kamaeleon-polish-concepts.html — the app's
-// visual source of truth. Loaded last so its values win.
-import "./concept.css";
 
 const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
 

@@ -14,11 +14,16 @@ export default defineConfig({
   outputDir: "test-results",
   reporter: [["list"]],
   use: {
-    // Defaults to the deployed app; set BASE to test a local dev server:
-    //   BASE=http://127.0.0.1:5173 pnpm test:e2e
-    // Without this every spec silently tested production, which also meant a
-    // spec could pass against a *stale* deploy while the working tree was broken.
-    baseURL: process.env.BASE ?? "https://ea284c1e1.abacusai.cloud",
+    // Defaults to the LOCAL dev server, so the suite tests the working tree. It used to
+    // default to the deployed URL, which meant every run silently tested production — a
+    // spec could pass against a stale deploy while the working tree was broken, and a
+    // failure could be someone else's deploy rather than your change.
+    //
+    // To test a deployment on purpose:
+    //   BASE=https://your-deploy.example pnpm test:e2e
+    // `localhost`, not `127.0.0.1`: Vite 7 binds to the IPv6 loopback by default, so the
+    // dotted-quad form refuses the connection on machines where both stacks are present.
+    baseURL: process.env.BASE ?? "http://localhost:5173",
     viewport: { width: 393, height: 852 },
     deviceScaleFactor: 2,
     isMobile: true,

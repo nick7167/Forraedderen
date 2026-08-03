@@ -3,24 +3,25 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { NeonBackdrop } from "./NeonBackdrop";
 import { PhaseChrome } from "./PhaseChrome";
+import { Stage, StageScroll, StageFooter } from "@/ui/Stage";
+import { Button } from "@/ui/Button";
+import { Card, Chip } from "@/ui/Surface";
 import { Av } from "./Av";
 import { Announce } from "./Announce";
 import { RoundHistory } from "./RoundHistory";
 import { t } from "@/lib/strings";
 import { feedback } from "@/lib/feedback";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 type Round = NonNullable<FunctionReturnType<typeof api.round.getRoundState>>;
 type AuthArgs = { roomId: Id<"rooms">; playerId?: Id<"players">; guestSecret: string };
 
 /**
- * Discussion — no dedicated concept screen exists for this phase, so it's built
- * from the concept's clue-screen vocabulary (`.s-clue` surface, `.clue-header`
- * with phase-badge and `.phase-title`, `.player-card` rows, `.clue-text`
- * bubbles for each clue given) to stay consistent with the designed language.
+ * Discussion.
+ *
+ * The clue feed, regrouped by player rather than by turn — this is the screen people argue
+ * over, and comparing two players means having their clues next to each other.
  */
 export function DiscussionPhase({
   round,
@@ -66,74 +67,67 @@ export function DiscussionPhase({
   }
 
   return (
-    <div className="cscreen s-clue">
-      <NeonBackdrop variant="clue" />
+    <Stage keyName="discussion" width="max-w-2xl" fit>
       <PhaseChrome
         onLeave={onLeave}
         history={<RoundHistory authArgs={authArgs} players={round.players} />}
       />
       <Announce message={t.a11yDiscussPhase} />
 
-      <div className="clue-header">
-        <div className="phase-row">
-          <div className="phase-badge">{t.discussTitle}</div>
-          <div className="round-pill">
+      <div className="flex shrink-0 flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <Chip tone="gold" size="sm" data-testid="phase-badge">
+            {t.discussTitle}
+          </Chip>
+          <span className="text-label text-muted font-semibold tabular-nums">
             {t.pass} {round.currentPass} / {round.cluePasses}
-          </div>
+          </span>
         </div>
-        <div className="phase-title">
-          {isPromptMode ? t.discussPromptQuestions : t.discussPrompt} 🗣️
-        </div>
+        <p className="font-display text-display-2 text-paper font-extrabold">
+          {isPromptMode ? t.discussPromptQuestions : t.discussPrompt}
+        </p>
       </div>
 
-      <div className="clue-feed">
+      <StageScroll className="flex flex-col gap-2 py-1" testId="discussion-feed">
         {isPromptMode && round.sharedPrompt && (
-          <div className="mode-desc-box text-center">
-            <div className="sc-lbl">{t.theRealQuestion}</div>
-            {round.sharedPrompt}
-          </div>
+          <Card variant="hero" className="flex flex-col gap-1 p-3 text-center">
+            <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
+              {t.theRealQuestion}
+            </span>
+            <span className="text-body-lg text-paper font-semibold">{round.sharedPrompt}</span>
+          </Card>
         )}
 
         {cluesByPlayer.map(({ player, clues }) => (
-          <div key={player._id} className="player-card">
+          <Card key={player._id} className="flex items-center gap-2.5 px-3 py-2.5">
             <Av emoji={player.avatarEmoji} color={player.avatarColor} size="sm" />
-            <div className="player-name">{player.name}</div>
-            <div className="flex flex-wrap justify-end gap-1.5">
+            <span className="text-body text-paper shrink-0 font-semibold">{player.name}</span>
+            <div className="flex flex-1 flex-wrap justify-end gap-1.5">
               {clues.map((c) => (
-                <span key={c._id} className="clue-text !max-w-none">
+                <Chip key={c._id} tone="neutral" data-testid="clue-text">
                   {c.text}
-                </span>
+                </Chip>
               ))}
             </div>
-          </div>
+          </Card>
         ))}
-      </div>
+      </StageScroll>
 
-      <div className="clue-input-area">
+      <StageFooter>
         {isHost ? (
-          <button
-            className="btn btn-primary w-full"
-            style={{ padding: 18, borderRadius: 20, fontSize: 17 }}
+          <Button
+            size="lg"
+            block
             onClick={handleAdvance}
-            disabled={busy}
+            loading={busy}
+            data-testid="discussion-advance"
           >
-            {busy ? (
-              <Loader2 className="animate-spin" />
-            ) : moreClues ? (
-              `${t.nextClue} →`
-            ) : (
-              `${t.goToVoting} →`
-            )}
-          </button>
+            {moreClues ? t.nextClue : t.goToVoting}
+          </Button>
         ) : (
-          <div className="waiting-row">
-            <div className="pdot" />
-            <div className="pdot" />
-            <div className="pdot" />
-            <div className="waiting-text">{t.waitingForHost}</div>
-          </div>
+          <p className="text-body-sm text-muted py-2 text-center">{t.waitingForHost}</p>
         )}
-      </div>
-    </div>
+      </StageFooter>
+    </Stage>
   );
 }

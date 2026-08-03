@@ -86,6 +86,7 @@ export const t = {
   // Reveal
   yourRole: "Din rolle",
   tapToReveal: "Tryk for at se din rolle",
+  tapToHide: "Tryk for at skjule igen",
   youAreImposter: "Du er KAMÆLEONEN",
   youAreCrew: "Du er i besætningen",
   theWord: "Ordet",

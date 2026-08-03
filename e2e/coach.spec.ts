@@ -5,16 +5,14 @@ import fs from "node:fs";
  * Captures the first-time host "settings coach" overlay so its alignment with
  * the lobby's settings icon-btn can be checked by eye.
  *
- * Run with:  BASE=http://127.0.0.1:5173 pnpm exec playwright test e2e/coach.spec.ts
+ * Run with:  pnpm exec playwright test e2e/coach.spec.ts
  */
 
-const BASE = process.env.BASE ?? "http://127.0.0.1:5173";
 const OUT = "concept-parity/app";
 
 test.setTimeout(180_000);
 
 test.use({
-  baseURL: BASE,
   viewport: { width: 375, height: 812 },
   deviceScaleFactor: 2,
   isMobile: true,
@@ -35,7 +33,7 @@ test("settings coach overlay", async ({ page }) => {
   await page.getByPlaceholder("Dit navn").fill("Tester");
   await page.getByRole("button", { name: "Opret spil" }).last().click();
 
-  await expect(page.locator(".room-code-card")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
   // The coach only shows on a freshly created lobby.
   await expect(page.locator("text=Tilpas spillet")).toBeVisible();
   await page.waitForTimeout(600);
@@ -46,7 +44,7 @@ test("settings coach overlay", async ({ page }) => {
   // The spotlight must land on the real settings button underneath it.
   const spot = await page.getByRole("button", { name: "Indstillinger" }).first().boundingBox();
   const real = await page
-    .locator(".s-lobby .header .icon-btn")
+    .locator('[data-testid="settings-button"]')
     .last()
     .boundingBox();
   console.log("spotlight:", spot, "real button:", real);

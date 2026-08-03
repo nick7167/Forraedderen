@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { Spinner } from "@/ui/Button";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useGameRoom } from "@/hooks/useGameRoom";
@@ -18,7 +19,6 @@ import { VotePhase } from "./VotePhase";
 import { RoundReveal } from "./RoundReveal";
 import { MatchResults } from "./MatchResults";
 import { PhaseBanner } from "./PhaseBanner";
-import { NeonBackdrop } from "./NeonBackdrop";
 
 // Phases that get an announcing banner when entered.
 const PHASE_BANNERS: Record<string, { emoji: string; label: string }> = {
@@ -54,6 +54,17 @@ export function GameRoom() {
     return () => clearTimeout(id);
   }, [banner]);
 
+  // Radix's dismissable layer parks `pointer-events: none` on <body> while a
+  // drawer or dialog is open and restores it on close. A phase change can rip
+  // one out from under it — the round-history drawer lives on the vote screen
+  // and unmounts when voting resolves — and the restore is skipped, leaving the
+  // whole app unclickable until reload. Sweep it whenever no layer is mounted.
+  useEffect(() => {
+    if (document.body.style.pointerEvents !== "none") return;
+    if (document.querySelector("[data-radix-dismissable-layer],[data-vaul-drawer]")) return;
+    document.body.style.pointerEvents = "";
+  });
+
   const leaveRoom = useMutation(api.games.leaveRoom);
   async function leave() {
     try {
@@ -67,8 +78,8 @@ export function GameRoom() {
 
   if (room === undefined) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <div className="text-muted flex flex-1 items-center justify-center py-24">
+        <Spinner className="size-6" />
       </div>
     );
   }
@@ -82,9 +93,7 @@ export function GameRoom() {
         emoji="🕳️"
         title={t.roomNotFound}
         actionLabel={t.goHome}
-        onAction={() => navigate("/")}
-        topInset
-      />
+        onAction={() => navigate("/")}      />
     );
   }
 
@@ -98,9 +107,7 @@ export function GameRoom() {
         title={t.removedTitle}
         body={t.removedBody}
         actionLabel={t.goHome}
-        onAction={leave}
-        topInset
-      />
+        onAction={leave}      />
     );
   }
 
@@ -124,8 +131,8 @@ export function GameRoom() {
   // In-round phases need the round payload.
   if (round === undefined || round === null) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <div className="text-muted flex flex-1 items-center justify-center py-24">
+        <Spinner className="size-6" />
       </div>
     );
   }
@@ -133,34 +140,28 @@ export function GameRoom() {
   // Joined mid-match (not dealt into this round) → wait for the next one.
   if (round.me && !round.me.isParticipant && round.phase !== "resolve") {
     return (
-      <div className="cscreen s-home">
-        <NeonBackdrop />
+      <div className="mx-auto flex w-full max-w-md flex-col px-4">
         <HostGoneBanner room={room} authArgs={authArgs} />
         <InfoScreen
           emoji="⏳"
           title={t.waitingTitle}
           body={t.waitingBody}
           actionLabel={t.leave}
-          onAction={leave}
-          topInset
-        />
+          onAction={leave}        />
       </div>
     );
   }
 
-  // Each phase screen owns its full concept layout (its own aurora, header
-  // padding and footer), so there is no shared top bar here — the leave and
-  // mute controls ride along inside each screen via PhaseChrome.
+  // Each phase screen is a Stage and owns its own column width, top bar (PhaseChrome)
+  // and footer. AnimatePresence with mode="wait" runs the outgoing screen's exit before
+  // the incoming one enters, so phases cross-fade instead of stacking for a frame.
   return (
     <>
-      {banner && (
-        <PhaseBanner
-          emoji={banner.emoji}
-          label={banner.label}
-          onDone={() => setBanner(null)}
-        />
-      )}
-      <HostGoneBanner room={room} authArgs={authArgs} />
+      {banner && <PhaseBanner emoji={banner.emoji} label={banner.label} />}
+      <div className="mx-auto w-full max-w-3xl px-4">
+        <HostGoneBanner room={room} authArgs={authArgs} />
+      </div>
+      <AnimatePresence mode="wait" initial={false}>
       {round.phase === "reveal" && (
         <RoleReveal
           round={round}
@@ -184,11 +185,22 @@ export function GameRoom() {
         <DiscussionPhase round={round} authArgs={authArgs} isHost={room.isHost} onLeave={leave} />
       )}
       {round.phase === "vote" && (
-        <VotePhase round={round} authArgs={authArgs} isHost={room.isHost} onLeave={leave} />
+        // Keyed by ballot: multi-imposter rounds run successive ballots without
+        // ever leaving the "vote" phase, so without a remount VotePhase carried
+        // its local `selected`/`confirmed` into the next ballot and left the
+        // confirm button stuck disabled on "✓ Du stemte".
+        <VotePhase
+          key={round.currentBallot}
+          round={round}
+          authArgs={authArgs}
+          isHost={room.isHost}
+          onLeave={leave}
+        />
       )}
       {round.phase === "resolve" && (
         <RoundReveal round={round} authArgs={authArgs} isHost={room.isHost} onLeave={leave} />
       )}
+      </AnimatePresence>
     </>
   );
 }
