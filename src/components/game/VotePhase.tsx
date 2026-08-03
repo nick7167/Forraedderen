@@ -104,9 +104,15 @@ export function VotePhase({
 
       <StageScroll className="flex flex-col gap-3 py-1">
         {/* Prompt modes: keep the real prompt in view while voting. */}
+        {/* The crew's question, teal — the same colour it will be at the resolve.
+            The chameleon's variant is never shown here: that is the whole mode. */}
         {isPromptMode && round.sharedPrompt && (
-          <Card variant="hero" className="flex flex-col gap-1 p-3 text-center">
-            <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
+          <Card
+            variant="hero"
+            className="border-teal flex flex-col gap-1 p-3 text-center"
+            data-testid="shared-prompt"
+          >
+            <span className="text-label text-teal font-semibold tracking-[0.12em] uppercase">
               {t.theRealQuestion}
             </span>
             <span className="text-body-lg text-paper font-semibold">{round.sharedPrompt}</span>

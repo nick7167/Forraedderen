@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 import { QUESTION_PAIRS } from "../convex/questionData";
+import { dismissCoach } from "./helpers";
 
 /**
  * Visual capture of the reveal card holding the longest question the game can
@@ -41,12 +42,7 @@ for (const { w, h, tag } of SIZES) {
     await page.getByPlaceholder("Dit navn").fill("Tester");
     await page.getByRole("button", { name: "Opret spil" }).last().click();
     await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
-
-    const coach = page.locator("text=Tilpas spillet");
-    if (await coach.isVisible().catch(() => false)) {
-      await page.mouse.click(w / 2, h - 60);
-      await page.waitForTimeout(300);
-    }
+    await dismissCoach(page);
     for (let i = 0; i < 2; i++) {
       await page.getByRole("button", { name: /Tilføj bot/ }).click();
       await page.waitForTimeout(400);

@@ -106,18 +106,13 @@ export function MatchResults({
       <Confetti count={56} />
 
       <StageScroll className="flex flex-col gap-4 py-1">
-        <div className="flex flex-col items-center gap-1 text-center">
+        {/* Just the label. The champion's name lives in the winner card below and was
+            being printed twice at display size — the card already has the avatar, the
+            plate and the score, so the headline was the redundant one. */}
+        <div className="flex flex-col items-center text-center">
           <span className="text-label text-muted font-semibold tracking-[0.12em] uppercase">
             {t.finalResults}
           </span>
-          {/* Paper, not gold — the winner is the one place in this app allowed the
-              brightest value, exactly as SnapArena reserves it for the top of a ladder. */}
-          <p
-            data-testid="result-headline"
-            className="font-display text-display-1 text-paper font-extrabold tracking-tight"
-          >
-            {champion?.name}
-          </p>
         </div>
 
         {champion && (

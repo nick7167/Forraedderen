@@ -37,7 +37,8 @@ export type GlyphName =
   | "bot"
   | "host"
   | "timer"
-  | "eye";
+  | "eye"
+  | "help";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   check: <path d="M3 8.5 6.5 12 13 4.5" />,
@@ -138,6 +139,15 @@ const PATHS: Record<GlyphName, ReactNode> = {
     <>
       <circle cx="8" cy="9" r="5" />
       <path d="M8 6.5V9l2 1.5M6.5 2h3" />
+    </>
+  ),
+  // How the game is played. A circled question mark rather than a book or a lightbulb —
+  // it is the one help affordance every player already recognises without a label.
+  help: (
+    <>
+      <circle cx="8" cy="8" r="6.25" />
+      <path d="M6.1 6.1a1.95 1.95 0 1 1 2.4 2.5c-.4.2-.5.5-.5.9" />
+      <path d="M8 12h.01" strokeWidth="1.9" />
     </>
   ),
   // Reveal / hide the role card.

@@ -391,7 +391,7 @@ function Meters() {
 const ALL_GLYPHS: GlyphName[] = [
   "check", "close", "plus", "minus", "copy", "share", "search", "settings", "leave",
   "history", "mute", "sound", "chevron", "user", "users", "warn", "bot", "host",
-  "timer", "eye",
+  "timer", "eye", "help",
 ];
 
 function Glyphs() {

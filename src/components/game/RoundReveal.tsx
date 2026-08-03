@@ -119,13 +119,22 @@ export function RoundReveal({
               <span className="font-display text-display-2 text-paper font-extrabold">
                 {p.name}
               </span>
+              {/* The crew's word/question in teal, the chameleon's in signal — the same
+                  two colours the role card used, so the reveal pays off what players were
+                  looking at all round. `signal-text` not `signal`: this is body size, and
+                  the design reserves the darker red for >=24px. */}
               <span className="text-body-sm text-muted">
-                {wordLabel}: <span className="text-paper font-semibold">{reveal.secretWord}</span>
+                {wordLabel}:{" "}
+                <span className="text-teal font-semibold" data-testid="crew-word">
+                  {reveal.secretWord}
+                </span>
               </span>
               {showDecoy && (
                 <span className="text-body-sm text-muted">
                   {decoyLabel}:{" "}
-                  <span className="text-paper font-semibold">{reveal.decoyWord}</span>
+                  <span className="text-signal-text font-semibold" data-testid="decoy-word">
+                    {reveal.decoyWord}
+                  </span>
                 </span>
               )}
             </div>

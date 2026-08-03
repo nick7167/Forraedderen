@@ -8,7 +8,8 @@ import fs from "node:fs";
  * Run with:  pnpm exec playwright test e2e/coach.spec.ts
  */
 
-const OUT = "concept-parity/app";
+// `concept-parity/` is gone with the mockup harness; this joins the other QA output.
+const OUT = "qa-screenshots";
 
 test.setTimeout(180_000);
 

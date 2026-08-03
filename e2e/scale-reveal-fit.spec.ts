@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 import { QUESTION_PAIRS } from "../convex/questionData";
+import { dismissCoach } from "./helpers";
 
 /**
  * The prompt-mode role-reveal screen must fit without scrolling *and* without
@@ -15,7 +16,7 @@ import { QUESTION_PAIRS } from "../convex/questionData";
  * Run with:  pnpm exec playwright test e2e/scale-reveal-fit.spec.ts
  */
 
-const OUT = "concept-parity/app";
+const OUT = "qa-screenshots";
 
 // Common phone viewports (CSS px), including the 762 that regressed.
 const SIZES = [
@@ -104,13 +105,7 @@ for (const { w, h } of SIZES) {
     await page.getByPlaceholder("Dit navn").fill("Tester");
     await page.getByRole("button", { name: "Opret spil" }).last().click();
     await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
-
-    // Dismiss the first-run coach so it doesn't swallow clicks.
-    const coach = page.locator("text=Tilpas spillet");
-    if (await coach.isVisible().catch(() => false)) {
-      await page.mouse.click(w / 2, h - 60);
-      await page.waitForTimeout(300);
-    }
+    await dismissCoach(page);
 
     for (let i = 0; i < 2; i++) {
       await page.getByRole("button", { name: /Tilføj bot/ }).click();

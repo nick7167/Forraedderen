@@ -1,5 +1,5 @@
 import { Button } from "@/ui/Button";
-import { Stage } from "@/ui/Stage";
+import { Stage, StageFooter } from "@/ui/Stage";
 
 /**
  * Centered title/body with one action — the waiting, removed and not-found states.
@@ -29,9 +29,11 @@ export function InfoScreen({
         <h1 className="font-display text-display-2 text-paper font-extrabold">{title}</h1>
         {body && <p className="text-body text-muted max-w-sm">{body}</p>}
       </div>
-      <Button size="lg" block onClick={onAction} data-testid="info-action">
-        {actionLabel}
-      </Button>
+      <StageFooter>
+        <Button size="lg" block onClick={onAction} data-testid="info-action">
+          {actionLabel}
+        </Button>
+      </StageFooter>
     </Stage>
   );
 }

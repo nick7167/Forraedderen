@@ -12,7 +12,7 @@ import {
 import { AvatarPicker } from "./AvatarPicker";
 import { Av } from "./Av";
 import { Wordmark } from "./Wordmark";
-import { Stage } from "@/ui/Stage";
+import { Stage, StageFooter } from "@/ui/Stage";
 import { Button, Spinner } from "@/ui/Button";
 import { Card } from "@/ui/Surface";
 import { Input } from "@/ui/Input";
@@ -117,7 +117,7 @@ export function JoinRoute() {
 
   // First-timer: name + avatar only. The code is already known.
   return (
-    <Stage keyName="join" width="max-w-md" className="justify-center sm:min-h-[90dvh]">
+    <Stage keyName="join" width="max-w-md">
       <div className="flex flex-col items-center gap-2 text-center">
         <Wordmark size="hero" />
         <p className="text-body text-muted">{t.joinPrompt}</p>
@@ -186,9 +186,11 @@ export function JoinRoute() {
         </div>
       </Card>
 
-      <Button size="lg" block loading={busy} onClick={() => join(name)} data-testid="join-cta">
-        {t.joinGame}
-      </Button>
+      <StageFooter>
+        <Button size="lg" block loading={busy} onClick={() => join(name)} data-testid="join-cta">
+          {t.joinGame}
+        </Button>
+      </StageFooter>
     </Stage>
   );
 }

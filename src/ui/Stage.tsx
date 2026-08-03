@@ -56,9 +56,28 @@ export function Stage({
       exit={reduced ? undefined : { opacity: 0, y: -12 }}
       transition={settle}
       data-testid={testId}
-      style={fit ? { height: "var(--app-h, 100dvh)" } : undefined}
-      className={`mx-auto flex w-full flex-col px-4 ${width} ${
-        fit ? "max-h-[var(--app-h,100dvh)] gap-3 overflow-hidden py-3" : "gap-6 py-6 sm:py-8"
+      /**
+       * `--stage-pb` publishes this stage's own bottom padding so `StageFooter` can cancel
+       * it exactly and sit flush on the bottom edge. A hardcoded `-mb-*` on the footer
+       * would be right for one branch and wrong for the other — the fit stage pads 12px,
+       * the scrolling stage 24px — and the two would drift apart silently.
+       */
+      style={
+        {
+          ...(fit ? { height: "var(--app-h, 100dvh)" } : null),
+          "--stage-pb": fit ? "0.75rem" : "1.5rem",
+        } as React.CSSProperties
+      }
+      /**
+       * `flex-1` on the scrolling branch so the stage fills the routing region even when
+       * its content is short. Without it the stage ends where the content does, and the
+       * sticky footer — which cannot escape its own container — sits mid-screen with a
+       * dead band of page below it instead of on the bottom edge.
+       */
+      className={`mx-auto flex w-full flex-col px-4 pb-[var(--stage-pb)] ${width} ${
+        fit
+          ? "max-h-[var(--app-h,100dvh)] gap-3 overflow-hidden pt-3"
+          : "flex-1 gap-6 pt-6 sm:pt-8"
       } ${className}`}
     >
       {children}
@@ -102,10 +121,25 @@ export function StageScroll({
 }
 
 /**
- * The pinned action area at the bottom of a stage.
+ * The bottom action bar.
  *
- * `pb-safe` rather than a fixed padding, so the primary CTA clears the iPhone home
- * indicator without leaving a visible band on every other device.
+ * Ported from SnapArena's `TabBar` recipe (`bg-ink-900 border-line ... border-t
+ * pb-[env(safe-area-inset-bottom)]`): the primary action of a screen lives in a bar pinned
+ * to the bottom edge, always in reach of a thumb.
+ *
+ * `sticky`, not `fixed`. In a `fit` stage there is nothing to scroll and sticky is inert —
+ * the bar simply sits at the bottom as before. In a scrolling stage (lobby, home, results)
+ * it pins, which is the bug this fixes: the CTA used to be the last element in the column
+ * and scrolled off the screen with everything else.
+ *
+ * Sticky also keeps the bar inside the column, so on a laptop it aligns with the content
+ * instead of spanning the whole window. On a phone the column *is* the viewport, so it is
+ * full-bleed — the SnapArena behaviour.
+ *
+ * `-mx-4` bleeds the fill past the Stage's horizontal padding, and the negative bottom
+ * margin cancels its bottom padding so the bar sits on the edge rather than floating above
+ * it. The latter reads `--stage-pb` from the Stage rather than hardcoding a value, because
+ * the fit and scrolling branches pad differently.
  */
 export function StageFooter({
   children,
@@ -118,7 +152,17 @@ export function StageFooter({
   testId?: string;
 }) {
   return (
-    <div data-testid={testId} className={`pb-safe flex shrink-0 flex-col gap-2 pt-1 ${className}`}>
+    <div
+      data-testid={testId}
+      style={{ marginBottom: "calc(var(--stage-pb, 0px) * -1)" }}
+      /**
+       * `mt-auto` pushes the bar to the bottom of a stage that is taller than its content;
+       * `sticky` then holds it there once the content is tall enough to scroll. The two
+       * together cover both cases — neither does on its own.
+       */
+      className={`bg-ink-900 border-line pb-safe sticky bottom-0 z-20 mt-auto -mx-4
+                  flex shrink-0 flex-col gap-2 border-t px-4 pt-3 ${className}`}
+    >
       {children}
     </div>
   );

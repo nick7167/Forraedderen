@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { DANISH_PACKS } from "../convex/packData";
+import { dismissCoach } from "./helpers";
 
 /**
  * Word-mode (Klassisk) reveal — where the concept's 286:402 card lives.
@@ -107,12 +108,7 @@ for (const { w, h } of SIZES) {
     await page.getByPlaceholder("Dit navn").fill("Tester");
     await page.getByRole("button", { name: "Opret spil" }).last().click();
     await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
-
-    const coach = page.locator("text=Tilpas spillet");
-    if (await coach.isVisible().catch(() => false)) {
-      await page.mouse.click(w / 2, h - 60);
-      await page.waitForTimeout(300);
-    }
+    await dismissCoach(page);
 
     for (let i = 0; i < 2; i++) {
       await page.getByRole("button", { name: /Tilføj bot/ }).click();

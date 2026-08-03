@@ -43,14 +43,27 @@ export async function dismissAddToHome(page: Page) {
   }
 }
 
-/** The first-time host "settings coach" overlay — dismiss it. */
+/**
+ * The first-time host "settings coach" overlay — dismiss it.
+ *
+ * Waits for it rather than sampling `isVisible()` once. The coach mounts from an effect
+ * that only fires after Convex resolves this device as the host, so it can appear a beat
+ * AFTER the lobby is on screen — a single check races it, and a missed coach then swallows
+ * every subsequent click behind a full-screen scrim until the test times out.
+ *
+ * Clicks the overlay's centre: the spotlight is top-right and the bubble hangs just below
+ * it, so the middle of the screen is scrim at every viewport size.
+ */
 export async function dismissCoach(page: Page) {
   const overlay = page.getByTestId("settings-coach");
-  if (await overlay.isVisible().catch(() => false)) {
-    // Click the scrim well away from the spotlight, which is top-right.
-    await overlay.click({ position: { x: 20, y: 500 } });
-    await page.waitForTimeout(400);
-  }
+  const appeared = await overlay
+    .waitFor({ state: "visible", timeout: 3000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!appeared) return;
+
+  await overlay.click();
+  await overlay.waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
 }
 
 /**

@@ -177,8 +177,8 @@ export const t = {
   caught: "Fanget!",
   escaped: "Slap væk!",
   vote: "stemme",
-  theImposterWas: "Kamæleonen var",
-  theImpostersWere: "Kamæleonerne var",
+  theImposterWas: "Kamæleonen",
+  theImpostersWere: "Kamæleonerne",
   imposterWordWas: "Kamæleonens ord",
   votes: "stemmer",
   nextRound: "Næste runde",
@@ -215,6 +215,11 @@ export const t = {
   // How to play
   historyTitle: "Tidligere runder",
   howToTitle: "Sådan spilles",
+  // The three-line summary on the home screen. Deliberately not the full rules — those
+  // live in `howTo` below and open in a drawer.
+  homeStep1: "Alle får det samme hemmelige ord.",
+  homeStep2: "Alle undtagen én — kamæleonen.",
+  homeStep3: "Giv spor på skift, og find den falske.",
   howTo: {
     goal: {
       title: "Målet",

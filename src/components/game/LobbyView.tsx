@@ -17,7 +17,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
 import { SettingsCoach } from "./SettingsCoach";
 import { HostGoneBanner } from "./HostGoneBanner";
-import { Stage } from "@/ui/Stage";
+import { Stage, StageFooter } from "@/ui/Stage";
 import { Button } from "@/ui/Button";
 import { Card, Chip, SectionLabel } from "@/ui/Surface";
 import { Glyph } from "@/ui/Glyph";
@@ -177,7 +177,7 @@ export function LobbyView({
                 aria-label={t.howToTitle}
                 data-testid="how-to-play"
               >
-                <Glyph name="eye" />
+                <Glyph name="help" />
               </button>
             }
           />
@@ -287,7 +287,7 @@ export function LobbyView({
         )}
       </div>
 
-      <div className="pb-safe mt-auto flex flex-col gap-2 pt-2">
+      <StageFooter>
         {room.isHost ? (
           <Button
             size="lg"
@@ -304,7 +304,7 @@ export function LobbyView({
             {t.waitingForHost}
           </p>
         )}
-      </div>
+      </StageFooter>
     </Stage>
   );
 }

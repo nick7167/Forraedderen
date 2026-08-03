@@ -1,4 +1,5 @@
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { dismissCoach } from "./helpers";
 
 /**
  * The invite link (`/j/:code`) — Phase 5's headline feature.
@@ -31,12 +32,7 @@ async function hostCreatesRoom(page: Page): Promise<string> {
   await page.getByPlaceholder("Dit navn").fill("Vært");
   await page.getByRole("button", { name: "Opret spil" }).last().click();
   await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
-
-  const coach = page.locator("text=Tilpas spillet");
-  if (await coach.isVisible().catch(() => false)) {
-    await page.mouse.click(188, 760);
-    await page.waitForTimeout(300);
-  }
+    await dismissCoach(page);
   return (await page.getByTestId("room-code-cell").allTextContents()).join("");
 }
 

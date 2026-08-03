@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/drawer";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { AvatarPicker } from "./AvatarPicker";
+import { HowToPlay } from "./HowToPlay";
 import { Av } from "./Av";
 import { Wordmark } from "./Wordmark";
-import { Stage } from "@/ui/Stage";
+import { Stage, StageFooter } from "@/ui/Stage";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Surface";
 import { Input } from "@/ui/Input";
@@ -90,7 +91,7 @@ export function HomeScreen() {
   }
 
   return (
-    <Stage keyName="home" width="max-w-2xl" className="justify-center sm:min-h-[90dvh]">
+    <Stage keyName="home" width="max-w-2xl">
       <AddToHomeScreen />
 
       {rememberedRoom && (
@@ -201,9 +202,38 @@ export function HomeScreen() {
         )}
       </Card>
 
-      <Button size="lg" block loading={busy} onClick={go} data-testid="home-cta">
-        {mode === "create" ? t.createGame : t.joinGame}
-      </Button>
+      {/*
+        What the game actually is, for someone who was handed a link and has never played.
+        Three lines, no card chrome — the full rules are one tap away in the same drawer the
+        lobby uses, so there is no second copy of them to keep in sync.
+      */}
+      <div className="flex flex-col items-center gap-2">
+        <ol className="flex w-full max-w-sm flex-col gap-1.5">
+          {[t.homeStep1, t.homeStep2, t.homeStep3].map((step, i) => (
+            <li key={step} className="text-body-sm text-muted flex items-baseline gap-2.5">
+              <span className="font-display text-label text-gold shrink-0 font-bold tabular-nums">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
+
+        <HowToPlay
+          trigger={
+            <Button variant="ghost" size="sm" data-testid="home-how-to">
+              <Glyph name="help" />
+              {t.howToTitle}
+            </Button>
+          }
+        />
+      </div>
+
+      <StageFooter>
+        <Button size="lg" block loading={busy} onClick={go} data-testid="home-cta">
+          {mode === "create" ? t.createGame : t.joinGame}
+        </Button>
+      </StageFooter>
     </Stage>
   );
 }
