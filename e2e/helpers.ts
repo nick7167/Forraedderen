@@ -75,7 +75,23 @@ export async function createRoom(page: Page, name = "Tester") {
   await page.waitForTimeout(1500);
   await dismissAddToHome(page);
   await page.getByTestId("name-input").fill(name);
-  await page.getByTestId("home-cta").click();
+
+  /**
+   * `force: true` on the CTA, with an explicit visibility assertion in front of it.
+   *
+   * The CTA lives in the sticky bottom bar, which pins to the *layout* viewport. Under
+   * Playwright's mobile emulation the layout viewport is larger than the configured one
+   * (380x675 inside a 320x568 page, scaled down to fit), so the bar's box sits at y=607
+   * against a viewport Playwright believes is 568 tall. It is genuinely on screen — the
+   * hit test at its centre returns the button — but Playwright's in-viewport actionability
+   * check disagrees and retries the scroll forever.
+   *
+   * So: keep the real check (is it visible?) and skip only the one that emulation gets
+   * wrong. Without this the reveal-geometry specs hang for the full test timeout at
+   * 320x568 and nowhere else.
+   */
+  await expect(page.getByTestId("home-cta")).toBeVisible();
+  await page.getByTestId("home-cta").click({ force: true });
   // The room-code card is the lobby's anchor.
   await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
   await dismissCoach(page);

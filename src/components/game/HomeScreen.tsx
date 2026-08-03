@@ -16,10 +16,11 @@ import { Av } from "./Av";
 import { Wordmark } from "./Wordmark";
 import { Stage, StageFooter } from "@/ui/Stage";
 import { Button } from "@/ui/Button";
-import { Card } from "@/ui/Surface";
+import { Card, SectionLabel } from "@/ui/Surface";
 import { Input } from "@/ui/Input";
 import { Glyph } from "@/ui/Glyph";
 import { AVATAR_COLORS, AVATAR_EMOJIS, randomFrom } from "@/lib/avatars";
+import { MODES } from "@/lib/modes";
 import {
   getGuestSecret,
   loadProfile,
@@ -109,7 +110,9 @@ export function HomeScreen() {
 
       <div className="flex flex-col items-center gap-2 text-center">
         <Wordmark size="hero" />
-        <p className="text-body text-muted max-w-sm">{t.tagline}</p>
+        <p className="text-body text-muted max-w-sm" data-testid="tagline">
+          {t.tagline}
+        </p>
       </div>
 
       <Card variant="hero" className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-6">
@@ -204,30 +207,60 @@ export function HomeScreen() {
 
       {/*
         What the game actually is, for someone who was handed a link and has never played.
-        Three lines, no card chrome — the full rules are one tap away in the same drawer the
-        lobby uses, so there is no second copy of them to keep in sync.
+        A round in three steps, then the four modes — the two questions a new player has,
+        in the order they have them. The exhaustive rules (ties, scoring) stay in the
+        drawer, so there is no second copy of them to keep in sync.
       */}
-      <div className="flex flex-col items-center gap-2">
-        <ol className="flex w-full max-w-sm flex-col gap-1.5">
-          {[t.homeStep1, t.homeStep2, t.homeStep3].map((step, i) => (
-            <li key={step} className="text-body-sm text-muted flex items-baseline gap-2.5">
-              <span className="font-display text-label text-gold shrink-0 font-bold tabular-nums">
+      <section className="flex flex-col gap-3" data-testid="home-how">
+        <SectionLabel>{t.homeHowLabel}</SectionLabel>
+
+        {/* Numbered because a round is a sequence, not a list of facts. The numeral is the
+            display face on the inset surface — the same treatment the room code gets. */}
+        <ol className="grid gap-2 sm:grid-cols-3">
+          {[t.homeSteps.word, t.homeSteps.clue, t.homeSteps.vote].map((step, i) => (
+            <Card as="li" key={step.title} className="flex flex-col gap-1.5 p-3.5">
+              <span
+                aria-hidden
+                className="bg-ink-inset text-gold font-display border-line flex size-7 items-center justify-center rounded-sm border text-body font-bold tabular-nums"
+              >
                 {i + 1}
               </span>
-              {step}
-            </li>
+              <span className="text-body text-paper font-semibold">{step.title}</span>
+              <span className="text-body-sm text-muted">{step.body}</span>
+            </Card>
           ))}
         </ol>
+      </section>
+
+      <section className="flex flex-col gap-3" data-testid="home-modes">
+        <div className="flex items-baseline justify-between gap-2">
+          <SectionLabel>{t.homeModesLabel}</SectionLabel>
+          <span className="text-label text-faint">{t.homeModesNote}</span>
+        </div>
+
+        {/* Same list the host picks from in the lobby — see src/lib/modes.ts. Two-up on a
+            phone so all four are visible without scrolling past the fold. */}
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {MODES.map((m) => (
+            <Card as="li" key={m.id} className="flex flex-col items-center gap-1 p-3 text-center">
+              <span className="text-2xl" aria-hidden>
+                {m.emoji}
+              </span>
+              <span className="text-body-sm text-paper font-semibold">{m.label}</span>
+              <span className="text-label text-muted">{m.tagline}</span>
+            </Card>
+          ))}
+        </ul>
 
         <HowToPlay
           trigger={
-            <Button variant="ghost" size="sm" data-testid="home-how-to">
+            <Button variant="secondary" block data-testid="home-how-to">
               <Glyph name="help" />
-              {t.howToTitle}
+              {t.homeRulesCta}
             </Button>
           }
         />
-      </div>
+      </section>
 
       <StageFooter>
         <Button size="lg" block loading={busy} onClick={go} data-testid="home-cta">

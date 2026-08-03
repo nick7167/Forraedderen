@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 import { QUESTION_PAIRS } from "../convex/questionData";
-import { dismissCoach } from "./helpers";
+import { createRoom, addBots } from "./helpers";
 
 /**
  * Visual capture of the reveal card holding the longest question the game can
@@ -37,16 +37,9 @@ for (const { w, h, tag } of SIZES) {
   test(`longest question renders in full at ${tag}`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
 
-    await page.goto("/");
-    await dismissAddToHome(page);
-    await page.getByPlaceholder("Dit navn").fill("Tester");
-    await page.getByRole("button", { name: "Opret spil" }).last().click();
-    await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
-    await dismissCoach(page);
-    for (let i = 0; i < 2; i++) {
-      await page.getByRole("button", { name: /Tilføj bot/ }).click();
-      await page.waitForTimeout(400);
-    }
+    // Shared setup — see createRoom() for why the CTA needs a forced click here.
+    await createRoom(page);
+    await addBots(page, 2);
 
     await page.getByRole("button", { name: "Indstillinger" }).click();
     await expect(page.getByTestId("settings-panel")).toBeVisible();

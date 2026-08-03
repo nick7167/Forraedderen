@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { DANISH_PACKS } from "../convex/packData";
-import { dismissCoach } from "./helpers";
+import { createRoom, addBots } from "./helpers";
 
 /**
  * Word-mode (Klassisk) reveal — where the concept's 286:402 card lives.
@@ -103,17 +103,9 @@ for (const { w, h } of SIZES) {
   test(`Klassisk reveal fits at ${w}x${h}`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
 
-    await page.goto("/");
-    await dismissAddToHome(page);
-    await page.getByPlaceholder("Dit navn").fill("Tester");
-    await page.getByRole("button", { name: "Opret spil" }).last().click();
-    await expect(page.getByTestId("room-code")).toBeVisible({ timeout: 30_000 });
-    await dismissCoach(page);
-
-    for (let i = 0; i < 2; i++) {
-      await page.getByRole("button", { name: /Tilføj bot/ }).click();
-      await page.waitForTimeout(400);
-    }
+    // Shared setup — see createRoom() for why the CTA needs a forced click here.
+    await createRoom(page);
+    await addBots(page, 2);
 
     await page.getByRole("button", { name: "Start spil" }).click();
     await expect(page.getByTestId("card-scene")).toBeVisible({ timeout: 30_000 });

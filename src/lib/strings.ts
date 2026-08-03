@@ -215,11 +215,26 @@ export const t = {
   // How to play
   historyTitle: "Tidligere runder",
   howToTitle: "Sådan spilles",
-  // The three-line summary on the home screen. Deliberately not the full rules — those
-  // live in `howTo` below and open in a drawer.
-  homeStep1: "Alle får det samme hemmelige ord.",
-  homeStep2: "Alle undtagen én — kamæleonen.",
-  homeStep3: "Giv spor på skift, og find den falske.",
+  // The home-screen explainer. Enough to understand a round without opening anything —
+  // the exhaustive rules (ties, scoring) still live in `howTo` below and open in a drawer.
+  homeHowLabel: "Sådan spilles",
+  homeSteps: {
+    word: {
+      title: "Alle får et ord",
+      body: "Hele bordet får det samme hemmelige ord. Alle undtagen én — kamæleonen.",
+    },
+    clue: {
+      title: "Giv et spor",
+      body: "På skift siger I ét ord om det hemmelige ord. Tydeligt nok til de andre, men ikke så tydeligt at kamæleonen kan gætte det.",
+    },
+    vote: {
+      title: "Find kamæleonen",
+      body: "Diskutér, og stem så på den, I mistænker. Rammer I rigtigt, vinder holdet. Ellers slipper kamæleonen væk med sejren.",
+    },
+  },
+  homeModesLabel: "Fire spiltyper",
+  homeModesNote: "Værten vælger spiltype i lobbyen.",
+  homeRulesCta: "Se alle reglerne",
   howTo: {
     goal: {
       title: "Målet",

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { t } from "@/lib/strings";
 import { Button } from "@/ui/Button";
 import { Glyph } from "@/ui/Glyph";
+import { MODES } from "@/lib/modes";
 import type { Doc } from "../../../convex/_generated/dataModel";
 
 type Settings = Doc<"rooms">["settings"];
@@ -17,13 +18,6 @@ type Settings = Doc<"rooms">["settings"];
  * rather than bespoke `.step-btn` / `.c-switch` shapes.
  */
 
-/** The four game modes, with the emoji the lobby and the reveal both reuse. */
-const MODES = [
-  { id: "spy", emoji: "🕵️", label: t.modeSpy, tagline: t.modeSpyTag },
-  { id: "undercover", emoji: "🦎", label: t.modeUndercover, tagline: t.modeUndercoverTag },
-  { id: "questions", emoji: "❓", label: t.modeQuestions, tagline: t.modeQuestionsTag },
-  { id: "scale", emoji: "📊", label: t.modeScale, tagline: t.modeScaleTag },
-] as const;
 
 function Stepper({
   value,

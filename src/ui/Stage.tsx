@@ -113,7 +113,15 @@ export function StageScroll({
     <div
       ref={scrollRef}
       data-testid={testId}
-      className={`no-scrollbar min-h-0 flex-1 overflow-y-auto ${className}`}
+      /**
+       * `[&>*]:shrink-0` is load-bearing. This is a flex column with a definite height, so
+       * its children default to `flex-shrink: 1` and get *squeezed* when the content is
+       * taller than the box — instead of overflowing and letting this element scroll,
+       * which is its entire job. It showed up as the vote screen's clue-chip strip being
+       * sliced in half: that row is `overflow-x-auto`, which makes `overflow-y` compute to
+       * `auto` as well, so once squeezed it clipped its own content rather than spilling.
+       */
+      className={`no-scrollbar min-h-0 flex-1 overflow-y-auto [&>*]:shrink-0 ${className}`}
     >
       {children}
     </div>

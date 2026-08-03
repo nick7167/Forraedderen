@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { shot, errorGuard, dismissAddToHome } from "./helpers";
+import { t } from "../src/lib/strings";
 
 test.describe.configure({ mode: "serial" });
 
@@ -22,7 +23,9 @@ test("home screen — branding, install prompt, avatar picker, join mode", async
   // Logo + tagline + both mode buttons visible
   await expect(page.getByTestId("wordmark")).toBeVisible();
   await expect(page.getByTestId("wordmark-text")).toHaveText("Kamæleon");
-  await expect(page.getByText("Find kamæleonen", { exact: false })).toBeVisible();
+  // By test id, not a substring: "Find kamæleonen" is now also the title of step 3
+  // in the home explainer, so a loose text match resolves to two elements.
+  await expect(page.getByTestId("tagline")).toHaveText(t.tagline);
   await expect(page.getByRole("button", { name: "Opret spil" }).last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Deltag i spil" })).toBeVisible();
   await page.waitForTimeout(500);

@@ -14,15 +14,17 @@ export default function App() {
        * reveal deliberately stays phone-sized because you are physically handing the
        * device to the person next to you.
        *
-       * Height is still driven from JS (`--app-h`, set in main.tsx) so it is correct on
-       * first paint. `100dvh` is the pre-JS fallback: iOS doesn't finalize the CSS dvh
-       * unit until a scroll, which caused the "fixes itself on scroll" bug.
+       * `min-h-dvh`, NOT `--app-h`. `--app-h` is `window.innerHeight`, which is the
+       * *layout* viewport — under mobile emulation (and when an iOS user zooms) that is
+       * taller than the visual viewport, and a shell forced to that height parks the
+       * sticky action bar below the fold where it cannot be tapped. `--app-h` is still
+       * exactly right for the reveal screen, which must occupy the layout viewport and
+       * never scroll; it is applied there by `Stage fit` and nowhere else.
        *
        * Edge-to-edge on purpose — top bars and footers apply the safe-area insets
        * internally via .pt-safe/.pb-safe.
        */
-      className="flex w-full flex-col"
-      style={{ minHeight: "var(--app-h, 100dvh)" }}
+      className="flex min-h-dvh w-full flex-col"
     >
       <OfflineIndicator />
 
