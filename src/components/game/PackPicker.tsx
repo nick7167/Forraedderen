@@ -16,11 +16,16 @@ export function PackPicker({
   onOpenChange,
   selectedPackId,
   onSelect,
+  spicyContent = false,
+  danishContent = true,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   selectedPackId?: Id<"packs">;
   onSelect: (id: Id<"packs"> | undefined) => void;
+  /** Mirrors the room's content-tier toggles; hides packs those exclude. */
+  spicyContent?: boolean;
+  danishContent?: boolean;
 }) {
   const packs = useQuery(api.packs.listPacks);
   const createPack = useMutation(api.packs.createCustomPack);
@@ -31,8 +36,18 @@ export function PackPicker({
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
 
-  const filtered = (packs ?? []).filter((p) =>
-    p.name.toLowerCase().includes(query.trim().toLowerCase()),
+  // A pack the room's tiers exclude is hidden rather than disabled — offering a
+  // pack the host can't meaningfully use just invites "why is this greyed out?".
+  // The currently pinned pack always stays visible so it can be un-pinned.
+  const tierAllows = (tier?: string) =>
+    !tier ||
+    (tier === "party" && spicyContent) ||
+    (tier === "dansk" && danishContent);
+
+  const filtered = (packs ?? []).filter(
+    (p) =>
+      p.name.toLowerCase().includes(query.trim().toLowerCase()) &&
+      (tierAllows(p.tier) || p._id === selectedPackId),
   );
   const showRandom = query.trim().length === 0;
 

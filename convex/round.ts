@@ -743,6 +743,33 @@ async function dealRound(ctx: MutationCtx, room: Doc<"rooms">, roundNumber: numb
   return roundId;
 }
 
+/**
+ * Which content tiers a room draws from. Family content is unconditional; the
+ * two toggles ADD their tier on top, so both off is the safe-for-any-table pool
+ * and both on is the widest one.
+ *
+ * `danishContent` defaults to ON when absent so rooms created before tiering
+ * existed still see the Danish-culture content; `spicyContent` defaults to OFF
+ * because party content should never appear without someone asking for it.
+ */
+export function enabledTiers(settings: Doc<"rooms">["settings"]) {
+  return {
+    party: settings.spicyContent === true,
+    dansk: settings.danishContent !== false,
+  };
+}
+
+export function inEnabledTier<T extends { tier?: "party" | "dansk" }>(
+  items: readonly T[],
+  settings: Doc<"rooms">["settings"],
+): readonly T[] {
+  const tiers = enabledTiers(settings);
+  const pool = items.filter((item) => !item.tier || tiers[item.tier]);
+  // Family content is always present, so this can only fire if a tier file is
+  // emptied — fall back to the whole list rather than crashing the deal.
+  return pool.length > 0 ? pool : items;
+}
+
 async function pickWords(
   ctx: QueryCtx,
   room: Doc<"rooms">,
@@ -751,8 +778,10 @@ async function pickWords(
   // reuse secretWord (crew prompt) + decoyWord (imposter prompt); there are no
   // categories in these modes, so category is left empty.
   if (isPromptMode(room.settings.gameMode)) {
-    const pairs =
-      room.settings.gameMode === "scale" ? SCALE_PAIRS : QUESTION_PAIRS;
+    const pairs = inEnabledTier(
+      room.settings.gameMode === "scale" ? SCALE_PAIRS : QUESTION_PAIRS,
+      room.settings,
+    );
     const pair = pairs[Math.floor(Math.random() * pairs.length)];
     return { word: pair.crew, category: "", decoyWord: pair.imposter };
   }
@@ -766,13 +795,16 @@ async function pickWords(
     : null;
 
   if (pinned && pinned.words.length > 0) {
-    // Host pinned a specific category (built-in or custom) from the DB.
+    // Host pinned a specific category (built-in or custom) from the DB. An
+    // explicit choice always wins — we don't second-guess it against the tier
+    // toggles, or pinning a Krydret pack would silently do nothing.
     category = pinned.name;
     words = pinned.words.map((w) => w.word);
   } else {
     // Random category — drawn straight from the in-code pack list, so it always
     // works even on a fresh deployment with an unseeded `packs` table.
-    const seed = DANISH_PACKS[Math.floor(Math.random() * DANISH_PACKS.length)];
+    const pool = inEnabledTier(DANISH_PACKS, room.settings);
+    const seed = pool[Math.floor(Math.random() * pool.length)];
     category = seed.name;
     words = seed.words;
   }

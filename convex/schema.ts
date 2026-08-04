@@ -31,6 +31,11 @@ export const settingsValidator = v.object({
   voteSecs: v.optional(v.number()),
   roundCount: v.number(), // rounds in a match
   packId: v.optional(v.id("packs")), // pinned category; undefined = random
+  // Content tiers layered onto the draw pool. Family content is always in;
+  // these ADD to it. Optional so rooms created before tiering stay valid —
+  // absent reads as "off" for spicy and "on" for danish (see DEFAULT_SETTINGS).
+  spicyContent: v.optional(v.boolean()), // "Krydret indhold"
+  danishContent: v.optional(v.boolean()), // "Dansk kultur"
 });
 
 // Phases the room moves through. `lobby` and `finished` bookend a match;
@@ -152,6 +157,9 @@ export default defineSchema({
     language: v.string(), // "da"
     emoji: v.string(),
     isBuiltIn: v.boolean(),
+    // "party" | "dansk" on tiered built-ins; absent = family (always offered).
+    // Custom packs never carry a tier.
+    tier: v.optional(v.string()),
     words: v.array(
       v.object({ word: v.string(), hint: v.optional(v.string()) }),
     ),

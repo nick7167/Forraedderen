@@ -26,6 +26,7 @@ export async function ensureBuiltInPacks(ctx: MutationCtx): Promise<number> {
       language: "da",
       emoji: pack.emoji,
       isBuiltIn: true,
+      tier: pack.tier,
       words: pack.words.map((word) => ({ word })),
     });
     inserted++;
@@ -59,6 +60,9 @@ export const listPacks = query({
       wordCount: p.words.length,
       isBuiltIn: p.isBuiltIn,
       isMine: !p.isBuiltIn,
+      // "party" | "dansk" | undefined — the picker hides tiers the room hasn't
+      // enabled, so a host doesn't pin a pack their settings exclude.
+      tier: p.tier,
     }));
   },
 });
@@ -141,11 +145,16 @@ export const reseedBuiltInPacks = mutation({
           language: "da",
           emoji: pack.emoji,
           isBuiltIn: true,
+          tier: pack.tier,
           words,
         });
         inserted++;
       } else {
-        await ctx.db.patch(current._id, { emoji: pack.emoji, words });
+        await ctx.db.patch(current._id, {
+          emoji: pack.emoji,
+          tier: pack.tier,
+          words,
+        });
         updated++;
       }
     }

@@ -282,6 +282,27 @@ export function SettingsPanel({
         </>
       )}
 
+      {/* Content tiers. These widen the draw pool for every mode — questions,
+          scale prompts and word packs alike — so they sit outside the
+          mode-specific blocks above. Family content is always included; each
+          toggle adds its tier on top. */}
+      <SettingRow label={t.spicyContent} sub={t.spicyContentSub}>
+        <Toggle
+          label={t.spicyContent}
+          value={current.spicyContent ?? false}
+          disabled={!editable}
+          onChange={(v) => set("spicyContent", v)}
+        />
+      </SettingRow>
+      <SettingRow label={t.danishContent} sub={t.danishContentSub}>
+        <Toggle
+          label={t.danishContent}
+          value={current.danishContent ?? true}
+          disabled={!editable}
+          onChange={(v) => set("danishContent", v)}
+        />
+      </SettingRow>
+
       {/* Categories are not used by the prompt-based modes. */}
       {!isPromptMode && (
         <SettingRow
@@ -309,6 +330,8 @@ export function SettingsPanel({
         onOpenChange={setPackOpen}
         selectedPackId={current.packId}
         onSelect={(id) => set("packId", id)}
+        spicyContent={current.spicyContent ?? false}
+        danishContent={current.danishContent ?? true}
       />
     </div>
   );

@@ -9,6 +9,7 @@
  */
 
 import type * as cleanup from "../cleanup.js";
+import type * as content_types from "../content/types.js";
 import type * as crons from "../crons.js";
 import type * as engine from "../engine.js";
 import type * as games from "../games.js";
@@ -30,6 +31,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   cleanup: typeof cleanup;
+  "content/types": typeof content_types;
   crons: typeof crons;
   engine: typeof engine;
   games: typeof games;

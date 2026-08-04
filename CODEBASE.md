@@ -38,7 +38,7 @@ Home → create/join → lobby → role/question reveal + ready
 
 ## Game rules implemented
 
-`rooms.settings.gameMode` selects one of three modes:
+`rooms.settings.gameMode` selects one of four modes:
 
 | Mode | Crew sees | Imposter sees | Key rule |
 | --- | --- | --- | --- |
@@ -76,9 +76,10 @@ before changing Convex code.
 | `lib.ts` | Guest-or-Clerk player authorization, presence projection, code generation, active-player queries. |
 | `presence.ts` | Heartbeat mutation; online threshold is 12 seconds. |
 | `packs.ts` | Built-in pack seeding/reseeding, listing, and custom pack creation. |
-| `packData.ts` | Built-in Danish word categories. |
-| `questionData.ts` | Built-in question pairs. `QUESTION_PAIRS` is the complete exported draw pool. |
-| `scaleData.ts` | Dedicated 1–5 prompt pairs for Måleren. |
+| `packData.ts` | Barrel over `content/packs.*.ts`; exports `DANISH_PACKS`. |
+| `questionData.ts` | Barrel over `content/questions.*.ts`; exports `QUESTION_PAIRS`. |
+| `scaleData.ts` | Barrel over `content/scale.*.ts`; exports `SCALE_PAIRS`. |
+| `content/` | The authored content itself, split by mode and tier — see Content data. |
 | `users.ts`, `auth.config.ts` | Clerk identity mirroring and JWT configuration. |
 
 Authorization is server-side. A player acts either through their signed-in
@@ -89,14 +90,39 @@ they are allowed to see in the current phase.
 
 ## Content data
 
-- Built-in word packs are seeded lazily when a room is created; a host may pin a
-  built-in or custom pack, otherwise the game chooses a random in-code pack.
+Authored content lives in `convex/content/`, one file per mode per tier.
+`questionData.ts`, `scaleData.ts` and `packData.ts` are thin barrels that
+concatenate those files and stamp each item's tier; every consumer imports the
+barrel, so adding a tier file never touches call sites.
+
+| File | Holds |
+| --- | --- |
+| `content/types.ts` | `QuestionPair`, `ScalePair`, `SeedPack`, `ContentTier`, `tagTier`. |
+| `content/questions.{family,party,dansk}.ts` | Spørgsmål pairs (~1,100 total). |
+| `content/scale.{family,party,dansk}.ts` | Måleren pairs (~670 total). |
+| `content/packs.{core,extra,party,dansk}.ts` | 39 word packs, ~6,100 words. |
+
+Current pool sizes: **1,101** question pairs, **667** scale pairs, **6,133**
+words across **39** packs. These are floors enforced by
+`content-quality.test.ts` — the draw is memoryless, so pool size is the only
+thing preventing repeats.
+
+- **Tiers are additive.** `family` (untagged) is always in the pool; `party`
+  ("Krydret indhold", opt-in) and `dansk` ("Dansk kultur", on by default) layer
+  on top. `enabledTiers`/`inEnabledTier` in `round.ts` do the filtering; the
+  pack picker hides packs whose tier is off, but an explicitly pinned pack is
+  always honoured.
+- Add new pairs/packs to the matching `convex/content/` file, never to a barrel.
+- Built-in packs are seeded lazily on room creation; a host may pin a built-in
+  or custom pack, otherwise a random in-tier in-code pack is used.
 - Guests can make one-off custom packs; signed-in users can reuse their packs.
-- `QUESTION_PAIRS` combines `QUESTION_PAIRS_EXTRA` and
-  `QUESTION_PAIRS_BASE`. Add every new valid `{ crew, imposter }` pair to one
-  of those arrays; do not create a standalone unused question list.
 - `SCALE_PAIRS` is used only by Måleren. Every pair must work with the same
   1–5 response scale; word-pack modes must never read either prompt pool.
+- **Every prompt must stand alone.** A player only ever sees their own side of a
+  pair, so a pronoun pointing at the partner prompt ("…får du af det?") is
+  unanswerable. Guarded by a test.
+- **No brand names or licensed content** in packs — the `dansk` tier uses
+  traditions, dishes and places instead.
 
 ## Match highlights
 
@@ -113,6 +139,7 @@ the room enters `finished`.
 | --- | --- |
 | `pnpm dev` | Run Vite and `convex dev` together. |
 | `pnpm lint` | Typecheck the project. |
+| `npx convex run packs:reseedBuiltInPacks` | **Required after any `convex/content/packs.*.ts` change** — otherwise the deployment keeps serving the previously seeded words. |
 | `pnpm build` | Typecheck and generate the production PWA build. |
 | `pnpm test:e2e` | Run mobile Playwright tours against a production build. |
 | `pnpm dev:convex` | Provision/watch Convex; requires the Clerk issuer environment variable in Convex. |
@@ -127,8 +154,18 @@ PWA service-worker settings live in `vite.config.ts`; application icons live in
 
 Playwright covers the home screen, install prompt, avatar picker, lobby,
 rules/settings/packs, a full Klassisk round and match result, the Spørgsmål
-flow, and Måleren through match highlights. Screenshots are retained in `Test Screenshots/` and
+flow, Måleren through match highlights, the reveal-card fit specs, and the
+content-tier switches. Screenshots are retained in `Test Screenshots/` and
 `qa-screenshots/`.
 
-Last verified after the question-pool fix: `pnpm lint`, `pnpm build`, and
-`pnpm test:e2e`.
+Vitest covers the round engine plus three content suites:
+
+| Suite | Guards |
+| --- | --- |
+| `content-length.test.ts` | Reveal-card envelope: question ≤110, scale ≤70, word ≤24 chars. |
+| `content-quality.test.ts` | Pool-size floors, duplicates and near-duplicates, opener distribution (no shape over 25%), answer-type match within a pair, stand-alone prompts, charset, pack consistency. |
+| `content-tiers.test.ts` | Additive tier filtering and the defaults for pre-tiering rooms. |
+
+Last verified after the content expansion: `pnpm lint`, `pnpm vitest run`
+(55 tests), `pnpm build`, `npx convex run packs:reseedBuiltInPacks`, and the
+full Playwright suite (23 tests) against a local dev server.

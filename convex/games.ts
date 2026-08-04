@@ -27,6 +27,10 @@ const DEFAULT_SETTINGS = {
   impostersKnowEachOther: true,
   roundCount: 5,
   packId: undefined as Id<"packs"> | undefined,
+  // Danish-culture content is on by default — this is a Danish game. Krydret
+  // content is opt-in so it never turns up unannounced with kids at the table.
+  spicyContent: false,
+  danishContent: true,
 };
 
 const joinArgs = {
