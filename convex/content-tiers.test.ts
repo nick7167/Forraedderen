@@ -39,14 +39,18 @@ describe("tier defaults", () => {
   });
 });
 
-describe("tier filtering", () => {
-  const pools = [
-    ["Spørgsmål", QUESTION_PAIRS],
-    ["Måleren", SCALE_PAIRS],
-    ["ordpakker", DANISH_PACKS],
-  ] as const;
-
-  for (const [label, pool] of pools) {
+/**
+ * Declared as a generic function rather than a loop over a mixed array: looping
+ * gives `pool` the union `QuestionPair[] | ScalePair[] | SeedPack[]`, and a
+ * generic call cannot resolve one `T` from a union, so the convex typecheck
+ * fails even though the runtime behaviour is identical. Each call below binds a
+ * concrete `T`.
+ */
+function tierFilteringSuite<T extends { tier?: "party" | "dansk" }>(
+  label: string,
+  pool: readonly T[],
+) {
+  describe(`tier filtering — ${label}`, () => {
     it(`${label}: family-only is a strict subset with no tiered items`, () => {
       const only = inEnabledTier(pool, settings({ danishContent: false }));
       expect(only.length).toBeGreaterThan(0);
@@ -78,5 +82,9 @@ describe("tier filtering", () => {
         expect(inEnabledTier(pool, s).some((x) => x.tier === "party")).toBe(false);
       }
     });
-  }
-});
+  });
+}
+
+tierFilteringSuite("Spørgsmål", QUESTION_PAIRS);
+tierFilteringSuite("Måleren", SCALE_PAIRS);
+tierFilteringSuite("ordpakker", DANISH_PACKS);

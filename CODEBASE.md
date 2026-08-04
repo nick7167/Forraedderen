@@ -138,7 +138,7 @@ the room enters `finished`.
 | Command | Use |
 | --- | --- |
 | `pnpm dev` | Run Vite and `convex dev` together. |
-| `pnpm lint` | Typecheck the project. |
+| `pnpm lint` | Typecheck **both** projects — `src/` and, separately, `convex/`. The root config only includes `src`, so the second pass is what `convex deploy` runs; without it a broken `convex/` file passes locally and fails the Vercel build. |
 | `npx convex run packs:reseedBuiltInPacks` | **Required after any `convex/content/packs.*.ts` change** — otherwise the deployment keeps serving the previously seeded words. |
 | `pnpm build` | Typecheck and generate the production PWA build. |
 | `pnpm test:e2e` | Run mobile Playwright tours against a production build. |
@@ -166,6 +166,7 @@ Vitest covers the round engine plus three content suites:
 | `content-quality.test.ts` | Pool-size floors, duplicates and near-duplicates, opener distribution (no shape over 25%), answer-type match within a pair, stand-alone prompts, charset, pack consistency. |
 | `content-tiers.test.ts` | Additive tier filtering and the defaults for pre-tiering rooms. |
 
-Last verified after the content expansion: `pnpm lint`, `pnpm vitest run`
-(55 tests), `pnpm build`, `npx convex run packs:reseedBuiltInPacks`, and the
-full Playwright suite (23 tests) against a local dev server.
+Last verified after the content expansion: `pnpm lint` (both projects),
+`pnpm vitest run` (66 tests), `pnpm build`,
+`npx convex run packs:reseedBuiltInPacks`, and the full Playwright suite
+(23 tests) against a local dev server.
